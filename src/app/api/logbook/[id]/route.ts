@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Logbook from '@/models/Logbook';
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || session.user.role !== 'employer') {
@@ -13,9 +13,11 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
     await connectToDatabase();
     
+    const { id } = await params;
+    
     // Only allow employer who owns this placement to approve
     const log = await Logbook.findOneAndUpdate(
-      { _id: params.id, employerId: session.user.id },
+      { _id: id, employerId: session.user.id },
       { isApproved: true },
       { new: true }
     );

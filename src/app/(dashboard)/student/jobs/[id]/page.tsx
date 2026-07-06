@@ -18,11 +18,11 @@ async function getJob(id: string) {
   }
 }
 
-export default async function JobDetails({ params }: { params: { id: string } }) {
+export default async function JobDetails({ params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
   // Destructure `id` directly from `params` since we assume it's synchronous in this context or handled by Next.js routing.
   // Wait, in Next.js 15+ params should be awaited. Let's just use it safely.
-  const { id } = params;
+  const { id } = await params;
   const job = await getJob(id);
 
   if (!job) {

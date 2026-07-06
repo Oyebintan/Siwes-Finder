@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Application from '@/models/Application';
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || session.user.role !== 'employer') {
@@ -17,9 +17,11 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     }
 
     await connectToDatabase();
+    
+    const { id } = await params;
 
     const application = await Application.findOneAndUpdate(
-      { _id: params.id, employer: session.user.id },
+      { _id: id, employer: session.user.id },
       { status },
       { new: true }
     );
