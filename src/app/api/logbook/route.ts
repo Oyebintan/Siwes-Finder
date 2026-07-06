@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Logbook from '@/models/Logbook';
 import Application from '@/models/Application';
-import Student from '@/models/Student';
+import User from '@/models/User';
 
 export async function POST(req: Request) {
   try {
@@ -16,15 +16,10 @@ export async function POST(req: Request) {
     const { weekNumber, dayOfWeek, activityDescription, hoursWorked } = await req.json();
 
     await connectToDatabase();
-    const studentProfile = await Student.findOne({ userId: session.user.id });
-    
-    if (!studentProfile) {
-       return NextResponse.json({ error: 'Student profile not found' }, { status: 404 });
-    }
 
     // Find the accepted application to know the employer
     const acceptedApp = await Application.findOne({ 
-      studentId: studentProfile._id, 
+      student: session.user.id, 
       status: 'Accepted' 
     });
 
@@ -33,8 +28,8 @@ export async function POST(req: Request) {
     }
 
     const log = await Logbook.create({
-      studentId: studentProfile._id,
-      employerId: acceptedApp.employerId,
+      studentId: session.user.id,
+      employerId: acceptedApp.employer,
       weekNumber,
       dayOfWeek,
       activityDescription,
@@ -43,6 +38,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(log, { status: 201 });
   } catch (error) {
+    console.error("Logbook POST error:", error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
@@ -55,19 +51,17 @@ export async function GET(req: Request) {
     await connectToDatabase();
 
     if (session.user.role === 'student') {
-      const studentProfile = await Student.findOne({ userId: session.user.id });
-      if (!studentProfile) return NextResponse.json([], { status: 200 });
-
-      const logs = await Logbook.find({ studentId: studentProfile._id }).sort({ weekNumber: -1, date: -1 });
+      const logs = await Logbook.find({ studentId: session.user.id }).sort({ weekNumber: -1, date: -1 });
       return NextResponse.json(logs, { status: 200 });
     } else {
       // Employer fetching logs from all their students
       const logs = await Logbook.find({ employerId: session.user.id })
-        .populate({ path: 'studentId', populate: { path: 'userId', select: 'name email' } })
+        .populate('studentId', 'name email')
         .sort({ isApproved: 1, date: -1 });
       return NextResponse.json(logs, { status: 200 });
     }
   } catch (error) {
+    console.error("Logbook GET error:", error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

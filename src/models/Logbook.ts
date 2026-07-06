@@ -13,7 +13,7 @@ export interface ILogbook extends Document {
 
 const LogbookSchema = new Schema<ILogbook>(
   {
-    studentId: { type: Schema.Types.ObjectId, ref: 'Student', required: true },
+    studentId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     employerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     weekNumber: { type: Number, required: true },
     dayOfWeek: { type: String, required: true },
