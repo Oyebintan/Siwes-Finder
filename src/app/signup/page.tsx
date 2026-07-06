@@ -63,7 +63,7 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
       
       <div className="w-full max-w-md animate-fade-in-up">
         {/* Logo / Header */}
@@ -73,35 +73,35 @@ export default function Signup() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </Link>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-2">Create an account</h1>
-          <p className="text-gray-500">Join SIWES Finder and secure your placement.</p>
+          <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-2">Create an account</h1>
+          <p className="text-gray-500 dark:text-gray-400">Join SIWES Finder and secure your placement.</p>
         </div>
 
         {/* Clean Card */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm">
+        <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-8 shadow-sm">
           
           {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-medium text-center">
+            <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/50 text-red-600 dark:text-red-400 text-sm font-medium text-center">
               {error}
             </div>
           )}
 
           {/* Role Segmented Control */}
-          <div className="flex p-1 bg-gray-100 rounded-xl mb-8 relative border border-gray-200/50">
+          <div className="flex p-1 bg-gray-100 dark:bg-gray-800 rounded-xl mb-8 relative border border-gray-200/50 dark:border-gray-700">
             <div 
-              className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-lg shadow-sm transition-transform duration-300 ease-out ${role === 'employer' ? 'translate-x-[calc(100%+8px)]' : 'translate-x-0'}`} 
+              className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-gray-700 rounded-lg shadow-sm transition-transform duration-300 ease-out ${role === 'employer' ? 'translate-x-[calc(100%+8px)]' : 'translate-x-0'}`} 
             />
             <button
               type="button"
               onClick={() => setRole('student')}
-              className={`flex-1 py-2 text-sm font-bold relative z-10 transition-colors ${role === 'student' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 py-2 text-sm font-bold relative z-10 transition-colors ${role === 'student' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
             >
               I'm a Student
             </button>
             <button
               type="button"
               onClick={() => setRole('employer')}
-              className={`flex-1 py-2 text-sm font-bold relative z-10 transition-colors ${role === 'employer' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 py-2 text-sm font-bold relative z-10 transition-colors ${role === 'employer' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
             >
               I'm an Employer
             </button>
@@ -109,38 +109,38 @@ export default function Signup() {
 
           <form onSubmit={handleCredentialsSignup} className="space-y-5">
             <div className="space-y-1.5">
-              <label className="block text-sm font-bold text-gray-700">Full Name</label>
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">Full Name</label>
               <input
                 type="text"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:bg-white text-gray-900 transition-all outline-none"
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-900 dark:text-white transition-all outline-none"
                 placeholder="John Doe"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-sm font-bold text-gray-700">Email Address</label>
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">Email Address</label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:bg-white text-gray-900 transition-all outline-none"
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-900 dark:text-white transition-all outline-none"
                 placeholder="you@example.com"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-sm font-bold text-gray-700">Password</label>
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">Password</label>
               <input
                 type="password"
                 required
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:bg-white text-gray-900 transition-all outline-none"
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-900 dark:text-white transition-all outline-none"
                 placeholder="••••••••"
               />
             </div>
@@ -156,10 +156,10 @@ export default function Signup() {
 
           <div className="mt-8 relative">
             <div className="absolute inset-0 flex items-center" aria-hidden="true">
-              <div className="w-full border-t border-gray-200" />
+              <div className="w-full border-t border-gray-200 dark:border-gray-800" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Or continue with</span>
+              <span className="px-2 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400">Or continue with</span>
             </div>
           </div>
 
@@ -167,7 +167,7 @@ export default function Signup() {
             type="button"
             onClick={handleGoogleSignup}
             disabled={loading || googleLoading}
-            className="w-full mt-6 py-3.5 rounded-xl bg-white border border-gray-300 text-gray-700 font-bold hover:bg-gray-50 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+            className="w-full mt-6 py-3.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
           >
             {googleLoading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -185,9 +185,9 @@ export default function Signup() {
           </button>
         </div>
 
-        <p className="text-center text-sm text-gray-600 mt-8">
+        <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-8">
           Already have an account?{' '}
-          <Link href="/login" className="text-blue-600 font-bold hover:text-blue-500 transition-colors">
+          <Link href="/login" className="text-blue-600 dark:text-blue-400 font-bold hover:text-blue-500 transition-colors">
             Sign In
           </Link>
         </p>

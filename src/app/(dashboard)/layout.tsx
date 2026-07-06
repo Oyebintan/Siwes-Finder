@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Loader2, LogOut, LayoutDashboard, Briefcase, FileText, User, BookOpen, Menu, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
@@ -26,8 +27,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-blue-600 dark:text-blue-500" />
       </div>
     );
   }
@@ -50,15 +51,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 relative font-sans text-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 relative font-sans text-gray-900 dark:text-gray-100 transition-colors duration-300">
       
       {/* Light Glassy Top Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-white/80 border-b border-gray-200 shadow-sm">
+      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-white/80 dark:bg-gray-950/80 border-b border-gray-200 dark:border-gray-800 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             
             <div className="flex items-center gap-2">
-              <Link href="/" className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 text-xl tracking-tight">
+              <Link href="/" className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300 text-xl tracking-tight">
                 SIWES Finder
               </Link>
             </div>
@@ -74,8 +75,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     href={link.href}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
                       isActive 
-                        ? 'bg-blue-50 text-blue-600' 
-                        : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
                     }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -85,10 +86,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               })}
             </div>
 
-            <div className="hidden md:flex items-center border-l border-gray-200 pl-4 ml-2">
+            <div className="hidden md:flex items-center gap-4 border-l border-gray-200 dark:border-gray-800 pl-4 ml-2">
+              <ThemeToggle />
               <button
                 onClick={() => signOut({ callbackUrl: '/' })}
-                className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-red-600 transition-colors"
+                className="flex items-center gap-2 text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                 title="Sign Out"
               >
                 <LogOut className="w-4 h-4" /> Sign Out
@@ -96,10 +98,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
 
             {/* Mobile menu button */}
-            <div className="md:hidden flex items-center">
+            <div className="md:hidden flex items-center gap-2">
+              <ThemeToggle />
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="text-gray-500 hover:text-gray-900 focus:outline-none"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white focus:outline-none"
               >
                 {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
@@ -109,7 +112,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-b border-gray-200">
+          <div className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
             <div className="px-2 pt-2 pb-3 space-y-1">
               {navLinks.map((link) => {
                 const Icon = link.icon;
@@ -121,8 +124,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center gap-3 px-3 py-3 rounded-md text-base font-bold ${
                       isActive 
-                        ? 'bg-blue-50 text-blue-600' 
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
                     }`}
                   >
                     <Icon className="w-5 h-5" />
@@ -132,7 +135,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               })}
               <button
                 onClick={() => signOut({ callbackUrl: '/' })}
-                className="flex w-full items-center gap-3 px-3 py-3 rounded-md text-base font-bold text-red-600 hover:bg-red-50"
+                className="flex w-full items-center gap-3 px-3 py-3 rounded-md text-base font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
               >
                 <LogOut className="w-5 h-5" /> Sign Out
               </button>
