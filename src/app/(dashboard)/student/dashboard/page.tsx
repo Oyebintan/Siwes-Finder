@@ -1,61 +1,60 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { redirect } from "next/navigation";
-import { Briefcase, FileText, CheckCircle, Clock, XCircle } from "lucide-react";
+import { connectToDatabase } from "@/lib/mongodb";
+import Job from "@/models/Job";
+import Application from "@/models/Application";
 import Link from "next/link";
+import { Briefcase, FileText, CheckCircle, XCircle } from "lucide-react";
 
 export default async function StudentDashboard() {
   const session = await getServerSession(authOptions);
 
-  if (!session || session.user.role !== "student") {
-    redirect("/login");
-  }
+  await connectToDatabase();
+  const availableJobsCount = await Job.countDocuments();
+  const applicationsCount = await Application.countDocuments({ student: session!.user.id });
+  const acceptedCount = await Application.countDocuments({ student: session!.user.id, status: 'Accepted' });
 
   return (
     <div className="space-y-8 animate-fade-in-up">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Welcome back, {session.user.name?.split(' ')[0]}!</h2>
-          <p className="text-foreground/60 mt-1">Here is an overview of your SIWES/IT placement journey.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight">Welcome, {session?.user?.name}</h1>
+          <p className="text-foreground/60 mt-1">Here is an overview of your SIWES placement journey.</p>
         </div>
-        <Link 
-          href="/student/jobs" 
-          className="inline-flex items-center justify-center px-6 py-3 font-semibold text-white transition-all bg-blue-600 rounded-xl hover:bg-blue-500 shadow-lg hover:shadow-blue-500/25"
-        >
-          Find New IT Placements
+        <Link href="/student/jobs" className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all">
+          Find Placements
         </Link>
-      </header>
+      </div>
 
-      {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="p-6 rounded-3xl bg-white/5 border border-white/10 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
-            <Briefcase className="w-6 h-6" />
+        <div className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-blue-500/50 transition-colors">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="p-3 rounded-xl bg-blue-500/10 text-blue-500"><Briefcase className="w-6 h-6" /></div>
+            <h3 className="font-bold text-lg text-foreground/80">Available IT Slots</h3>
           </div>
-          <div>
-            <p className="text-sm font-medium text-foreground/60">Total Applications</p>
-            <h3 className="text-2xl font-bold">0</h3>
-          </div>
+          <p className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
+            {availableJobsCount}
+          </p>
         </div>
 
-        <div className="p-6 rounded-3xl bg-white/5 border border-white/10 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-yellow-500/10 text-yellow-500 flex items-center justify-center shrink-0">
-            <Clock className="w-6 h-6" />
+        <div className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500/50 transition-colors">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="p-3 rounded-xl bg-cyan-500/10 text-cyan-500"><FileText className="w-6 h-6" /></div>
+            <h3 className="font-bold text-lg text-foreground/80">My Applications</h3>
           </div>
-          <div>
-            <p className="text-sm font-medium text-foreground/60">Pending Review</p>
-            <h3 className="text-2xl font-bold">0</h3>
-          </div>
+          <p className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-300">
+            {applicationsCount}
+          </p>
         </div>
 
-        <div className="p-6 rounded-3xl bg-white/5 border border-white/10 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-green-500/10 text-green-500 flex items-center justify-center shrink-0">
-            <CheckCircle className="w-6 h-6" />
+        <div className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-indigo-500/50 transition-colors">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-500"><CheckCircle className="w-6 h-6" /></div>
+            <h3 className="font-bold text-lg text-foreground/80">Offers Received</h3>
           </div>
-          <div>
-            <p className="text-sm font-medium text-foreground/60">Accepted</p>
-            <h3 className="text-2xl font-bold">0</h3>
-          </div>
+          <p className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-300">
+            {acceptedCount}
+          </p>
         </div>
       </div>
 
