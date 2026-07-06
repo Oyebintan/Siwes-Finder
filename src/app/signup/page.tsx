@@ -32,7 +32,7 @@ export default function Signup() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Something went wrong');
+        throw new Error(data.error || 'Something went wrong on the server');
       }
 
       // Automatically sign them in
@@ -43,7 +43,7 @@ export default function Signup() {
       });
 
       if (signInRes?.error) {
-        throw new Error('Failed to auto-login. Please log in manually.');
+        throw new Error(signInRes.error || 'Failed to auto-login. Please log in manually.');
       }
 
       router.push('/login-redirect');
@@ -53,63 +53,55 @@ export default function Signup() {
     }
   };
 
-  const handleGoogleSignup = () => {
-    setGoogleLoading(true);
-    signIn('google', { callbackUrl: '/login-redirect' });
+  const handleGoogleSignup = async () => {
+    try {
+      setGoogleLoading(true);
+      await signIn('google', { callbackUrl: '/login-redirect' });
+    } catch (err) {
+      setGoogleLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center overflow-hidden bg-[#0a0f1c]">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       
-      {/* Animated Glowing Orbs Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] -left-[10%] w-[50vw] h-[50vw] rounded-full bg-blue-600/20 blur-[120px] mix-blend-screen animate-blob" />
-        <div className="absolute top-[20%] -right-[10%] w-[40vw] h-[40vw] rounded-full bg-cyan-400/20 blur-[120px] mix-blend-screen animate-blob animation-delay-2000" />
-        <div className="absolute -bottom-[20%] left-[20%] w-[60vw] h-[60vw] rounded-full bg-indigo-500/20 blur-[150px] mix-blend-screen animate-blob animation-delay-4000" />
-        {/* Subtle grid overlay */}
-        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
-      </div>
-
-      <div className="relative z-10 w-full max-w-[440px] p-6 animate-fade-in-up">
+      <div className="w-full max-w-md animate-fade-in-up">
         {/* Logo / Header */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-400 shadow-lg shadow-blue-500/30 mb-6 group transition-transform hover:scale-105">
-            <svg className="w-8 h-8 text-white group-hover:animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <Link href="/" className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 shadow-md mb-6 transition-transform hover:scale-105">
+            <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </Link>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight mb-2">Create an account</h1>
-          <p className="text-blue-100/60">Join SIWES Finder and secure your placement.</p>
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-2">Create an account</h1>
+          <p className="text-gray-500">Join SIWES Finder and secure your placement.</p>
         </div>
 
-        {/* Premium Glass Card */}
-        <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+        {/* Clean Card */}
+        <div className="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm">
           
-          {/* Subtle top glare */}
-          <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-
           {error && (
-            <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-medium text-center backdrop-blur-md">
+            <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-medium text-center">
               {error}
             </div>
           )}
 
           {/* Role Segmented Control */}
-          <div className="flex p-1 bg-black/40 rounded-2xl mb-8 relative">
+          <div className="flex p-1 bg-gray-100 rounded-xl mb-8 relative border border-gray-200/50">
             <div 
-              className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white/10 rounded-xl border border-white/5 shadow-sm transition-transform duration-300 ease-out ${role === 'employer' ? 'translate-x-[calc(100%+8px)]' : 'translate-x-0'}`} 
+              className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-lg shadow-sm transition-transform duration-300 ease-out ${role === 'employer' ? 'translate-x-[calc(100%+8px)]' : 'translate-x-0'}`} 
             />
             <button
               type="button"
               onClick={() => setRole('student')}
-              className={`flex-1 py-2.5 text-sm font-bold relative z-10 transition-colors ${role === 'student' ? 'text-white' : 'text-white/40 hover:text-white/60'}`}
+              className={`flex-1 py-2 text-sm font-bold relative z-10 transition-colors ${role === 'student' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
             >
               I'm a Student
             </button>
             <button
               type="button"
               onClick={() => setRole('employer')}
-              className={`flex-1 py-2.5 text-sm font-bold relative z-10 transition-colors ${role === 'employer' ? 'text-white' : 'text-white/40 hover:text-white/60'}`}
+              className={`flex-1 py-2 text-sm font-bold relative z-10 transition-colors ${role === 'employer' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
             >
               I'm an Employer
             </button>
@@ -117,38 +109,38 @@ export default function Signup() {
 
           <form onSubmit={handleCredentialsSignup} className="space-y-5">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-white/70 uppercase tracking-wider pl-1">Full Name</label>
+              <label className="block text-sm font-bold text-gray-700">Full Name</label>
               <input
                 type="text"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-5 py-3.5 rounded-2xl bg-black/20 border border-white/5 focus:border-blue-500/50 focus:bg-black/40 text-white placeholder:text-white/20 transition-all outline-none"
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:bg-white text-gray-900 transition-all outline-none"
                 placeholder="John Doe"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-white/70 uppercase tracking-wider pl-1">Email Address</label>
+              <label className="block text-sm font-bold text-gray-700">Email Address</label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-5 py-3.5 rounded-2xl bg-black/20 border border-white/5 focus:border-blue-500/50 focus:bg-black/40 text-white placeholder:text-white/20 transition-all outline-none"
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:bg-white text-gray-900 transition-all outline-none"
                 placeholder="you@example.com"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-white/70 uppercase tracking-wider pl-1">Password</label>
+              <label className="block text-sm font-bold text-gray-700">Password</label>
               <input
                 type="password"
                 required
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-5 py-3.5 rounded-2xl bg-black/20 border border-white/5 focus:border-blue-500/50 focus:bg-black/40 text-white placeholder:text-white/20 transition-all outline-none"
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:bg-white text-gray-900 transition-all outline-none"
                 placeholder="••••••••"
               />
             </div>
@@ -156,23 +148,26 @@ export default function Signup() {
             <button
               type="submit"
               disabled={loading || googleLoading}
-              className="w-full py-4 mt-2 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:hover:translate-y-0 flex items-center justify-center"
+              className="w-full py-3.5 mt-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold shadow-md hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center"
             >
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Create Account'}
             </button>
           </form>
 
-          <div className="mt-8 flex items-center gap-4">
-            <hr className="flex-1 border-white/10" />
-            <span className="text-xs font-bold text-white/30 uppercase tracking-wider">Or continue with</span>
-            <hr className="flex-1 border-white/10" />
+          <div className="mt-8 relative">
+            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+              <div className="w-full border-t border-gray-200" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">Or continue with</span>
+            </div>
           </div>
 
           <button
             type="button"
             onClick={handleGoogleSignup}
             disabled={loading || googleLoading}
-            className="w-full mt-6 py-3.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+            className="w-full mt-6 py-3.5 rounded-xl bg-white border border-gray-300 text-gray-700 font-bold hover:bg-gray-50 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
           >
             {googleLoading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -190,9 +185,9 @@ export default function Signup() {
           </button>
         </div>
 
-        <p className="text-center text-sm text-blue-100/50 mt-8">
+        <p className="text-center text-sm text-gray-600 mt-8">
           Already have an account?{' '}
-          <Link href="/login" className="text-cyan-400 font-bold hover:text-cyan-300 transition-colors">
+          <Link href="/login" className="text-blue-600 font-bold hover:text-blue-500 transition-colors">
             Sign In
           </Link>
         </p>

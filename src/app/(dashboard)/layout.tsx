@@ -1,89 +1,151 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import Image from "next/image";
-import { LayoutDashboard, UserCircle, Briefcase, FileText, LogOut } from "lucide-react";
-import LogoutButton from "@/components/LogoutButton";
+'use client';
 
-export default async function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const session = await getServerSession(authOptions);
+import { useSession, signOut } from 'next-auth/react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { Loader2, LogOut, LayoutDashboard, Briefcase, FileText, User, BookOpen, Menu, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-  if (!session) {
-    redirect("/login");
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { data: session, status } = useSession();
+  const pathname = usePathname();
+  const router = useRouter();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Route protection
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+    if (status === 'authenticated') {
+      if (session.user.role === 'unassigned') {
+        router.push('/onboarding');
+      }
+    }
+  }, [status, session, router]);
+
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+      </div>
+    );
   }
 
-  const isStudent = session.user.role === "student";
+  if (!session || session.user.role === 'unassigned') return null;
+
+  const isStudent = session.user.role === 'student';
+
+  const navLinks = isStudent ? [
+    { name: 'Dashboard', href: '/student/dashboard', icon: LayoutDashboard },
+    { name: 'Find Jobs', href: '/student/jobs', icon: Briefcase },
+    { name: 'Applications', href: '/student/applications', icon: FileText },
+    { name: 'e-Logbook', href: '/student/logbook', icon: BookOpen },
+    { name: 'Profile', href: '/student/profile', icon: User },
+  ] : [
+    { name: 'Dashboard', href: '/employer/dashboard', icon: LayoutDashboard },
+    { name: 'Post Job', href: '/employer/post-job', icon: Briefcase },
+    { name: 'Applicants', href: '/employer/applications', icon: FileText },
+    { name: 'Logbooks', href: '/employer/logbook', icon: BookOpen },
+  ];
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Dashboard Top Navigation (Liquid Glassy) */}
-      <nav className="sticky top-4 z-50 mx-auto w-[95%] max-w-7xl flex items-center justify-between px-4 py-3 md:px-6 md:py-3 backdrop-blur-2xl bg-white/10 dark:bg-black/30 border border-white/20 dark:border-white/10 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.1)] transition-all duration-300">
-        <div className="flex items-center gap-2 md:gap-3">
-          <Image
-            src="/logo.png"
-            alt="SIWES Finder Logo"
-            width={32}
-            height={32}
-            className="w-8 h-8 md:w-10 md:h-10 rounded-xl"
-          />
-          <h1 className="text-lg md:text-xl font-extrabold tracking-tight hidden sm:block bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-400 dark:from-blue-400 dark:to-cyan-200">
-            {isStudent ? "Student Portal" : "Employer Portal"}
-          </h1>
+    <div className="min-h-screen bg-gray-50 relative font-sans text-gray-900">
+      
+      {/* Light Glassy Top Navbar */}
+      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-white/80 border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            
+            <div className="flex items-center gap-2">
+              <Link href="/" className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 text-xl tracking-tight">
+                SIWES Finder
+              </Link>
+            </div>
+
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-1">
+              {navLinks.map((link) => {
+                const Icon = link.icon;
+                const isActive = pathname.startsWith(link.href);
+                return (
+                  <Link
+                    key={link.name}
+                    href={link.href}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                      isActive 
+                        ? 'bg-blue-50 text-blue-600' 
+                        : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span>{link.name}</span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            <div className="hidden md:flex items-center border-l border-gray-200 pl-4 ml-2">
+              <button
+                onClick={() => signOut({ callbackUrl: '/' })}
+                className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-red-600 transition-colors"
+                title="Sign Out"
+              >
+                <LogOut className="w-4 h-4" /> Sign Out
+              </button>
+            </div>
+
+            {/* Mobile menu button */}
+            <div className="md:hidden flex items-center">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="text-gray-500 hover:text-gray-900 focus:outline-none"
+              >
+                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Dashboard Links */}
-        <div className="flex items-center gap-4 md:gap-8">
-          <Link href={isStudent ? "/student/dashboard" : "/employer/dashboard"} className="flex flex-col items-center text-foreground/70 hover:text-blue-500 transition-colors">
-            <LayoutDashboard className="w-5 h-5" />
-            <span className="text-[10px] font-semibold mt-1">Dashboard</span>
-          </Link>
-          
-          {isStudent ? (
-            <>
-              <Link href="/student/jobs" className="flex flex-col items-center text-foreground/70 hover:text-blue-500 transition-colors">
-                <Briefcase className="w-5 h-5" />
-                <span className="text-[10px] font-semibold mt-1">Find IT</span>
-              </Link>
-              <Link href="/student/applications" className="flex flex-col items-center text-foreground/70 hover:text-blue-500 transition-colors">
-                <FileText className="w-5 h-5" />
-                <span className="text-[10px] font-semibold mt-1">Applications</span>
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link href="/employer/post-job" className="flex flex-col items-center text-foreground/70 hover:text-blue-500 transition-colors">
-                <Briefcase className="w-5 h-5" />
-                <span className="text-[10px] font-semibold mt-1">Post Job</span>
-              </Link>
-              <Link href="/employer/applications" className="flex flex-col items-center text-foreground/70 hover:text-blue-500 transition-colors">
-                <FileText className="w-5 h-5" />
-                <span className="text-[10px] font-semibold mt-1">Review</span>
-              </Link>
-            </>
-          )}
-
-          <Link href="/profile" className="flex flex-col items-center text-foreground/70 hover:text-blue-500 transition-colors">
-            <UserCircle className="w-5 h-5" />
-            <span className="text-[10px] font-semibold mt-1">Profile</span>
-          </Link>
-        </div>
-
-        <div className="flex items-center gap-2 md:gap-4">
-          <ThemeToggle />
-          <LogoutButton />
-        </div>
+        {/* Mobile Navigation */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-white border-b border-gray-200">
+            <div className="px-2 pt-2 pb-3 space-y-1">
+              {navLinks.map((link) => {
+                const Icon = link.icon;
+                const isActive = pathname.startsWith(link.href);
+                return (
+                  <Link
+                    key={link.name}
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-3 rounded-md text-base font-bold ${
+                      isActive 
+                        ? 'bg-blue-50 text-blue-600' 
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    {link.name}
+                  </Link>
+                );
+              })}
+              <button
+                onClick={() => signOut({ callbackUrl: '/' })}
+                className="flex w-full items-center gap-3 px-3 py-3 rounded-md text-base font-bold text-red-600 hover:bg-red-50"
+              >
+                <LogOut className="w-5 h-5" /> Sign Out
+              </button>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Main Content Area */}
-      <main className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-8 pt-10">
+      <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         {children}
       </main>
+
     </div>
   );
 }
