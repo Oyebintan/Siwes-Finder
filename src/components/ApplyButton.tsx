@@ -37,7 +37,7 @@ export default function ApplyButton({ jobId }: { jobId: string }) {
 
   if (success) {
     return (
-      <div className="w-full py-4 rounded-xl bg-green-500/10 border border-green-500/20 text-green-500 font-bold flex items-center justify-center gap-2">
+      <div className="w-full py-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 text-green-600 dark:text-green-400 font-bold flex items-center justify-center gap-2">
         <CheckCircle className="w-5 h-5" /> Application Submitted
       </div>
     );
@@ -46,14 +46,14 @@ export default function ApplyButton({ jobId }: { jobId: string }) {
   return (
     <div className="space-y-3">
       {error && (
-        <div className="p-3 text-sm text-red-500 bg-red-500/10 rounded-xl border border-red-500/20 text-center">
+        <div className="p-3 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800/50 text-center">
           {error}
         </div>
       )}
       <button
         onClick={handleApply}
         disabled={loading}
-        className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+        className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
       >
         {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
           <>Apply Now <ArrowRight className="w-4 h-4" /></>

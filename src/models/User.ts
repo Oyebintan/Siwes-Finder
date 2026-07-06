@@ -11,6 +11,7 @@ export interface IUser extends Document {
   level?: string;
   skills?: string[];
   resumeUrl?: string;
+  isProfileComplete?: boolean;
   // Employer Specific
   companyName?: string;
   industry?: string;
@@ -24,14 +25,15 @@ const UserSchema: Schema = new Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String },
     role: { type: String, enum: ['student', 'employer', 'unassigned'], default: 'unassigned' },
-    
+
     // Student fields
     university: { type: String },
     courseOfStudy: { type: String },
     level: { type: String },
     skills: { type: [String], default: [] },
     resumeUrl: { type: String },
-    
+    isProfileComplete: { type: Boolean, default: false },
+
     // Employer fields
     companyName: { type: String },
     industry: { type: String },

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import AuthProvider from "@/components/Provider";
+import SpiralBackground from "@/components/SpiralBackground";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,11 +34,12 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col transition-colors duration-300">
         <ThemeProvider
           attribute="class"
-          defaultTheme="light"
+          defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
           <AuthProvider>
+            <SpiralBackground />
             {children}
           </AuthProvider>
         </ThemeProvider>
@@ -45,4 +47,3 @@ export default function RootLayout({
     </html>
   );
 }
-
