@@ -45,7 +45,13 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(application, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
+    // Duplicate key from the unique (job, student) index — a race with the
+    // check above, or a concurrent double-submit. Return the friendly message.
+    if (error?.code === 11000) {
+      return NextResponse.json({ error: 'You have already applied for this placement' }, { status: 400 });
+    }
+    console.error('Application POST error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
@@ -60,8 +66,14 @@ export async function GET(req: Request) {
     await connectToDatabase();
 
     if (session.user.role === 'student') {
+      // Company name lives on the employer's User record, not on Job, so pull
+      // it through a nested populate instead of selecting a field Job lacks.
       const apps = await Application.find({ student: session.user.id })
-        .populate('job', 'title companyName location')
+        .populate({
+          path: 'job',
+          select: 'title location employerId',
+          populate: { path: 'employerId', select: 'companyName' },
+        })
         .sort({ createdAt: -1 });
       return NextResponse.json(apps, { status: 200 });
     } else if (session.user.role === 'employer') {

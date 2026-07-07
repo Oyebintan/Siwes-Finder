@@ -18,4 +18,12 @@ const ApplicationSchema: Schema = new Schema(
   { timestamps: true }
 );
 
+// A student can only apply to a given job once. This is the real guard against
+// duplicate applications (the app-level check is racy under concurrent requests).
+ApplicationSchema.index({ job: 1, student: 1 }, { unique: true });
+
+// Support the dashboard list queries, which filter by owner and sort by newest.
+ApplicationSchema.index({ student: 1, createdAt: -1 });
+ApplicationSchema.index({ employer: 1, createdAt: -1 });
+
 export default mongoose.models.Application || mongoose.model<IApplication>('Application', ApplicationSchema);
