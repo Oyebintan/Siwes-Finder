@@ -3,7 +3,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Loader2, LogOut, LayoutDashboard, Briefcase, FileText, User, BookOpen, Menu, X } from 'lucide-react';
+import { Loader2, LogOut, LayoutDashboard, Briefcase, FileText, User, BookOpen, Menu, X, Building2, Users, ShieldCheck } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -23,15 +23,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
   if (!session || session.user.role === 'unassigned') return null;
 
-  const isStudent = session.user.role === 'student';
-  const navLinks = isStudent ? [
+  const role = session.user.role;
+  const navLinks = role === 'student' ? [
     { name: 'Dashboard', href: '/student/dashboard', icon: LayoutDashboard },
     { name: 'Find Jobs', href: '/student/jobs', icon: Briefcase },
     { name: 'Applications', href: '/student/applications', icon: FileText },
     { name: 'e-Logbook', href: '/student/logbook', icon: BookOpen },
     { name: 'Profile', href: '/student/profile', icon: User },
+  ] : role === 'admin' ? [
+    { name: 'Overview', href: '/admin/dashboard', icon: LayoutDashboard },
+    { name: 'Companies', href: '/admin/companies', icon: ShieldCheck },
+    { name: 'Users', href: '/admin/users', icon: Users },
+    { name: 'Listings', href: '/admin/jobs', icon: Briefcase },
   ] : [
     { name: 'Dashboard', href: '/employer/dashboard', icon: LayoutDashboard },
+    { name: 'Verification', href: '/employer/verification', icon: ShieldCheck },
     { name: 'Post Job', href: '/employer/post-job', icon: Briefcase },
     { name: 'Applicants', href: '/employer/applications', icon: FileText },
     { name: 'Logbooks', href: '/employer/logbook', icon: BookOpen },
