@@ -3,23 +3,33 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Job from '@/models/Job';
+import User from '@/models/User';
 
-// POST: Create a new job placement (Employer only)
+function escapeRegex(input: string): string {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// POST: Create a new job placement (verified employers only)
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-
     if (!session || session.user.role !== 'employer') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { title, location, type, duration, requirements, description, stipend } = body;
-
     await connectToDatabase();
 
-    const newJob = await Job.create({
-      employerId: session.user.id,
+    // Only approved companies may publish opportunities.
+    const employer = await User.findById(session.user.id).select('verificationStatus');
+    if (!employer || employer.verificationStatus !== 'approved') {
+      return NextResponse.json(
+        { error: 'Your company must be verified by an admin before you can post opportunities.' },
+        { status: 403 }
+      );
+    }
+
+    const body = await req.json();
+    const {
       title,
       location,
       type,
@@ -27,49 +37,108 @@ export async function POST(req: Request) {
       requirements,
       description,
       stipend,
+      applicationMethod = 'platform',
+      applicationEmail,
+      applicationUrl,
+    } = body;
+
+    if (!title || !location || !type || !duration || !description) {
+      return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
+    }
+
+    // Validate the chosen application method has the data it needs.
+    if (!['platform', 'email', 'external'].includes(applicationMethod)) {
+      return NextResponse.json({ error: 'Invalid application method.' }, { status: 400 });
+    }
+    if (applicationMethod === 'email') {
+      if (!applicationEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(applicationEmail)) {
+        return NextResponse.json({ error: 'A valid application email is required for email applications.' }, { status: 400 });
+      }
+    }
+    if (applicationMethod === 'external') {
+      if (!applicationUrl || !/^https?:\/\/.+/i.test(applicationUrl)) {
+        return NextResponse.json({ error: 'A valid application URL (http/https) is required for external applications.' }, { status: 400 });
+      }
+    }
+
+    const newJob = await Job.create({
+      employerId: session.user.id,
+      title,
+      location,
+      type,
+      duration,
+      requirements: Array.isArray(requirements) ? requirements : [],
+      description,
+      stipend,
+      applicationMethod,
+      applicationEmail: applicationMethod === 'email' ? applicationEmail : undefined,
+      applicationUrl: applicationMethod === 'external' ? applicationUrl : undefined,
     });
 
-    return NextResponse.json(
-      { message: 'Job posted successfully', job: newJob },
-      { status: 201 }
-    );
-  } catch (error: any) {
+    return NextResponse.json({ message: 'Job posted successfully', job: newJob }, { status: 201 });
+  } catch (error) {
     console.error('Job posting error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-// GET: Fetch all active jobs (For students) or specific employer's jobs
+// GET: employer sees own jobs; students see a searchable/filtered/paginated feed
+// of active jobs from verified companies only.
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     await connectToDatabase();
 
-    let jobs;
     if (session.user.role === 'employer') {
-      // Employer sees their own posted jobs
-      jobs = await Job.find({ employerId: session.user.id }).sort({ createdAt: -1 });
-    } else {
-      // Student sees all active jobs, populated with employer name
-      jobs = await Job.find({ isActive: true })
-        .populate('employerId', 'name')
-        .sort({ createdAt: -1 });
+      const jobs = await Job.find({ employerId: session.user.id }).sort({ createdAt: -1 });
+      return NextResponse.json({ jobs }, { status: 200 });
     }
 
-    return NextResponse.json({ jobs }, { status: 200 });
-  } catch (error: any) {
-    console.error('Fetching jobs error:', error);
+    // Public feed (students): only verified employers' active jobs.
+    const { searchParams } = new URL(req.url);
+    const q = (searchParams.get('q') || '').trim();
+    const type = (searchParams.get('type') || '').trim();
+    const location = (searchParams.get('location') || '').trim();
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '12', 10) || 12));
+
+    const approvedEmployerIds = await User.find({
+      role: 'employer',
+      verificationStatus: 'approved',
+    }).distinct('_id');
+
+    const filter: Record<string, unknown> = {
+      isActive: true,
+      employerId: { $in: approvedEmployerIds },
+    };
+    if (q) {
+      const rx = new RegExp(escapeRegex(q), 'i');
+      filter.$or = [{ title: rx }, { description: rx }];
+    }
+    if (type && ['On-site', 'Remote', 'Hybrid'].includes(type)) {
+      filter.type = type;
+    }
+    if (location) {
+      filter.location = new RegExp(escapeRegex(location), 'i');
+    }
+
+    const total = await Job.countDocuments(filter);
+    const jobs = await Job.find(filter)
+      .populate('employerId', 'name companyName industry')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { jobs, total, page, totalPages: Math.max(1, Math.ceil(total / limit)) },
+      { status: 200 }
     );
+  } catch (error) {
+    console.error('Fetching jobs error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
