@@ -5,12 +5,26 @@ import { connectToDatabase } from "@/lib/mongodb";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 
+// Fail fast: never fall back to a hardcoded signing secret. A missing secret
+// means anyone could forge session tokens, so refuse to start without one.
+const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
+if (!NEXTAUTH_SECRET) {
+  throw new Error(
+    "NEXTAUTH_SECRET is not set. Generate one with `openssl rand -base64 32` and add it to your environment before starting the app."
+  );
+}
+
 export const authOptions: AuthOptions = {
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID as string || "dummy",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string || "dummy",
-    }),
+    // Only register Google sign-in when real credentials are configured.
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [
+          GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          }),
+        ]
+      : []),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -19,7 +33,7 @@ export const authOptions: AuthOptions = {
       },
       async authorize(credentials) {
         await connectToDatabase();
-        
+
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Missing email or password");
         }
@@ -80,5 +94,5 @@ export const authOptions: AuthOptions = {
   pages: {
     signIn: '/login',
   },
-  secret: process.env.NEXTAUTH_SECRET || "fallback_super_secret_for_dev_mode",
+  secret: NEXTAUTH_SECRET,
 };
