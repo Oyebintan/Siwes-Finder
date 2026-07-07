@@ -1,76 +1,263 @@
 import Link from 'next/link';
-import { ArrowRight, Building2, Briefcase, FileText } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
+
+const companies = ['Paystack', 'Flutterwave', 'Andela', 'MTN Nigeria', 'Interswitch', 'Nigerian Breweries'];
+
+const featured = [
+  { logo: 'PS', tint: 'primary', title: 'Frontend Engineering Intern', meta: 'Paystack · Lagos · 6 months', tags: ['React', 'Fintech'] },
+  { logo: 'FW', tint: 'secondary', title: 'Data Analytics Intern', meta: 'Flutterwave · Lagos · 6 months', tags: ['SQL', 'Fintech'] },
+  { logo: 'MTN', tint: 'accent', title: 'Network Engineering Intern', meta: 'MTN Nigeria · Abuja · 6 months', tags: ['Telecoms', 'Networking'] },
+];
+
+const testimonials = [
+  { quote: 'I found a verified fintech placement in three days instead of three months.', name: 'Amara O.', role: 'Computer Science, UNILAG' },
+  { quote: 'No more chasing referrals. Everything I need is in one dashboard.', name: 'Tunde A.', role: 'Electrical Engineering, OAU' },
+  { quote: 'As an HR lead, I hired four strong interns in a week — all pre-verified.', name: 'Ifeoma N.', role: 'HR Lead, Interswitch' },
+];
+
+const faqs = [
+  { q: 'Is SIWES Finder free for students?', a: 'Yes — creating a profile and applying to opportunities is always free.' },
+  { q: 'How are companies verified?', a: 'Every company submits CAC registration and HR contact details, reviewed by our admin team before listings go live.' },
+  { q: 'Which schools are supported?', a: 'All accredited Nigerian universities and polytechnics — search for yours during signup.' },
+];
+
+const stats = [
+  { value: '2,400+', label: 'Students placed', accent: false },
+  { value: '180+', label: 'Verified companies', accent: true },
+  { value: '36', label: 'States covered', accent: false },
+  { value: '72hrs', label: 'Avg. time to first offer', accent: true },
+];
+
+const tintMap: Record<string, string> = {
+  primary: 'bg-primary-500/10 dark:bg-primary-400/15 text-primary-500 dark:text-primary-400',
+  secondary: 'bg-secondary-500/10 dark:bg-secondary-300/15 text-secondary-500 dark:text-secondary-300',
+  accent: 'bg-accent-500/10 dark:bg-accent-400/15 text-accent-500 dark:text-accent-400',
+};
+
+function Logo({ size = 28 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden>
+      <circle cx="22" cy="42" r="10" className="fill-primary-500 dark:fill-primary-400" />
+      <circle cx="42" cy="22" r="10" className="fill-primary-500 dark:fill-primary-400" opacity="0.4" />
+      <path d="M28 36 L38 28" className="stroke-primary-500 dark:stroke-primary-400" strokeWidth="4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+const VerifiedBadge = () => (
+  <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-success-bg text-success whitespace-nowrap">● Verified</span>
+);
 
 export default function Home() {
   return (
-    <div className="min-h-screen relative font-sans text-gray-900 dark:text-gray-100 transition-colors duration-300">
-
-      <nav className="fixed top-0 left-0 right-0 z-50 glass-surface border-b border-gray-200/60 dark:border-white/5">
-        <div className="max-w-7xl mx-auto px-6 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent-800 to-accent-400 shadow-md shadow-accent-900/20 flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <span className="text-lg font-extrabold tracking-tight text-gray-900 dark:text-white">SIWES Finder</span>
-          </div>
-
+    <div className="relative overflow-x-clip font-sans text-foreground">
+      {/* NAV */}
+      <header className="sticky top-0 z-50 glass-surface border-b border-surface-border">
+        <div className="max-w-[1220px] mx-auto px-6 sm:px-7 py-4 flex items-center justify-between gap-4 flex-wrap">
+          <Link href="/" className="flex items-center gap-2.5">
+            <Logo />
+            <span className="font-display font-extrabold text-[18px] tracking-tight">SIWES Finder</span>
+          </Link>
+          <nav className="hidden md:flex items-center gap-9">
+            <a href="#how-it-works" className="text-sm font-semibold text-muted hover:text-foreground transition-colors">How it works</a>
+            <a href="#opportunities" className="text-sm font-semibold text-muted hover:text-foreground transition-colors">Opportunities</a>
+            <a href="#faq" className="text-sm font-semibold text-muted hover:text-foreground transition-colors">FAQ</a>
+          </nav>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <Link href="/login" className="hidden sm:inline-block px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-accent-600 dark:hover:text-accent-300 font-bold transition-colors">
-              Sign In
-            </Link>
-            <Link href="/signup" className="px-5 py-2 rounded-full text-sm bg-gradient-to-r from-accent-800 to-accent-400 text-white shadow-md shadow-accent-900/20 hover:shadow-lg hover:brightness-110 font-bold transition-all">
-              Get Started
-            </Link>
+            <Link href="/login" className="text-sm font-semibold px-1 py-2 hover:text-primary-500 dark:hover:text-primary-400 transition-colors">Log in</Link>
+            <Link href="/signup" className="bg-primary-500 dark:bg-primary-400 text-white px-5 py-2.5 rounded-[9px] text-sm font-bold shadow-lg shadow-primary-900/20 hover:brightness-110 transition-all">Get Started</Link>
           </div>
         </div>
-      </nav>
+      </header>
 
-      <main className="relative z-10 flex flex-col items-center justify-center text-center px-4 pt-40 pb-32 max-w-5xl mx-auto">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300 font-bold text-sm mb-8 animate-fade-in-up border border-accent-200 dark:border-accent-800/50">
-          <span className="flex h-2 w-2 relative">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-500"></span>
-          </span>
-          The Future of IT Placements in Nigeria
-        </div>
+      {/* HERO */}
+      <section className="relative max-w-[1220px] mx-auto px-6 sm:px-7 pt-24 pb-20">
+        <div className="pointer-events-none absolute -top-36 -right-40 w-[520px] h-[520px] rounded-full blur-md animate-blob" style={{ background: 'radial-gradient(circle, var(--color-primary-500), transparent 70%)', opacity: 0.13 }} />
+        <div className="pointer-events-none absolute top-20 right-28 w-[340px] h-[340px] rounded-full blur-md animate-blob [animation-direction:reverse]" style={{ background: 'radial-gradient(circle, var(--color-secondary-500), transparent 70%)', opacity: 0.12 }} />
 
-        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-tight animate-fade-in-up text-gray-900 dark:text-white" style={{ animationDelay: '100ms' }}>
-          Secure Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-800 via-accent-500 to-accent-300">SIWES</span> Placement.
-        </h1>
+        <div className="relative grid gap-12 items-center [grid-template-columns:repeat(auto-fit,minmax(340px,1fr))]">
+          <div className="animate-fade-in-up">
+            <div className="inline-flex items-center gap-2 bg-primary-500/10 dark:bg-primary-400/15 text-primary-500 dark:text-primary-400 px-3.5 py-1.5 rounded-full font-mono text-[11.5px] font-bold tracking-wide mb-7 uppercase">For Nigerian University Students</div>
+            <h1 className="font-display font-extrabold text-[clamp(38px,6vw,60px)] leading-[1.04] tracking-[-0.035em] mb-6">
+              Find <span className="italic font-medium">verified</span><br />
+              SIWES placements<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-secondary-500 dark:from-primary-400 dark:to-secondary-300">faster.</span>
+            </h1>
+            <p className="text-[18px] leading-[1.65] text-muted mb-9 max-w-[460px]">Skip the WhatsApp groups and cold calls. Browse verified companies, apply in minutes, and track every placement in one place.</p>
+            <div className="flex gap-3.5 flex-wrap">
+              <Link href="/signup" className="bg-foreground text-background px-6 py-3.5 rounded-[9px] text-[15px] font-bold hover:brightness-110 transition-all">Register as a Student</Link>
+              <Link href="/signup" className="px-6 py-3.5 rounded-[9px] text-[15px] font-bold border-[1.5px] border-surface-border hover:border-primary-500 transition-colors">Register as a Company</Link>
+            </div>
+          </div>
 
-        <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-12 leading-relaxed animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-          The smartest bridge between ambitious Nigerian students and leading organizations. Apply for jobs, track applications, and maintain your e-logbook all in one place.
-        </p>
-
-        <div className="flex flex-col sm:flex-row items-center gap-4 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
-          <Link href="/signup" className="group px-8 py-4 rounded-xl bg-gradient-to-r from-accent-800 to-accent-400 font-bold text-lg text-white shadow-lg shadow-accent-900/25 hover:-translate-y-1 hover:brightness-110 transition-all flex items-center gap-2 w-full sm:w-auto justify-center">
-            Start Your Journey <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-          </Link>
-          <Link href="/login" className="px-8 py-4 rounded-xl bg-surface-1 border border-surface-border text-gray-700 dark:text-gray-300 font-bold text-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-all w-full sm:w-auto text-center shadow-sm">
-            Employer Portal
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-32 w-full">
-          {[
-            { title: "One-Click Apply", icon: Briefcase, desc: "Browse through hundreds of organizations and apply instantly with your digital profile." },
-            { title: "Digital e-Logbook", icon: FileText, desc: "No more paper logbooks. Log your daily tasks online and get them approved by your supervisor." },
-            { title: "Smart Matching", icon: Building2, desc: "Employers can filter through students by university, course of study, and digital resumes." }
-          ].map((feat, i) => (
-            <div key={i} className="bg-surface-1 border border-surface-border shadow-sm p-8 rounded-3xl text-left hover:shadow-md hover:border-accent-400/40 transition-all group animate-fade-in-up" style={{ animationDelay: `${400 + i * 100}ms` }}>
-              <div className="w-14 h-14 rounded-2xl bg-accent-100 dark:bg-accent-900/30 text-accent-600 dark:text-accent-300 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <feat.icon className="w-7 h-7" />
+          {/* Floating cards */}
+          <div className="relative h-[440px] min-w-[280px] animate-fade-in-up [animation-delay:100ms]">
+            <div className="absolute top-5 right-0 w-[250px] bg-surface-1 border border-surface-border rounded-[18px] shadow-2xl p-[22px] animate-float-card">
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="w-[38px] h-[38px] rounded-[10px] bg-primary-500/10 dark:bg-primary-400/15 flex items-center justify-center font-display font-extrabold text-primary-500 dark:text-primary-400 text-[13px]">PS</div>
+                <div>
+                  <div className="text-[13.5px] font-bold">Frontend Intern</div>
+                  <div className="text-[11.5px] text-muted">Paystack · Lagos</div>
+                </div>
               </div>
-              <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-white">{feat.title}</h3>
-              <p className="text-gray-500 dark:text-gray-400 leading-relaxed text-sm">{feat.desc}</p>
+              <div className="flex items-center justify-between mb-3">
+                <span className="font-mono text-[11px] text-muted">MATCH</span>
+                <span className="font-mono text-[16px] font-bold text-success">92%</span>
+              </div>
+              <span className="inline-block text-[11px] font-bold px-2.5 py-1 rounded-full bg-success-bg text-success">● Verified company</span>
+            </div>
+            <div className="absolute bottom-5 left-0 w-[230px] bg-surface-1 border border-surface-border rounded-[18px] shadow-xl p-5">
+              <div className="font-mono text-[10.5px] text-muted mb-2 tracking-wide">APPLICATION STATUS</div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-success" />
+                <span className="text-[13.5px] font-semibold">Accepted at MTN Nigeria</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* MARQUEE */}
+      <section className="pt-2 pb-[72px] overflow-hidden">
+        <div className="text-center font-mono text-[11.5px] font-bold text-muted tracking-widest uppercase mb-7">Verified companies hiring on SIWES Finder</div>
+        <div className="flex w-max animate-marquee">
+          {[0, 1].map((dup) => (
+            <div key={dup} className="flex gap-16 pr-16" aria-hidden={dup === 1}>
+              {companies.map((c) => (
+                <span key={c} className="font-display font-extrabold text-[20px] text-muted whitespace-nowrap">{c}</span>
+              ))}
             </div>
           ))}
         </div>
-      </main>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section id="how-it-works" className="border-y border-surface-border bg-surface-1">
+        <div className="max-w-[1220px] mx-auto px-6 sm:px-7 py-[88px]">
+          <div className="mb-[52px]">
+            <div className="font-mono font-bold text-[11.5px] tracking-widest text-primary-500 dark:text-primary-400 uppercase mb-3.5">01 / How it works</div>
+            <h2 className="font-display font-extrabold text-[38px] tracking-[-0.025em] max-w-[520px]">Two journeys, one platform.</h2>
+          </div>
+          <div className="grid gap-14 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
+            <Journey
+              label="FOR STUDENTS" labelClass="text-secondary-500 dark:text-secondary-300" numClass="bg-primary-500 dark:bg-primary-400"
+              steps={[['Build your profile', 'Course, school, skills, preferred state.'], ['Get matched', 'See opportunities ranked by fit.'], ['Apply & track', 'One click apply, real-time status.']]}
+            />
+            <Journey
+              label="FOR COMPANIES" labelClass="text-primary-500 dark:text-primary-400" numClass="bg-secondary-500 dark:bg-secondary-300"
+              steps={[['Get verified', 'Submit company details for review.'], ['Post opportunities', 'Multi-step listing in minutes.'], ['Review applicants', 'Filter, shortlist, and respond fast.']]}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* FEATURED */}
+      <section id="opportunities" className="max-w-[1220px] mx-auto px-6 sm:px-7 py-[88px]">
+        <div className="flex items-end justify-between mb-9 gap-4">
+          <div>
+            <div className="font-mono font-bold text-[11.5px] tracking-widest text-primary-500 dark:text-primary-400 uppercase mb-3.5">02 / Featured</div>
+            <h2 className="font-display font-extrabold text-[32px] tracking-[-0.02em]">Opportunities open now</h2>
+          </div>
+          <Link href="/signup" className="text-[14.5px] font-bold text-primary-500 dark:text-primary-400 whitespace-nowrap">Browse all →</Link>
+        </div>
+        <div className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
+          {featured.map((o) => (
+            <Link key={o.title} href="/login" className="group block bg-surface-1 rounded-2xl p-6 border border-surface-border transition-all duration-250 hover:-translate-y-1 hover:border-primary-500 hover:shadow-[0_20px_40px_-12px_rgba(15,23,42,0.16)] dark:hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.6)]">
+              <div className="flex items-center gap-2.5 mb-[18px]">
+                <div className={`w-10 h-10 rounded-[10px] flex items-center justify-center font-display font-extrabold text-[13px] ${tintMap[o.tint]}`}>{o.logo}</div>
+                <span className="ml-auto"><VerifiedBadge /></span>
+              </div>
+              <div className="font-display font-bold text-[16.5px] mb-1.5">{o.title}</div>
+              <div className="text-[13px] text-muted mb-[18px]">{o.meta}</div>
+              <div className="flex gap-2 flex-wrap">
+                {o.tags.map((t) => (
+                  <span key={t} className="text-[11.5px] px-2.5 py-1 rounded-full bg-background text-muted border border-surface-border">{t}</span>
+                ))}
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* STATS */}
+      <section className="bg-[#0B1220] dark:bg-black py-[72px] px-6 sm:px-7">
+        <div className="max-w-[1220px] mx-auto grid gap-4 text-center [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]">
+          {stats.map((s) => (
+            <div key={s.label} className="rounded-2xl px-4 py-6 bg-white/[0.045] border border-white/[0.09] backdrop-blur-md">
+              <div className={`font-mono font-bold text-[38px] ${s.accent ? 'text-accent-400' : 'text-white'}`}>{s.value}</div>
+              <div className="text-[13.5px] text-[#9A9AA6] mt-2">{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* TESTIMONIALS */}
+      <section className="max-w-[1220px] mx-auto px-6 sm:px-7 py-[88px]">
+        <h2 className="font-display font-extrabold text-[32px] tracking-[-0.02em] mb-9 text-center">Students trust SIWES Finder</h2>
+        <div className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]">
+          {testimonials.map((t) => (
+            <div key={t.name} className="bg-surface-1 rounded-2xl p-[26px] border border-surface-border">
+              <div className="font-display italic text-[15.5px] leading-[1.6] mb-[18px]">&ldquo;{t.quote}&rdquo;</div>
+              <div className="text-[13px] font-bold">{t.name}</div>
+              <div className="text-[12px] text-muted">{t.role}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" className="border-t border-surface-border bg-surface-1">
+        <div className="max-w-[800px] mx-auto px-6 sm:px-7 py-[88px]">
+          <h2 className="font-display font-extrabold text-[32px] tracking-[-0.02em] mb-9 text-center">Frequently asked questions</h2>
+          <div className="flex flex-col gap-px bg-surface-border rounded-2xl overflow-hidden">
+            {faqs.map((f) => (
+              <div key={f.q} className="bg-surface-1 px-[26px] py-[22px]">
+                <div className="font-bold text-[15px] mb-1.5">{f.q}</div>
+                <div className="text-[14px] text-muted leading-[1.6]">{f.a}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FINAL CTA */}
+      <section className="max-w-[1220px] mx-auto px-6 sm:px-7 py-[88px]">
+        <div className="rounded-[26px] p-[clamp(32px,6vw,64px)] text-center bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-400 dark:to-[#4B3FD8]">
+          <h2 className="font-display font-extrabold text-[34px] text-white mb-4.5 tracking-[-0.02em]">Your SIWES placement is one search away.</h2>
+          <Link href="/signup" className="inline-block bg-white text-primary-600 px-8 py-4 rounded-[9px] text-[15px] font-bold mt-2 hover:brightness-95 transition-all">Create your free profile</Link>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="border-t border-surface-border py-12 px-6 sm:px-7">
+        <div className="max-w-[1220px] mx-auto flex justify-between items-center flex-wrap gap-4">
+          <div className="flex items-center gap-2.5">
+            <Logo size={22} />
+            <span className="font-display font-extrabold text-[15px]">SIWES Finder</span>
+          </div>
+          <div className="text-[13px] text-muted">© 2026 SIWES Finder. Built for Nigerian students.</div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+function Journey({ label, labelClass, numClass, steps }: { label: string; labelClass: string; numClass: string; steps: [string, string][] }) {
+  return (
+    <div>
+      <div className={`font-mono text-[12px] font-bold mb-5 tracking-wide ${labelClass}`}>{label}</div>
+      <div className="flex flex-col gap-6">
+        {steps.map(([title, desc], i) => (
+          <div key={title} className="flex gap-[18px]">
+            <div className={`w-9 h-9 rounded-[10px] text-white font-display font-extrabold text-[14px] flex items-center justify-center shrink-0 ${numClass}`}>{i + 1}</div>
+            <div>
+              <div className="font-bold text-[16px] mb-1">{title}</div>
+              <div className="text-[14px] text-muted leading-[1.55]">{desc}</div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

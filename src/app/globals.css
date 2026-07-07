@@ -46,6 +46,7 @@
   --color-surface-1: var(--surface-1);
   --color-surface-2: var(--surface-2);
   --color-surface-border: var(--surface-border);
+  --color-muted: var(--muted);
 
   --color-success: var(--success);
   --color-success-bg: var(--success-bg);
@@ -54,15 +55,34 @@
   --color-error: var(--error);
   --color-error-bg: var(--error-bg);
 
-  /* Display / headings = Bricolage Grotesque; body/UI = Geist */
+  /* Display / headings = Bricolage Grotesque; body/UI = Geist; figures = Geist Mono */
   --font-display: var(--font-bricolage), var(--font-geist-sans), sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
   --animate-fade-in-up: fade-in-up 0.8s ease-out forwards;
+  --animate-marquee: marquee 26s linear infinite;
+  --animate-float-card: float-card 6s ease-in-out infinite;
+  --animate-blob: blob-move 12s ease-in-out infinite;
 }
 
 @keyframes fade-in-up {
   0% { opacity: 0; transform: translateY(10px); }
   100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes float-card {
+  0%, 100% { transform: translateY(0) rotate(-1.5deg); }
+  50% { transform: translateY(-12px) rotate(-1.5deg); }
+}
+
+@keyframes blob-move {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(30px, -20px) scale(1.06); }
 }
 
 :root {
