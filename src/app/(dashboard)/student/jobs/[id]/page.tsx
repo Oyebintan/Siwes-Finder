@@ -86,7 +86,13 @@ export default async function JobDetails({ params }: { params: Promise<{ id: str
           <div className="bg-surface-1 border border-accent-400/20 rounded-3xl p-6 sticky top-24 shadow-sm">
             <h3 className="font-bold text-lg mb-2 text-gray-900 dark:text-white">Ready to apply?</h3>
             <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">Make sure your profile and IT letter are updated before applying.</p>
-            <ApplyButton jobId={job._id.toString()} />
+            <ApplyButton
+              jobId={job._id.toString()}
+              applicationMethod={job.applicationMethod}
+              applicationEmail={job.applicationEmail}
+              applicationUrl={job.applicationUrl}
+              jobTitle={job.title}
+            />
             <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-4">Applications open</p>
           </div>
         </div>

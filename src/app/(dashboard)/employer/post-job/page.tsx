@@ -14,6 +14,10 @@ export default function EmployerPostJob() {
   const [description, setDescription] = useState('');
   const [requirements, setRequirements] = useState('');
 
+  const [applicationMethod, setApplicationMethod] = useState<'platform' | 'email' | 'external'>('platform');
+  const [applicationEmail, setApplicationEmail] = useState('');
+  const [applicationUrl, setApplicationUrl] = useState('');
+
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
@@ -36,13 +40,20 @@ export default function EmployerPostJob() {
           stipend: stipend || 'Unpaid',
           description,
           requirements: requirements.split('\n').map(r => r.trim()).filter(Boolean),
+          applicationMethod,
+          applicationEmail,
+          applicationUrl,
         }),
       });
 
-      if (!res.ok) throw new Error('Failed to post job');
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to post job');
+      }
 
       setSuccess(true);
       setTitle(''); setLocation(''); setStipend(''); setDescription(''); setRequirements('');
+      setApplicationEmail(''); setApplicationUrl(''); setApplicationMethod('platform');
       router.refresh();
       setTimeout(() => router.push('/employer/dashboard'), 1500);
     } catch (err: any) {
@@ -114,6 +125,36 @@ export default function EmployerPostJob() {
             <textarea required rows={4} value={requirements} onChange={(e) => setRequirements(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-accent-400 focus:ring-1 focus:ring-accent-400 text-gray-900 dark:text-white transition-all outline-none resize-none"
               placeholder={"Basic knowledge of HTML/CSS\nCurrently studying Computer Science\nGood communication skills"} />
+          </div>
+
+          <div className="space-y-4 pt-6 border-t border-gray-100 dark:border-surface-border">
+            <div className="space-y-1.5">
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">How should students apply?</label>
+              <select value={applicationMethod} onChange={(e) => setApplicationMethod(e.target.value as any)}
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-accent-400 focus:ring-1 focus:ring-accent-400 text-gray-900 dark:text-white transition-all outline-none">
+                <option value="platform">On this platform (students apply here)</option>
+                <option value="email">By email (students email you)</option>
+                <option value="external">External link (redirect to your site)</option>
+              </select>
+            </div>
+
+            {applicationMethod === 'email' && (
+              <div className="space-y-1.5">
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">Application email</label>
+                <input type="email" required value={applicationEmail} onChange={(e) => setApplicationEmail(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-accent-400 focus:ring-1 focus:ring-accent-400 text-gray-900 dark:text-white transition-all outline-none"
+                  placeholder="e.g. careers@company.com" />
+              </div>
+            )}
+
+            {applicationMethod === 'external' && (
+              <div className="space-y-1.5">
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">External application URL</label>
+                <input type="url" required value={applicationUrl} onChange={(e) => setApplicationUrl(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-accent-400 focus:ring-1 focus:ring-accent-400 text-gray-900 dark:text-white transition-all outline-none"
+                  placeholder="https://company.com/careers/apply" />
+              </div>
+            )}
           </div>
 
           <div className="pt-6 border-t border-gray-100 dark:border-surface-border flex justify-end">
