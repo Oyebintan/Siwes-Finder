@@ -1,30 +1,28 @@
 @import "tailwindcss";
 
-/* Wire Tailwind v4's dark: variant to next-themes' class strategy. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  /* Monochrome-blue brand scale: dark navy -> light sky blue.
-     This is the single gradient family used across the whole app —
-     no cyan, no unrelated accent hues. */
-  --color-brand-950: #020c1f;
-  --color-brand-900: #05173d;
-  --color-brand-800: #0a2a5e;
-  --color-brand-700: #103d80;
-  --color-brand-600: #1856b3;
-  --color-brand-500: #2472d9;
-  --color-brand-400: #4f97ea;
-  --color-brand-300: #83b9f2;
-  --color-brand-200: #b3d5f8;
-  --color-brand-100: #dceafc;
+  --color-accent-900: #042f24;
+  --color-accent-800: #064e3b;
+  --color-accent-700: #047857;
+  --color-accent-600: #059669;
+  --color-accent-500: #10b981;
+  --color-accent-400: #34d399;
+  --color-accent-300: #6ee7b7;
+  --color-accent-200: #a7f3d0;
+  --color-accent-100: #d7f7e9;
+
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-border: var(--surface-border);
 
   --animate-fade-in-up: fade-in-up 0.8s ease-out forwards;
-  --animate-spiral-cw: spiral-spin 140s linear infinite;
-  --animate-spiral-ccw: spiral-spin-reverse 190s linear infinite;
-  --animate-drift: drift 22s ease-in-out infinite;
+  --animate-pulse-travel: pulse-travel 9s linear infinite;
 }
 
 @keyframes fade-in-up {
@@ -39,172 +37,72 @@
   }
 }
 
-@keyframes spiral-spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes spiral-spin-reverse {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(-360deg);
-  }
-}
-
-@keyframes drift {
-
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-
-  50% {
-    transform: translate(2%, -2%) scale(1.04);
-  }
-}
-
-/* Real light mode: clean white/gray, real dark mode: absolute black.
-   Both driven only by the .dark class — never by OS prefers-color-scheme —
-   so the in-app toggle is always the single source of truth. */
 :root {
-  --background: #f8fafc;
-  /* slate-50 */
-  --foreground: #0b1220;
-  --spiral-opacity: 0.16;
-  --spiral-color-a: var(--color-brand-700);
-  --spiral-color-b: var(--color-brand-300);
-  --page-glow: radial-gradient(ellipse at top, #eaf2fe 0%, #f8fafc 55%);
-}
-
-@theme {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-
-  --color-brand-950: #020c1f;
-  --color-brand-900: #05173d;
-  --color-brand-800: #0a2a5e;
-  --color-brand-700: #103d80;
-  --color-brand-600: #1856b3;
-  --color-brand-500: #2f7fe0;
-  --color-brand-400: #5da0f0;
-  --color-brand-300: #8ec0f7;
-  --color-brand-200: #bcdaf9;
-  --color-brand-100: #e2eefc;
-
-  --color-surface-1: var(--surface-1);
-  --color-surface-2: var(--surface-2);
-  --color-surface-border: var(--surface-border);
-
-  --animate-fade-in-up: fade-in-up 0.8s ease-out forwards;
-  --animate-spiral-cw: spiral-spin 140s linear infinite;
-  --animate-spiral-ccw: spiral-spin-reverse 190s linear infinite;
-  --animate-drift: drift 22s ease-in-out infinite;
-}
-
-:root {
-  --background: #f8fafc;
-  --foreground: #0b1220;
+  --background: #f7f9f8;
+  --foreground: #0c1210;
+  --surface-0: #f7f9f8;
   --surface-1: #ffffff;
-  --surface-2: #f1f5f9;
-  --surface-border: rgba(15, 23, 42, 0.08);
-  --spiral-opacity: 0.14;
-  --spiral-color-a: var(--color-brand-700);
-  --spiral-color-b: var(--color-brand-300);
-  --page-glow: radial-gradient(ellipse at top, #eaf2fe 0%, #f8fafc 55%);
-}
-
-@theme {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-
-  --color-brand-950: #020c1f;
-  --color-brand-900: #05173d;
-  --color-brand-800: #0a2a5e;
-  --color-brand-700: #103d80;
-  --color-brand-600: #1856b3;
-  --color-brand-500: #2f7fe0;
-  --color-brand-400: #5da0f0;
-  --color-brand-300: #8ec0f7;
-  --color-brand-200: #bcdaf9;
-  --color-brand-100: #e2eefc;
-
-  --color-surface-1: var(--surface-1);
-  --color-surface-2: var(--surface-2);
-  --color-surface-border: var(--surface-border);
-
-  --animate-fade-in-up: fade-in-up 0.8s ease-out forwards;
-  --animate-spiral-cw: spiral-spin 140s linear infinite;
-  --animate-spiral-ccw: spiral-spin-reverse 190s linear infinite;
-  --animate-drift: drift 22s ease-in-out infinite;
-}
-
-:root {
-  --background: #f8fafc;
-  --foreground: #0b1220;
-  --surface-1: #ffffff;
-  --surface-2: #f1f5f9;
-  --surface-border: rgba(15, 23, 42, 0.08);
-  --spiral-opacity: 0.14;
-  --spiral-color-a: var(--color-brand-700);
-  --spiral-color-b: var(--color-brand-300);
-  --page-glow: radial-gradient(ellipse at top, #eaf2fe 0%, #f8fafc 55%);
-}
-
-@theme {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-
-  --color-brand-950: #020c1f;
-  --color-brand-900: #05173d;
-  --color-brand-800: #0a2a5e;
-  --color-brand-700: #103d80;
-  --color-brand-600: #1856b3;
-  --color-brand-500: #2f7fe0;
-  --color-brand-400: #5da0f0;
-  --color-brand-300: #8ec0f7;
-  --color-brand-200: #bcdaf9;
-  --color-brand-100: #e2eefc;
-
-  --color-surface-1: var(--surface-1);
-  --color-surface-2: var(--surface-2);
-  --color-surface-border: var(--surface-border);
-
-  --animate-fade-in-up: fade-in-up 0.8s ease-out forwards;
-  --animate-spiral-cw: spiral-spin 140s linear infinite;
-  --animate-spiral-ccw: spiral-spin-reverse 190s linear infinite;
-  --animate-drift: drift 22s ease-in-out infinite;
-}
-
-:root {
-  --background: #f8fafc;
-  --foreground: #0b1220;
-  --surface-1: #ffffff;
-  --surface-2: #f1f5f9;
-  --surface-border: rgba(15, 23, 42, 0.08);
-  --spiral-opacity: 0.14;
-  --spiral-color-a: var(--color-brand-700);
-  --spiral-color-b: var(--color-brand-300);
-  --page-glow: radial-gradient(ellipse at top, #eaf2fe 0%, #f8fafc 55%);
+  --surface-2: #eef2f0;
+  --surface-border: rgba(6, 78, 59, 0.1);
+  --circuit-opacity: 0.22;
+  --circuit-color: var(--color-accent-600);
+  --page-glow: radial-gradient(ellipse at top, #eafaf2 0%, #f7f9f8 55%);
 }
 
 .dark {
-  --background: #000000;
-  --foreground: #eef4ff;
-  /* Elevated surfaces are a dark BLUE-black, not gray and not pure black —
-     this is what actually separates cards from the canvas. */
-  --surface-1: #0a1120;
-  --surface-2: #101a30;
-  --surface-border: rgba(94, 158, 240, 0.16);
-  --spiral-opacity: 0.5;
-  --spiral-color-a: var(--color-brand-400);
-  --spiral-color-b: var(--color-brand-200);
-  --page-glow: radial-gradient(ellipse at top, #050d1f 0%, #000000 60%);
+  --background: #090b0a;
+  --foreground: #ecf7f1;
+  --surface-0: #090b0a;
+  --surface-1: #101513;
+  --surface-2: #171f1c;
+  --surface-border: rgba(52, 211, 153, 0.16);
+  --circuit-opacity: 0.5;
+  --circuit-color: var(--color-accent-400);
+  --page-glow: radial-gradient(ellipse at top, #051912 0%, #090b0a 60%);
+}
+
+html,
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), sans-serif;
+  scroll-behavior: smooth;
+  min-height: 100vh;
+}
+
+.glass-surface {
+  background-color: color-mix(in srgb, var(--background) 72%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* ---- Ambient circuit-trace background ---- */
+.ambient-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--page-glow);
+}
+
+.circuit-corner {
+  position: absolute;
+  width: 26rem;
+  height: 26rem;
+  opacity: var(--circuit-opacity);
+}
+
+.circuit-corner.top-right {
+  top: -2rem;
+  right: -2rem;
+}
+
+.circuit-corner.bottom-left {
+  bottom: -2rem;
+  left: -2rem;
+}
+
+.bg-clip-text {
+  background-size: 200% 200%;
 }

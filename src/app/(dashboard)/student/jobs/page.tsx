@@ -26,7 +26,7 @@ export default async function StudentJobBoard() {
           <input
             type="text"
             placeholder="Search roles..."
-            className="w-full pl-10 pr-4 py-2 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-brand-400 focus:ring-1 focus:ring-brand-400 text-gray-900 dark:text-white outline-none transition-all text-sm"
+            className="w-full pl-10 pr-4 py-2 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-accent-400 focus:ring-1 focus:ring-accent-400 text-gray-900 dark:text-white outline-none transition-all text-sm"
           />
         </div>
       </div>
@@ -40,10 +40,10 @@ export default async function StudentJobBoard() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {jobs.map((job: any) => (
-            <div key={job._id} className="group bg-surface-1 border border-surface-border hover:border-brand-400/40 shadow-sm rounded-2xl p-6 transition-all hover:shadow-md dark:hover:shadow-[0_0_24px_-10px_rgba(94,158,240,0.4)]">
+            <div key={job._id} className="group bg-surface-1 border border-surface-border hover:border-accent-400/40 shadow-sm rounded-2xl p-6 transition-all hover:shadow-md dark:hover:shadow-[0_0_24px_-10px_rgba(94,158,240,0.4)]">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-300 transition-colors">{job.title}</h3>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white group-hover:text-accent-600 dark:group-hover:text-accent-300 transition-colors">{job.title}</h3>
                   <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
                     <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" /> {job.location}</span>
                     <span className="flex items-center gap-1.5"><Briefcase className="w-4 h-4" /> {job.type}</span>
@@ -65,7 +65,7 @@ export default async function StudentJobBoard() {
                 </span>
                 <Link
                   href={`/student/jobs/${job._id}`}
-                  className="px-5 py-2 rounded-xl bg-gray-50 dark:bg-surface-2 hover:bg-gradient-to-r hover:from-brand-700 hover:to-brand-400 hover:text-white text-gray-700 dark:text-gray-200 text-sm font-bold transition-all"
+                  className="px-5 py-2 rounded-xl bg-gray-50 dark:bg-surface-2 hover:bg-gradient-to-r hover:from-accent-700 hover:to-accent-400 hover:text-white text-gray-700 dark:text-gray-200 text-sm font-bold transition-all"
                 >
                   View Details
                 </Link>

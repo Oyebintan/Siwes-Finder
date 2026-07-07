@@ -29,14 +29,14 @@ export default async function StudentApplications() {
           <Building2 className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
           <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">No applications yet</h3>
           <p className="text-gray-500 dark:text-gray-400 mb-6">You haven't applied to any IT placements yet.</p>
-          <Link href="/student/jobs" className="px-6 py-3 rounded-xl bg-gradient-to-r from-brand-700 to-brand-400 text-white font-bold hover:brightness-110 transition-all">
+          <Link href="/student/jobs" className="px-6 py-3 rounded-xl bg-gradient-to-r from-accent-700 to-accent-400 text-white font-bold hover:brightness-110 transition-all">
             Browse Jobs
           </Link>
         </div>
       ) : (
         <div className="space-y-4">
           {applications.map((app: any) => (
-            <div key={app._id} className="bg-surface-1 border border-surface-border hover:border-brand-400/40 shadow-sm rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all">
+            <div key={app._id} className="bg-surface-1 border border-surface-border hover:border-accent-400/40 shadow-sm rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all">
               <div>
                 <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">{app.job.title}</h3>
                 <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
@@ -61,7 +61,7 @@ export default async function StudentApplications() {
                     <XCircle className="w-4 h-4" /> Rejected
                   </span>
                 )}
-                <Link href={`/student/jobs/${app.job._id}`} className="px-4 py-2 text-sm font-bold text-gray-700 dark:text-gray-200 hover:text-white bg-gray-50 dark:bg-surface-2 hover:bg-gradient-to-r hover:from-brand-700 hover:to-brand-400 rounded-xl transition-all">
+                <Link href={`/student/jobs/${app.job._id}`} className="px-4 py-2 text-sm font-bold text-gray-700 dark:text-gray-200 hover:text-white bg-gray-50 dark:bg-surface-2 hover:bg-gradient-to-r hover:from-accent-700 hover:to-accent-400 rounded-xl transition-all">
                   View Job
                 </Link>
               </div>

@@ -29,10 +29,10 @@ export default function EmployerApplicationCard({ app }: { app: any }) {
   };
 
   return (
-    <div className="bg-surface-1 border border-surface-border hover:border-brand-400/40 shadow-sm rounded-2xl p-6 transition-all">
+    <div className="bg-surface-1 border border-surface-border hover:border-accent-400/40 shadow-sm rounded-2xl p-6 transition-all">
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h3 className="text-lg font-bold text-brand-600 dark:text-brand-300 mb-1">{app.job.title}</h3>
+          <h3 className="text-lg font-bold text-accent-600 dark:text-accent-300 mb-1">{app.job.title}</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">Applied on {new Date(app.createdAt).toLocaleDateString()}</p>
         </div>
         {status === 'Pending' && <span className="px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold border border-amber-200 dark:border-amber-800/40">Pending</span>}
@@ -58,7 +58,7 @@ export default function EmployerApplicationCard({ app }: { app: any }) {
       <div className="flex items-center gap-4">
         {app.student.resumeUrl ? (
           <a href={app.student.resumeUrl} target="_blank" rel="noopener noreferrer"
-            className="flex-1 px-4 py-2.5 rounded-xl bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-300 hover:bg-brand-100 dark:hover:bg-brand-500/20 text-sm font-bold flex items-center justify-center gap-2 transition-colors">
+            className="flex-1 px-4 py-2.5 rounded-xl bg-accent-50 dark:bg-accent-500/10 text-accent-600 dark:text-accent-300 hover:bg-accent-100 dark:hover:bg-accent-500/20 text-sm font-bold flex items-center justify-center gap-2 transition-colors">
             <FileText className="w-4 h-4" /> View Resume
           </a>
         ) : (

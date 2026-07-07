@@ -76,19 +76,19 @@ export default function EmployerPostJob() {
             <div className="space-y-1.5">
               <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">Job Title</label>
               <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-brand-400 focus:ring-1 focus:ring-brand-400 text-gray-900 dark:text-white transition-all outline-none"
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-accent-400 focus:ring-1 focus:ring-accent-400 text-gray-900 dark:text-white transition-all outline-none"
                 placeholder="e.g. Frontend Developer Intern" />
             </div>
             <div className="space-y-1.5">
               <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">Location</label>
               <input type="text" required value={location} onChange={(e) => setLocation(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-brand-400 focus:ring-1 focus:ring-brand-400 text-gray-900 dark:text-white transition-all outline-none"
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-accent-400 focus:ring-1 focus:ring-accent-400 text-gray-900 dark:text-white transition-all outline-none"
                 placeholder="e.g. Lagos, Nigeria" />
             </div>
             <div className="space-y-1.5">
               <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">Work Type</label>
               <select value={type} onChange={(e) => setType(e.target.value as any)}
-                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-brand-400 focus:ring-1 focus:ring-brand-400 text-gray-900 dark:text-white transition-all outline-none">
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-accent-400 focus:ring-1 focus:ring-accent-400 text-gray-900 dark:text-white transition-all outline-none">
                 <option value="On-site">On-site</option>
                 <option value="Remote">Remote</option>
                 <option value="Hybrid">Hybrid</option>
@@ -97,7 +97,7 @@ export default function EmployerPostJob() {
             <div className="space-y-1.5">
               <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">Stipend (Monthly)</label>
               <input type="text" value={stipend} onChange={(e) => setStipend(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-brand-400 focus:ring-1 focus:ring-brand-400 text-gray-900 dark:text-white transition-all outline-none"
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-accent-400 focus:ring-1 focus:ring-accent-400 text-gray-900 dark:text-white transition-all outline-none"
                 placeholder="e.g. ₦50,000 (Optional)" />
             </div>
           </div>
@@ -105,20 +105,20 @@ export default function EmployerPostJob() {
           <div className="space-y-1.5">
             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">Job Description</label>
             <textarea required rows={5} value={description} onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-brand-400 focus:ring-1 focus:ring-brand-400 text-gray-900 dark:text-white transition-all outline-none resize-none"
+              className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-accent-400 focus:ring-1 focus:ring-accent-400 text-gray-900 dark:text-white transition-all outline-none resize-none"
               placeholder="Describe the day-to-day responsibilities..." />
           </div>
 
           <div className="space-y-1.5">
             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">Requirements (One per line)</label>
             <textarea required rows={4} value={requirements} onChange={(e) => setRequirements(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-brand-400 focus:ring-1 focus:ring-brand-400 text-gray-900 dark:text-white transition-all outline-none resize-none"
+              className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-accent-400 focus:ring-1 focus:ring-accent-400 text-gray-900 dark:text-white transition-all outline-none resize-none"
               placeholder={"Basic knowledge of HTML/CSS\nCurrently studying Computer Science\nGood communication skills"} />
           </div>
 
           <div className="pt-6 border-t border-gray-100 dark:border-surface-border flex justify-end">
             <button type="submit" disabled={loading}
-              className="px-8 py-3 rounded-xl bg-gradient-to-r from-brand-700 to-brand-400 text-white font-bold hover:brightness-110 transition-all disabled:opacity-50">
+              className="px-8 py-3 rounded-xl bg-gradient-to-r from-accent-700 to-accent-400 text-white font-bold hover:brightness-110 transition-all disabled:opacity-50">
               {loading ? 'Publishing...' : 'Post Job Opening'}
             </button>
           </div>

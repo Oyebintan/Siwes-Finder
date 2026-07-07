@@ -14,28 +14,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login');
-    }
-    if (status === 'authenticated') {
-      if (session.user.role === 'unassigned') {
-        router.push('/onboarding');
-      }
-    }
+    if (status === 'unauthenticated') router.push('/login');
+    if (status === 'authenticated' && session.user.role === 'unassigned') router.push('/onboarding');
   }, [status, session, router]);
 
   if (status === 'loading') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-10 h-10 animate-spin text-brand-500" />
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-accent-500" /></div>;
   }
-
   if (!session || session.user.role === 'unassigned') return null;
 
   const isStudent = session.user.role === 'student';
-
   const navLinks = isStudent ? [
     { name: 'Dashboard', href: '/student/dashboard', icon: LayoutDashboard },
     { name: 'Find Jobs', href: '/student/jobs', icon: Briefcase },
@@ -51,17 +39,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen relative font-sans text-gray-900 dark:text-gray-100 transition-colors duration-300">
-
       <nav className="fixed top-0 left-0 right-0 z-50 glass-surface border-b border-gray-200/60 dark:border-white/5 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-
-            <Link href="/" className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-brand-800 to-brand-400 text-xl tracking-tight">
+            <Link href="/" className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-accent-800 to-accent-400 text-xl tracking-tight">
               SIWES Finder
             </Link>
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-1 relative">
+            <div className="hidden md:flex items-center gap-1 h-full">
               {navLinks.map((link) => {
                 const Icon = link.icon;
                 const isActive = pathname.startsWith(link.href);
@@ -69,13 +54,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <Link
                     key={link.name}
                     href={link.href}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${isActive
-                        ? 'bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'
+                    className={`relative flex items-center gap-2 px-4 h-16 text-sm font-bold transition-colors ${isActive ? 'text-accent-700 dark:text-accent-300' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                       }`}
                   >
                     <Icon className="w-4 h-4" />
                     <span>{link.name}</span>
+                    {isActive && <span className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full bg-gradient-to-r from-accent-600 to-accent-300" />}
                   </Link>
                 );
               })}
@@ -83,21 +67,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             <div className="hidden md:flex items-center gap-4 border-l border-gray-200 dark:border-white/10 pl-4 ml-2">
               <ThemeToggle />
-              <button
-                onClick={() => signOut({ callbackUrl: '/' })}
-                className="flex items-center gap-2 text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                title="Sign Out"
-              >
+              <button onClick={() => signOut({ callbackUrl: '/' })} className="flex items-center gap-2 text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors" title="Sign Out">
                 <LogOut className="w-4 h-4" /> Sign Out
               </button>
             </div>
 
             <div className="md:hidden flex items-center gap-2">
               <ThemeToggle />
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white focus:outline-none"
-              >
+              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white focus:outline-none">
                 {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
             </div>
@@ -115,9 +92,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     key={link.name}
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-3 rounded-md text-base font-bold ${isActive
-                        ? 'bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
+                    className={`flex items-center gap-3 px-3 py-3 rounded-md text-base font-bold ${isActive ? 'bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
                       }`}
                   >
                     <Icon className="w-5 h-5" />
@@ -125,10 +100,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   </Link>
                 );
               })}
-              <button
-                onClick={() => signOut({ callbackUrl: '/' })}
-                className="flex w-full items-center gap-3 px-3 py-3 rounded-md text-base font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-              >
+              <button onClick={() => signOut({ callbackUrl: '/' })} className="flex w-full items-center gap-3 px-3 py-3 rounded-md text-base font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
                 <LogOut className="w-5 h-5" /> Sign Out
               </button>
             </div>
@@ -139,7 +111,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10">
         {children}
       </main>
-
     </div>
   );
 }

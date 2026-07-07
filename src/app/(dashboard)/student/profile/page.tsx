@@ -80,7 +80,7 @@ export default function StudentProfile() {
   if (initialLoading) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-brand-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-accent-500" />
       </div>
     );
   }
@@ -116,7 +116,7 @@ export default function StudentProfile() {
               required
               value={university}
               onChange={(e) => setUniversity(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-brand-400 focus:ring-1 focus:ring-brand-400 text-gray-900 dark:text-white transition-all outline-none"
+              className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-accent-400 focus:ring-1 focus:ring-accent-400 text-gray-900 dark:text-white transition-all outline-none"
               placeholder="e.g. University of Lagos"
             />
           </div>
@@ -128,7 +128,7 @@ export default function StudentProfile() {
               required
               value={course}
               onChange={(e) => setCourse(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-brand-400 focus:ring-1 focus:ring-brand-400 text-gray-900 dark:text-white transition-all outline-none"
+              className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-accent-400 focus:ring-1 focus:ring-accent-400 text-gray-900 dark:text-white transition-all outline-none"
               placeholder="e.g. Computer Science"
             />
           </div>
@@ -141,7 +141,7 @@ export default function StudentProfile() {
                 type="file"
                 accept="application/pdf"
                 onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
-                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-brand-400 focus:ring-1 focus:ring-brand-400 transition-all outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-50 dark:file:bg-brand-500/10 file:text-brand-600 dark:file:text-brand-300 hover:file:bg-brand-100 dark:hover:file:bg-brand-500/20"
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-accent-400 focus:ring-1 focus:ring-accent-400 transition-all outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-accent-50 dark:file:bg-accent-500/10 file:text-accent-600 dark:file:text-accent-300 hover:file:bg-accent-100 dark:hover:file:bg-accent-500/20"
               />
               <div className="flex items-center gap-4">
                 <hr className="flex-1 border-gray-200 dark:border-surface-border" />
@@ -152,7 +152,7 @@ export default function StudentProfile() {
                 type="url"
                 value={resumeLink}
                 onChange={(e) => setResumeLink(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-brand-400 focus:ring-1 focus:ring-brand-400 text-gray-900 dark:text-white transition-all outline-none"
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-accent-400 focus:ring-1 focus:ring-accent-400 text-gray-900 dark:text-white transition-all outline-none"
                 placeholder="https://drive.google.com/file/d/... (Optional)"
               />
             </div>
@@ -162,7 +162,7 @@ export default function StudentProfile() {
             <button
               type="submit"
               disabled={loading || uploading}
-              className="px-8 py-3 rounded-xl bg-gradient-to-r from-brand-700 to-brand-400 text-white font-bold hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              className="px-8 py-3 rounded-xl bg-gradient-to-r from-accent-700 to-accent-400 text-white font-bold hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {(loading || uploading) && <Loader2 className="w-4 h-4 animate-spin" />}
               {loading || uploading ? 'Saving Changes...' : 'Save Profile'}

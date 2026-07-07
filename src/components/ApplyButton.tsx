@@ -48,7 +48,7 @@ export default function ApplyButton({ jobId }: { jobId: string }) {
         </div>
       )}
       <button onClick={handleApply} disabled={loading}
-        className="w-full py-4 rounded-xl bg-gradient-to-r from-brand-700 to-brand-400 text-white font-bold hover:brightness-110 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+        className="w-full py-4 rounded-xl bg-gradient-to-r from-accent-700 to-accent-400 text-white font-bold hover:brightness-110 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
         {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (<>Apply Now <ArrowRight className="w-4 h-4" /></>)}
       </button>
     </div>
