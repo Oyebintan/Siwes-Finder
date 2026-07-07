@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     const application = await Application.create({
       job: jobId,
       student: session.user.id,
-      employer: job.postedBy,
+      employer: job.employerId,
       status: 'Pending'
     });
 

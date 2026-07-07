@@ -26,7 +26,7 @@ export default async function EmployerApplications() {
       </div>
 
       {applications.length === 0 ? (
-        <div className="text-center py-20 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm rounded-3xl">
+        <div className="text-center py-20 bg-surface-1 border border-surface-border shadow-sm rounded-3xl">
           <UserCheck className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
           <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">No applicants yet</h3>
           <p className="text-gray-500 dark:text-gray-400">When students apply, they will appear here.</p>

@@ -84,75 +84,127 @@
   --page-glow: radial-gradient(ellipse at top, #eaf2fe 0%, #f8fafc 55%);
 }
 
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-brand-950: #020c1f;
+  --color-brand-900: #05173d;
+  --color-brand-800: #0a2a5e;
+  --color-brand-700: #103d80;
+  --color-brand-600: #1856b3;
+  --color-brand-500: #2f7fe0;
+  --color-brand-400: #5da0f0;
+  --color-brand-300: #8ec0f7;
+  --color-brand-200: #bcdaf9;
+  --color-brand-100: #e2eefc;
+
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-border: var(--surface-border);
+
+  --animate-fade-in-up: fade-in-up 0.8s ease-out forwards;
+  --animate-spiral-cw: spiral-spin 140s linear infinite;
+  --animate-spiral-ccw: spiral-spin-reverse 190s linear infinite;
+  --animate-drift: drift 22s ease-in-out infinite;
+}
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0b1220;
+  --surface-1: #ffffff;
+  --surface-2: #f1f5f9;
+  --surface-border: rgba(15, 23, 42, 0.08);
+  --spiral-opacity: 0.14;
+  --spiral-color-a: var(--color-brand-700);
+  --spiral-color-b: var(--color-brand-300);
+  --page-glow: radial-gradient(ellipse at top, #eaf2fe 0%, #f8fafc 55%);
+}
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-brand-950: #020c1f;
+  --color-brand-900: #05173d;
+  --color-brand-800: #0a2a5e;
+  --color-brand-700: #103d80;
+  --color-brand-600: #1856b3;
+  --color-brand-500: #2f7fe0;
+  --color-brand-400: #5da0f0;
+  --color-brand-300: #8ec0f7;
+  --color-brand-200: #bcdaf9;
+  --color-brand-100: #e2eefc;
+
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-border: var(--surface-border);
+
+  --animate-fade-in-up: fade-in-up 0.8s ease-out forwards;
+  --animate-spiral-cw: spiral-spin 140s linear infinite;
+  --animate-spiral-ccw: spiral-spin-reverse 190s linear infinite;
+  --animate-drift: drift 22s ease-in-out infinite;
+}
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0b1220;
+  --surface-1: #ffffff;
+  --surface-2: #f1f5f9;
+  --surface-border: rgba(15, 23, 42, 0.08);
+  --spiral-opacity: 0.14;
+  --spiral-color-a: var(--color-brand-700);
+  --spiral-color-b: var(--color-brand-300);
+  --page-glow: radial-gradient(ellipse at top, #eaf2fe 0%, #f8fafc 55%);
+}
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-brand-950: #020c1f;
+  --color-brand-900: #05173d;
+  --color-brand-800: #0a2a5e;
+  --color-brand-700: #103d80;
+  --color-brand-600: #1856b3;
+  --color-brand-500: #2f7fe0;
+  --color-brand-400: #5da0f0;
+  --color-brand-300: #8ec0f7;
+  --color-brand-200: #bcdaf9;
+  --color-brand-100: #e2eefc;
+
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-border: var(--surface-border);
+
+  --animate-fade-in-up: fade-in-up 0.8s ease-out forwards;
+  --animate-spiral-cw: spiral-spin 140s linear infinite;
+  --animate-spiral-ccw: spiral-spin-reverse 190s linear infinite;
+  --animate-drift: drift 22s ease-in-out infinite;
+}
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0b1220;
+  --surface-1: #ffffff;
+  --surface-2: #f1f5f9;
+  --surface-border: rgba(15, 23, 42, 0.08);
+  --spiral-opacity: 0.14;
+  --spiral-color-a: var(--color-brand-700);
+  --spiral-color-b: var(--color-brand-300);
+  --page-glow: radial-gradient(ellipse at top, #eaf2fe 0%, #f8fafc 55%);
+}
+
 .dark {
   --background: #000000;
-  /* absolute black, as requested */
   --foreground: #eef4ff;
-  --spiral-opacity: 0.55;
-  --spiral-color-a: var(--color-brand-500);
+  /* Elevated surfaces are a dark BLUE-black, not gray and not pure black —
+     this is what actually separates cards from the canvas. */
+  --surface-1: #0a1120;
+  --surface-2: #101a30;
+  --surface-border: rgba(94, 158, 240, 0.16);
+  --spiral-opacity: 0.5;
+  --spiral-color-a: var(--color-brand-400);
   --spiral-color-b: var(--color-brand-200);
   --page-glow: radial-gradient(ellipse at top, #050d1f 0%, #000000 60%);
-}
-
-html,
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), sans-serif;
-  scroll-behavior: smooth;
-  min-height: 100vh;
-}
-
-/* The single subtle glass surface, reserved for the sticky navbar / dropdowns. */
-.glass-surface {
-  background-color: color-mix(in srgb, var(--background) 72%, transparent);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-}
-
-/* ---- Animated spiral background ---- */
-.spiral-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: -10;
-  overflow: hidden;
-  pointer-events: none;
-  background: var(--page-glow);
-}
-
-.spiral-backdrop svg {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: max(160vw, 160vh);
-  height: max(160vw, 160vh);
-  transform: translate(-50%, -50%);
-  opacity: var(--spiral-opacity);
-}
-
-.spiral-arm-a {
-  animation: var(--animate-spiral-cw);
-  transform-origin: 500px 500px;
-}
-
-.spiral-arm-b {
-  animation: var(--animate-spiral-ccw);
-  transform-origin: 500px 500px;
-}
-
-.spiral-glow-blob {
-  animation: var(--animate-drift);
-}
-
-@media (prefers-reduced-motion: reduce) {
-
-  .spiral-arm-a,
-  .spiral-arm-b,
-  .spiral-glow-blob {
-    animation: none;
-  }
-}
-
-.bg-clip-text {
-  background-size: 200% 200%;
 }

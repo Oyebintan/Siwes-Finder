@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import AuthProvider from "@/components/Provider";
-import SpiralBackground from "@/components/SpiralBackground";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,7 +39,6 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <SpiralBackground />
             {children}
           </AuthProvider>
         </ThemeProvider>

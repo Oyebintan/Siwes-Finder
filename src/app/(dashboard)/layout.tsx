@@ -13,7 +13,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Route protection
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
@@ -27,8 +26,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
-        <Loader2 className="w-10 h-10 animate-spin text-blue-600 dark:text-blue-500" />
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-brand-500" />
       </div>
     );
   }
@@ -51,21 +50,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 relative font-sans text-gray-900 dark:text-gray-100 transition-colors duration-300">
-      
-      {/* Light Glassy Top Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-white/80 dark:bg-gray-950/80 border-b border-gray-200 dark:border-gray-800 shadow-sm">
+    <div className="min-h-screen relative font-sans text-gray-900 dark:text-gray-100 transition-colors duration-300">
+
+      <nav className="fixed top-0 left-0 right-0 z-50 glass-surface border-b border-gray-200/60 dark:border-white/5 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            
-            <div className="flex items-center gap-2">
-              <Link href="/" className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300 text-xl tracking-tight">
-                SIWES Finder
-              </Link>
-            </div>
+
+            <Link href="/" className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-brand-800 to-brand-400 text-xl tracking-tight">
+              SIWES Finder
+            </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-1">
+            <div className="hidden md:flex items-center gap-1 relative">
               {navLinks.map((link) => {
                 const Icon = link.icon;
                 const isActive = pathname.startsWith(link.href);
@@ -73,11 +69,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <Link
                     key={link.name}
                     href={link.href}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                      isActive 
-                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
-                    }`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${isActive
+                        ? 'bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'
+                      }`}
                   >
                     <Icon className="w-4 h-4" />
                     <span>{link.name}</span>
@@ -86,7 +81,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               })}
             </div>
 
-            <div className="hidden md:flex items-center gap-4 border-l border-gray-200 dark:border-gray-800 pl-4 ml-2">
+            <div className="hidden md:flex items-center gap-4 border-l border-gray-200 dark:border-white/10 pl-4 ml-2">
               <ThemeToggle />
               <button
                 onClick={() => signOut({ callbackUrl: '/' })}
@@ -97,7 +92,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </button>
             </div>
 
-            {/* Mobile menu button */}
             <div className="md:hidden flex items-center gap-2">
               <ThemeToggle />
               <button
@@ -110,9 +104,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </div>
 
-        {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+          <div className="md:hidden glass-surface border-b border-gray-200/60 dark:border-white/5">
             <div className="px-2 pt-2 pb-3 space-y-1">
               {navLinks.map((link) => {
                 const Icon = link.icon;
@@ -122,11 +115,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     key={link.name}
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-3 rounded-md text-base font-bold ${
-                      isActive 
-                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
-                    }`}
+                    className={`flex items-center gap-3 px-3 py-3 rounded-md text-base font-bold ${isActive
+                        ? 'bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
+                      }`}
                   >
                     <Icon className="w-5 h-5" />
                     {link.name}
@@ -135,7 +127,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               })}
               <button
                 onClick={() => signOut({ callbackUrl: '/' })}
-                className="flex w-full items-center gap-3 px-3 py-3 rounded-md text-base font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
+                className="flex w-full items-center gap-3 px-3 py-3 rounded-md text-base font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
               >
                 <LogOut className="w-5 h-5" /> Sign Out
               </button>
@@ -144,8 +136,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         )}
       </nav>
 
-      {/* Main Content Area */}
-      <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10">
         {children}
       </main>
 

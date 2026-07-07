@@ -29,20 +29,19 @@ export default function EmployerApplicationCard({ app }: { app: any }) {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 hover:border-cyan-500/50 shadow-sm rounded-2xl p-6 transition-all">
+    <div className="bg-surface-1 border border-surface-border hover:border-brand-400/40 shadow-sm rounded-2xl p-6 transition-all">
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h3 className="text-lg font-bold text-cyan-600 dark:text-cyan-400 mb-1">{app.job.title}</h3>
+          <h3 className="text-lg font-bold text-brand-600 dark:text-brand-300 mb-1">{app.job.title}</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">Applied on {new Date(app.createdAt).toLocaleDateString()}</p>
         </div>
-
-        {status === 'Pending' && <span className="px-3 py-1 rounded-full bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 text-xs font-bold border border-yellow-200 dark:border-yellow-800/50">Pending</span>}
-        {status === 'Accepted' && <span className="px-3 py-1 rounded-full bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-xs font-bold border border-green-200 dark:border-green-800/50">Accepted</span>}
-        {status === 'Rejected' && <span className="px-3 py-1 rounded-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-bold border border-red-200 dark:border-red-800/50">Rejected</span>}
+        {status === 'Pending' && <span className="px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold border border-amber-200 dark:border-amber-800/40">Pending</span>}
+        {status === 'Accepted' && <span className="px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-200 dark:border-emerald-800/40">Accepted</span>}
+        {status === 'Rejected' && <span className="px-3 py-1 rounded-full bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-bold border border-red-200 dark:border-red-800/40">Rejected</span>}
       </div>
 
-      <div className="flex items-start gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800/60 mb-6">
-        <div className="w-12 h-12 rounded-full bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 flex items-center justify-center shrink-0">
+      <div className="flex items-start gap-4 p-4 rounded-xl bg-gray-50 dark:bg-surface-2 mb-6">
+        <div className="w-12 h-12 rounded-full bg-white dark:bg-surface-1 border border-gray-100 dark:border-surface-border flex items-center justify-center shrink-0">
           <User className="w-6 h-6 text-gray-400 dark:text-gray-500" />
         </div>
         <div>
@@ -58,41 +57,29 @@ export default function EmployerApplicationCard({ app }: { app: any }) {
 
       <div className="flex items-center gap-4">
         {app.student.resumeUrl ? (
-
-          href = { app.student.resumeUrl }
-            target="_blank"
-        rel="noopener noreferrer"
-        className="flex-1 px-4 py-2.5 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-sm font-bold flex items-center justify-center gap-2 transition-colors"
-          >
-        <FileText className="w-4 h-4" /> View Resume
-      </a>
-      ) : (
-      <span className="flex-1 px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 text-sm font-bold flex items-center justify-center gap-2">
-        <FileText className="w-4 h-4" /> No resume yet
-      </span>
+          <a href={app.student.resumeUrl} target="_blank" rel="noopener noreferrer"
+            className="flex-1 px-4 py-2.5 rounded-xl bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-300 hover:bg-brand-100 dark:hover:bg-brand-500/20 text-sm font-bold flex items-center justify-center gap-2 transition-colors">
+            <FileText className="w-4 h-4" /> View Resume
+          </a>
+        ) : (
+          <span className="flex-1 px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-surface-2 text-gray-400 dark:text-gray-500 text-sm font-bold flex items-center justify-center gap-2">
+            <FileText className="w-4 h-4" /> No resume yet
+          </span>
         )}
 
-      {status === 'Pending' && (
-        <div className="flex gap-2">
-          <button
-            onClick={() => handleUpdateStatus('Accepted')}
-            disabled={loading}
-            className="p-2.5 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors disabled:opacity-50"
-            title="Accept Candidate"
-          >
-            <CheckCircle className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => handleUpdateStatus('Rejected')}
-            disabled={loading}
-            className="p-2.5 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors disabled:opacity-50"
-            title="Reject Candidate"
-          >
-            <XCircle className="w-5 h-5" />
-          </button>
-        </div>
-      )}
+        {status === 'Pending' && (
+          <div className="flex gap-2">
+            <button onClick={() => handleUpdateStatus('Accepted')} disabled={loading}
+              className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors disabled:opacity-50" title="Accept Candidate">
+              <CheckCircle className="w-5 h-5" />
+            </button>
+            <button onClick={() => handleUpdateStatus('Rejected')} disabled={loading}
+              className="p-2.5 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors disabled:opacity-50" title="Reject Candidate">
+              <XCircle className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+      </div>
     </div>
-    </div >
   );
 }
