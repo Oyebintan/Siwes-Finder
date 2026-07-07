@@ -14,6 +14,18 @@ if (!NEXTAUTH_SECRET) {
   );
 }
 
+// Admins are provisioned by email allowlist (there is no public admin signup).
+// Set ADMIN_EMAILS="a@x.com,b@y.com" in the environment. Matching users are
+// promoted to the 'admin' role the next time they sign in.
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "")
+  .split(",")
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean);
+
+function isAdminEmail(email?: string | null): boolean {
+  return !!email && ADMIN_EMAILS.includes(email.toLowerCase());
+}
+
 export const authOptions: AuthOptions = {
   providers: [
     // Only register Google sign-in when real credentials are configured.
@@ -48,6 +60,12 @@ export const authOptions: AuthOptions = {
           throw new Error("Incorrect password");
         }
 
+        // Promote allowlisted emails to admin on sign-in.
+        if (isAdminEmail(user.email) && user.role !== "admin") {
+          user.role = "admin";
+          await user.save();
+        }
+
         return { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
       }
     })
@@ -61,11 +79,16 @@ export const authOptions: AuthOptions = {
           const newUser = await User.create({
             name: user.name,
             email: user.email,
-            role: "unassigned",
+            role: isAdminEmail(user.email) ? "admin" : "unassigned",
           });
           user.id = newUser._id.toString();
-          (user as any).role = "unassigned";
+          (user as any).role = newUser.role;
         } else {
+          // Promote allowlisted emails to admin on sign-in.
+          if (isAdminEmail(existingUser.email) && existingUser.role !== "admin") {
+            existingUser.role = "admin";
+            await existingUser.save();
+          }
           user.id = existingUser._id.toString();
           (user as any).role = existingUser.role;
         }
