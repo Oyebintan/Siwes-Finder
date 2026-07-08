@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Loader2, LogOut, LayoutDashboard, Briefcase, FileText, User, BookOpen,
-  Menu, X, Search, ShieldCheck, Users, Plus, Building2, type LucideIcon,
+  Menu, X, Search, ShieldCheck, Users, Plus, Building2, MessageCircle, type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -18,6 +18,7 @@ const STUDENT_NAV: NavItem[] = [
   { name: 'Browse Opportunities', href: '/student/jobs', icon: Search },
   { name: 'Applications', href: '/student/applications', icon: FileText },
   { name: 'e-Logbook', href: '/student/logbook', icon: BookOpen },
+  { name: 'Community', href: '/student/community', icon: MessageCircle },
   { name: 'Profile', href: '/student/profile', icon: User },
 ];
 

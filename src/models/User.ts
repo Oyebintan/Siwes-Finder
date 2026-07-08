@@ -19,6 +19,7 @@ export interface IUser extends Document {
   siwesDuration?: string;
   preferredState?: string;
   isProfileComplete?: boolean;
+  communityJoined?: boolean;
   // Employer / Company Specific
   companyName?: string;
   industry?: string;
@@ -51,6 +52,9 @@ const UserSchema: Schema = new Schema(
     siwesDuration: { type: String },
     preferredState: { type: String },
     isProfileComplete: { type: Boolean, default: false },
+    // Opt-in flag for the student Community directory/chat -- students must
+    // explicitly join before appearing to peers or being able to post.
+    communityJoined: { type: Boolean, default: false },
 
     // Employer / Company fields
     companyName: { type: String },

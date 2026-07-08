@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { LogIn, ArrowUpRight, CheckCircle2 } from 'lucide-react';
+import { LogIn, ArrowUpRight, CheckCircle2, Users } from 'lucide-react';
 
 const companies = ['Paystack', 'Flutterwave', 'Andela', 'MTN Nigeria', 'Interswitch', 'Nigerian Breweries'];
 
@@ -233,6 +233,20 @@ export default function Home() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* COMMUNITY */}
+      <section className="border-t border-surface-border bg-surface-1">
+        <div className="max-w-[1220px] mx-auto px-6 sm:px-10 lg:px-14 py-16 sm:py-20 flex flex-col items-center text-center">
+          <div className="w-14 h-14 rounded-2xl bg-primary-500/10 dark:bg-primary-400/15 flex items-center justify-center mb-6">
+            <Users className="w-7 h-7 text-primary-500 dark:text-primary-400" />
+          </div>
+          <h2 className="font-display font-extrabold text-[32px] tracking-[-0.02em] max-w-[560px] mb-4">You don&apos;t get to do SIWES alone.</h2>
+          <p className="text-[15.5px] text-muted max-w-[480px] mb-8">You&apos;ll move with people that are doing the same as you — see who&apos;s placed where, swap notes, and stay connected the whole way through.</p>
+          <Link href="/signup" className="inline-flex items-center gap-2 bg-primary-500 dark:bg-primary-400 text-white px-6 py-3.5 rounded-[9px] text-[15px] font-bold hover:brightness-110 transition-all">
+            <Users className="w-4 h-4" /> Join the community
+          </Link>
         </div>
       </section>
 
