@@ -1,0 +1,61 @@
+# Deploying to Vercel
+
+This repo builds and boots cleanly for production (`npm run build && npm run start`
+verified locally). Deploying itself has to happen from a machine with normal
+internet access — the sandbox this was prepared in has outbound access to
+`api.vercel.com` blocked by policy, so the steps below are for you to run.
+
+## 1. One-time setup
+
+```bash
+npm install -g vercel   # or use `npx vercel` for every command below
+vercel login            # or: export VERCEL_TOKEN=<your token>
+vercel link             # run from the repo root; creates/links the Vercel project
+```
+
+## 2. Set environment variables
+
+Set these as **Production** env vars (`vercel env add <NAME> production`, or via
+the Vercel dashboard → Project → Settings → Environment Variables):
+
+| Variable | Value |
+|---|---|
+| `MONGODB_URI` | Your MongoDB Atlas connection string. **Must include a database name** in the path, e.g. `mongodb+srv://user:pass@cluster0.xxxxx.mongodb.net/siwes-finder?appName=Cluster0` — a URI with no path segment falls back to Mongoose's default `test` database. |
+| `NEXTAUTH_SECRET` | A **fresh** secret, not reused from local dev: `openssl rand -base64 32` |
+| `NEXTAUTH_URL` | Your production URL. Unknown until the first deploy — use the assigned `*.vercel.app` URL (or your custom domain), then redeploy if it changes. |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | From Google Cloud Console, if enabling Google sign-in. |
+| `ADMIN_EMAILS` | Comma-separated list of emails that should be promoted to admin on sign-in. |
+
+## 3. Before the first deploy actually works
+
+**MongoDB Atlas IP allowlist**: Atlas rejects connections from IPs not on its
+Network Access allowlist. Vercel's serverless functions don't have a fixed
+IP on the free tier, so add `0.0.0.0/0` ("Allow Access from Anywhere") under
+Atlas → Network Access.
+
+## 4. Deploy
+
+```bash
+vercel --prod
+```
+
+## 5. After the first deploy
+
+- **Google OAuth redirect URI**: if using Google sign-in, add
+  `https://<your-domain>/api/auth/callback/google` to the OAuth client's
+  Authorized redirect URIs in Google Cloud Console. Sign-in will fail with a
+  redirect_uri_mismatch error until this is done.
+- **`NEXTAUTH_URL`**: if you didn't know the final domain in step 2, update
+  the env var to match and redeploy (`vercel --prod`).
+
+## Known gap: file uploads
+
+`src/app/api/upload/route.ts` (resumes, CAC verification documents) writes
+to `public/uploads` on local disk. **This does not persist on Vercel** —
+serverless functions have a read-only filesystem outside `/tmp`, and `/tmp`
+itself isn't shared across invocations or served as a static asset. Uploads
+will fail (or silently vanish) in production until this is swapped for a
+persistent object store (Vercel Blob is the natural fit — same platform,
+`@vercel/blob` package). This wasn't fixed as part of E2E/deploy prep
+because verifying an object-storage integration end-to-end isn't possible
+without network access to provision one from this environment.
