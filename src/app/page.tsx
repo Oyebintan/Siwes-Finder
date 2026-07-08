@@ -54,7 +54,7 @@ export default function Home() {
     <div className="relative overflow-x-clip font-sans text-foreground">
       {/* NAV */}
       <header className="sticky top-0 z-50 glass-surface border-b border-surface-border">
-        <div className="max-w-[1220px] mx-auto px-6 sm:px-7 py-4 flex items-center justify-between gap-4 flex-wrap">
+        <div className="max-w-[1220px] mx-auto px-6 sm:px-10 lg:px-14 py-4 flex items-center justify-between gap-4 flex-wrap">
           <Link href="/" className="flex items-center gap-2.5">
             <Logo />
             <span className="font-display font-extrabold text-[18px] tracking-tight">SIWES Finder</span>
@@ -87,7 +87,7 @@ export default function Home() {
       </header>
 
       {/* HERO */}
-      <section className="relative max-w-[1220px] mx-auto px-6 sm:px-7 pt-10 sm:pt-14 pb-14 sm:pb-16">
+      <section className="relative max-w-[1220px] mx-auto px-6 sm:px-10 lg:px-14 pt-10 sm:pt-14 pb-14 sm:pb-16">
         <div className="pointer-events-none absolute -top-36 -right-40 w-[520px] h-[520px] rounded-full blur-md animate-blob" style={{ background: 'radial-gradient(circle, var(--color-primary-500), transparent 70%)', opacity: 0.13 }} />
         <div className="pointer-events-none absolute top-20 right-28 w-[340px] h-[340px] rounded-full blur-md animate-blob [animation-direction:reverse]" style={{ background: 'radial-gradient(circle, var(--color-secondary-500), transparent 70%)', opacity: 0.12 }} />
 
@@ -157,7 +157,7 @@ export default function Home() {
 
       {/* HOW IT WORKS */}
       <section id="how-it-works" className="border-y border-surface-border bg-surface-1">
-        <div className="max-w-[1220px] mx-auto px-6 sm:px-7 py-16 sm:py-20">
+        <div className="max-w-[1220px] mx-auto px-6 sm:px-10 lg:px-14 py-16 sm:py-20">
           <div className="mb-[52px]">
             <div className="font-mono font-bold text-[11.5px] tracking-widest text-primary-500 dark:text-primary-400 uppercase mb-3.5">01 / How it works</div>
             <h2 className="font-display font-extrabold text-[38px] tracking-[-0.025em] max-w-[520px]">Two journeys, one platform.</h2>
@@ -176,7 +176,7 @@ export default function Home() {
       </section>
 
       {/* FEATURED */}
-      <section id="opportunities" className="max-w-[1220px] mx-auto px-6 sm:px-7 py-16 sm:py-20">
+      <section id="opportunities" className="max-w-[1220px] mx-auto px-6 sm:px-10 lg:px-14 py-16 sm:py-20">
         <div className="flex items-end justify-between mb-9 gap-4">
           <div>
             <div className="font-mono font-bold text-[11.5px] tracking-widest text-primary-500 dark:text-primary-400 uppercase mb-3.5">02 / Featured</div>
@@ -204,7 +204,7 @@ export default function Home() {
       </section>
 
       {/* STATS */}
-      <section className="bg-[#0B1220] dark:bg-black py-14 sm:py-16 px-6 sm:px-7">
+      <section className="bg-[#0B1220] dark:bg-black py-14 sm:py-16 px-6 sm:px-10 lg:px-14">
         <div className="max-w-[1220px] mx-auto grid gap-4 text-center [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]">
           {stats.map((s) => (
             <div key={s.label} className="rounded-2xl px-4 py-6 bg-white/[0.045] border border-white/[0.09] backdrop-blur-md">
@@ -216,7 +216,7 @@ export default function Home() {
       </section>
 
       {/* TESTIMONIALS */}
-      <section className="max-w-[1220px] mx-auto px-6 sm:px-7 py-16 sm:py-20">
+      <section className="max-w-[1220px] mx-auto px-6 sm:px-10 lg:px-14 py-16 sm:py-20">
         <h2 className="font-display font-extrabold text-[32px] tracking-[-0.02em] mb-9 text-center">Students trust SIWES Finder</h2>
         <div className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]">
           {testimonials.map((t) => (
@@ -231,7 +231,7 @@ export default function Home() {
 
       {/* FAQ */}
       <section id="faq" className="border-t border-surface-border bg-surface-1">
-        <div className="max-w-[800px] mx-auto px-6 sm:px-7 py-16 sm:py-20">
+        <div className="max-w-[800px] mx-auto px-6 sm:px-10 lg:px-14 py-16 sm:py-20">
           <h2 className="font-display font-extrabold text-[32px] tracking-[-0.02em] mb-9 text-center">Frequently asked questions</h2>
           <div className="flex flex-col gap-px bg-surface-border rounded-2xl overflow-hidden">
             {faqs.map((f) => (
@@ -245,7 +245,7 @@ export default function Home() {
       </section>
 
       {/* FINAL CTA */}
-      <section className="max-w-[1220px] mx-auto px-6 sm:px-7 py-16 sm:py-20">
+      <section className="max-w-[1220px] mx-auto px-6 sm:px-10 lg:px-14 py-16 sm:py-20">
         <div className="rounded-[26px] p-[clamp(28px,5vw,56px)] text-center bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-400 dark:to-[#4B3FD8]">
           <h2 className="font-display font-extrabold text-[30px] text-white mb-4 tracking-[-0.02em]">Your SIWES placement is one search away.</h2>
           <Link href="/signup" className="inline-block bg-white text-primary-600 px-6 py-3 rounded-[9px] text-sm font-bold mt-2 hover:brightness-95 transition-all">Create your free profile</Link>
@@ -253,7 +253,7 @@ export default function Home() {
       </section>
 
       {/* FOOTER */}
-      <footer className="border-t border-surface-border py-12 px-6 sm:px-7">
+      <footer className="border-t border-surface-border py-12 px-6 sm:px-10 lg:px-14">
         <div className="max-w-[1220px] mx-auto flex justify-between items-center flex-wrap gap-4">
           <div className="flex items-center gap-2.5">
             <Logo size={22} />

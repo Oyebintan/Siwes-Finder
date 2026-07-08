@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
@@ -9,7 +9,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 
 function Logo() {
   return (
-    <svg width="28" height="28" viewBox="0 0 64 64" aria-hidden>
+    <svg width="26" height="26" viewBox="0 0 64 64" aria-hidden>
       <circle cx="22" cy="42" r="10" className="fill-primary-500 dark:fill-primary-400" />
       <circle cx="42" cy="22" r="10" className="fill-primary-500 dark:fill-primary-400" opacity="0.4" />
       <path d="M28 36 L38 28" className="stroke-primary-500 dark:stroke-primary-400" strokeWidth="4" strokeLinecap="round" />
@@ -17,9 +17,32 @@ function Logo() {
   );
 }
 
+const OAUTH_ERRORS: Record<string, string> = {
+  OAuthSignin: 'Could not start Google sign-in. Please try again.',
+  OAuthCallback: 'Google sign-in was interrupted before it could finish. Please try again.',
+  OAuthCreateAccount: 'Could not create an account with that Google profile.',
+  Callback: 'Something went wrong completing sign-in. Please try again.',
+  OAuthAccountNotLinked: 'That email already has a password-based account. Log in with your password instead.',
+  AccessDenied: 'Google denied access to this app. If this app is still in testing, ask the developer to add your Google account as a test user.',
+  Configuration: 'Google sign-in isn\'t configured correctly on the server.',
+  Default: 'Google sign-in failed. Please try again.',
+};
+
+function OAuthErrorBanner() {
+  const params = useSearchParams();
+  const error = params.get('error');
+  if (!error) return null;
+  return (
+    <div className="mb-4 p-3 rounded-xl bg-error-bg border border-error/20 text-error text-[13px] font-medium text-center">
+      {OAUTH_ERRORS[error] || OAUTH_ERRORS.Default}
+    </div>
+  );
+}
+
 export default function Login() {
   const router = useRouter();
 
+  const [tab, setTab] = useState<'student' | 'company'>('student');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -53,48 +76,64 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen grid [grid-template-columns:repeat(auto-fit,minmax(360px,1fr))] bg-background text-foreground">
+    <div className="h-screen grid [grid-template-columns:repeat(auto-fit,minmax(360px,1fr))] bg-background text-foreground overflow-hidden">
       {/* LEFT: form */}
-      <div className="flex flex-col justify-center px-8 sm:px-16 py-16 max-w-[460px] mx-auto w-full">
-        <div className="flex items-center justify-between mb-12">
-          <Link href="/" className="flex items-center gap-2.5">
+      <div className="h-full overflow-y-auto flex flex-col justify-center px-8 sm:px-14 lg:px-16 py-6 max-w-[440px] mx-auto w-full">
+        <div className="flex items-center justify-between mb-5">
+          <Link href="/" className="flex items-center gap-2">
             <Logo />
-            <span className="font-display font-extrabold text-[17px] tracking-tight">SIWES Finder</span>
+            <span className="font-display font-extrabold text-[16px] tracking-tight">SIWES Finder</span>
           </Link>
           <ThemeToggle />
         </div>
 
-        <h1 className="font-display font-extrabold text-[28px] tracking-[-0.02em] mb-2">Welcome back</h1>
-        <p className="text-[14.5px] text-muted mb-8">Log in to continue your placement journey.</p>
+        <h1 className="font-display font-extrabold text-[26px] tracking-[-0.02em] mb-1">Welcome back</h1>
+        <p className="text-[13.5px] text-muted mb-5">Log in to continue your placement journey.</p>
 
-        <div className="flex gap-2 bg-background border border-surface-border rounded-[10px] p-1 mb-7">
-          <div className="flex-1 text-center py-2.5 rounded-lg bg-surface-1 text-[13.5px] font-bold shadow-sm">Student</div>
-          <div className="flex-1 text-center py-2.5 rounded-lg text-[13.5px] font-semibold text-muted">Company</div>
+        <div className="flex gap-2 bg-background border border-surface-border rounded-[10px] p-1 mb-5">
+          <button
+            type="button"
+            onClick={() => setTab('student')}
+            className={`flex-1 text-center py-2 rounded-lg text-[13px] transition-colors ${tab === 'student' ? 'bg-surface-1 font-bold shadow-sm' : 'font-semibold text-muted'}`}
+          >
+            Student
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('company')}
+            className={`flex-1 text-center py-2 rounded-lg text-[13px] transition-colors ${tab === 'company' ? 'bg-surface-1 font-bold shadow-sm' : 'font-semibold text-muted'}`}
+          >
+            Company
+          </button>
         </div>
 
+        <Suspense fallback={null}>
+          <OAuthErrorBanner />
+        </Suspense>
+
         {error && (
-          <div className="mb-5 p-3.5 rounded-xl bg-error-bg border border-error/20 text-error text-sm font-medium text-center">
+          <div className="mb-4 p-3 rounded-xl bg-error-bg border border-error/20 text-error text-[13px] font-medium text-center">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleCredentialsLogin} className="space-y-5">
+        <form onSubmit={handleCredentialsLogin} className="space-y-3.5">
           <div>
-            <label className="block text-[13px] font-semibold mb-1.5">Email address</label>
+            <label className="block text-[12.5px] font-semibold mb-1">Email address</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@university.edu.ng"
-              className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-foreground text-[14.5px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
+              placeholder={tab === 'student' ? 'you@university.edu.ng' : 'you@company.com'}
+              className="w-full px-3.5 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-foreground text-[14px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
             />
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-[13px] font-semibold">Password</label>
-              <a href="#" className="text-[13px] font-semibold text-primary-500 dark:text-primary-400">Forgot password?</a>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-[12.5px] font-semibold">Password</label>
+              <a href="#" className="text-[12.5px] font-semibold text-primary-500 dark:text-primary-400">Forgot password?</a>
             </div>
             <input
               type="password"
@@ -102,20 +141,20 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-foreground text-[14.5px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
+              className="w-full px-3.5 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-foreground text-[14px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading || googleLoading}
-            className="w-full py-3.5 rounded-lg bg-primary-500 dark:bg-primary-400 text-white font-bold text-[15px] shadow-lg shadow-primary-900/20 hover:brightness-110 disabled:opacity-50 transition-all flex items-center justify-center"
+            className="w-full py-2.5 rounded-lg bg-primary-500 dark:bg-primary-400 text-white font-bold text-[14.5px] shadow-lg shadow-primary-900/20 hover:brightness-110 disabled:opacity-50 transition-all flex items-center justify-center"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Log in'}
           </button>
         </form>
 
-        <div className="mt-6 relative">
+        <div className="mt-4 relative">
           <div className="absolute inset-0 flex items-center" aria-hidden="true">
             <div className="w-full border-t border-surface-border" />
           </div>
@@ -128,7 +167,7 @@ export default function Login() {
           type="button"
           onClick={handleGoogleLogin}
           disabled={loading || googleLoading}
-          className="w-full mt-6 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 font-semibold hover:bg-surface-2 disabled:opacity-50 transition-all flex items-center justify-center gap-2 text-sm"
+          className="w-full mt-4 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-surface-1 font-semibold hover:bg-surface-2 disabled:opacity-50 transition-all flex items-center justify-center gap-2 text-sm"
         >
           {googleLoading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -145,25 +184,28 @@ export default function Login() {
           )}
         </button>
 
-        <div className="text-center text-[13.5px] text-muted mt-6">
+        <div className="text-center text-[13px] text-muted mt-4">
           Don&apos;t have an account? <Link href="/signup" className="font-bold text-primary-500 dark:text-primary-400">Sign up</Link>
         </div>
       </div>
 
-      {/* RIGHT: visual */}
-      <div className="relative overflow-hidden min-h-[320px] bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-400 dark:to-[#4B3FD8]">
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 30% 20%, rgba(255,255,255,0.12), transparent 50%)' }} />
-        <div className="relative h-full flex flex-col justify-center px-10 sm:px-16 py-16 text-white">
-          <div className="font-display font-extrabold text-[30px] leading-[1.25] tracking-[-0.02em] max-w-[400px] mb-6">
+      {/* RIGHT: animated visual */}
+      <div className="relative overflow-hidden hidden sm:block bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-400 dark:to-[#4B3FD8]">
+        <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 30% 20%, rgba(255,255,255,0.14), transparent 50%)' }} />
+        <div className="pointer-events-none absolute -top-24 -right-16 w-[320px] h-[320px] rounded-full blur-2xl animate-blob" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.22), transparent 70%)' }} />
+        <div className="pointer-events-none absolute bottom-0 -left-20 w-[280px] h-[280px] rounded-full blur-2xl animate-blob [animation-direction:reverse]" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.16), transparent 70%)' }} />
+
+        <div className="relative h-full flex flex-col justify-center px-10 lg:px-14 py-10 text-white">
+          <div className="font-display font-extrabold text-[26px] leading-[1.25] tracking-[-0.02em] max-w-[380px] mb-5">
             &ldquo;Everything I need for my SIWES search, in one clean dashboard.&rdquo;
           </div>
           <div className="text-sm text-white/70">Amara O. — Computer Science, University of Lagos</div>
 
-          <div className="mt-14 bg-white/[0.08] border border-white/[0.15] rounded-2xl p-5 backdrop-blur-md max-w-[280px]">
-            <div className="text-xs text-white/70 mb-2.5">This week</div>
+          <div className="mt-10 bg-white/[0.1] border border-white/[0.18] rounded-2xl p-5 backdrop-blur-md max-w-[270px] animate-float-card">
+            <div className="text-xs text-white/70 mb-2">This week</div>
             <div className="flex justify-between items-center gap-3">
-              <div className="font-display font-extrabold text-[26px]">126</div>
-              <div className="text-[12.5px] text-white/70">new verified opportunities</div>
+              <div className="font-display font-extrabold text-[24px]">126</div>
+              <div className="text-[12px] text-white/70">new verified opportunities</div>
             </div>
           </div>
         </div>

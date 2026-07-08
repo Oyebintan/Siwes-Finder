@@ -9,7 +9,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 
 function Logo() {
   return (
-    <svg width="28" height="28" viewBox="0 0 64 64" aria-hidden>
+    <svg width="26" height="26" viewBox="0 0 64 64" aria-hidden>
       <circle cx="22" cy="42" r="10" className="fill-primary-500 dark:fill-primary-400" />
       <circle cx="42" cy="22" r="10" className="fill-primary-500 dark:fill-primary-400" opacity="0.4" />
       <path d="M28 36 L38 28" className="stroke-primary-500 dark:stroke-primary-400" strokeWidth="4" strokeLinecap="round" />
@@ -83,75 +83,76 @@ export default function Signup() {
       setGoogleLoading(true);
       await signIn('google', { callbackUrl: '/login-redirect' });
     } catch (err) {
+      console.error('Google sign in failed', err);
       setGoogleLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen grid [grid-template-columns:repeat(auto-fit,minmax(360px,1fr))] bg-background text-foreground">
+    <div className="h-screen grid [grid-template-columns:repeat(auto-fit,minmax(360px,1fr))] bg-background text-foreground overflow-hidden">
       {/* LEFT: form */}
-      <div className="flex flex-col justify-center px-8 sm:px-16 py-16 max-w-[460px] mx-auto w-full">
-        <div className="flex items-center justify-between mb-10">
-          <Link href="/" className="flex items-center gap-2.5">
+      <div className="h-full overflow-y-auto flex flex-col justify-center px-8 sm:px-14 lg:px-16 py-6 max-w-[440px] mx-auto w-full">
+        <div className="flex items-center justify-between mb-4">
+          <Link href="/" className="flex items-center gap-2">
             <Logo />
-            <span className="font-display font-extrabold text-[17px] tracking-tight">SIWES Finder</span>
+            <span className="font-display font-extrabold text-[16px] tracking-tight">SIWES Finder</span>
           </Link>
           <ThemeToggle />
         </div>
 
-        <h1 className="font-display font-extrabold text-[28px] tracking-[-0.02em] mb-2">Create your account</h1>
-        <p className="text-[14.5px] text-muted mb-8">{copy.subtitle}</p>
+        <h1 className="font-display font-extrabold text-[26px] tracking-[-0.02em] mb-1">Create your account</h1>
+        <p className="text-[13.5px] text-muted mb-4">{copy.subtitle}</p>
 
-        <div className="flex gap-2 bg-background border border-surface-border rounded-[10px] p-1 mb-7">
+        <div className="flex gap-2 bg-background border border-surface-border rounded-[10px] p-1 mb-4">
           <button
             type="button"
             onClick={() => setRole('student')}
-            className={`flex-1 text-center py-2.5 rounded-lg text-[13.5px] transition-colors ${isStudent ? 'bg-surface-1 font-bold shadow-sm' : 'font-semibold text-muted'}`}
+            className={`flex-1 text-center py-2 rounded-lg text-[13px] transition-colors ${isStudent ? 'bg-surface-1 font-bold shadow-sm' : 'font-semibold text-muted'}`}
           >
             Student
           </button>
           <button
             type="button"
             onClick={() => setRole('employer')}
-            className={`flex-1 text-center py-2.5 rounded-lg text-[13.5px] transition-colors ${!isStudent ? 'bg-surface-1 font-bold shadow-sm' : 'font-semibold text-muted'}`}
+            className={`flex-1 text-center py-2 rounded-lg text-[13px] transition-colors ${!isStudent ? 'bg-surface-1 font-bold shadow-sm' : 'font-semibold text-muted'}`}
           >
             Company
           </button>
         </div>
 
         {error && (
-          <div className="mb-5 p-3.5 rounded-xl bg-error-bg border border-error/20 text-error text-sm font-medium text-center">
+          <div className="mb-4 p-3 rounded-xl bg-error-bg border border-error/20 text-error text-[13px] font-medium text-center">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleCredentialsSignup} className="space-y-4">
+        <form onSubmit={handleCredentialsSignup} className="space-y-3">
           <div>
-            <label className="block text-[13px] font-semibold mb-1.5">{isStudent ? 'Full name' : 'Company name'}</label>
+            <label className="block text-[12.5px] font-semibold mb-1">{isStudent ? 'Full name' : 'Company name'}</label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={isStudent ? 'Amara Okafor' : 'Paystack'}
-              className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-foreground text-[14.5px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
+              className="w-full px-3.5 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-foreground text-[14px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
             />
           </div>
 
           <div>
-            <label className="block text-[13px] font-semibold mb-1.5">{isStudent ? 'School email' : 'Work email'}</label>
+            <label className="block text-[12.5px] font-semibold mb-1">{isStudent ? 'School email' : 'Work email'}</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={isStudent ? 'you@university.edu.ng' : 'hr@company.com'}
-              className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-foreground text-[14.5px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
+              className="w-full px-3.5 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-foreground text-[14px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
             />
           </div>
 
           <div>
-            <label className="block text-[13px] font-semibold mb-1.5">Password</label>
+            <label className="block text-[12.5px] font-semibold mb-1">Password</label>
             <input
               type="password"
               required
@@ -159,14 +160,14 @@ export default function Signup() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Create a password"
-              className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-foreground text-[14.5px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
+              className="w-full px-3.5 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-foreground text-[14px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading || googleLoading}
-            className={`w-full py-3.5 rounded-lg font-bold text-[15px] shadow-lg disabled:opacity-50 transition-all flex items-center justify-center ${
+            className={`w-full py-2.5 rounded-lg font-bold text-[14.5px] shadow-lg disabled:opacity-50 transition-all flex items-center justify-center ${
               isStudent
                 ? 'bg-primary-500 dark:bg-primary-400 text-white shadow-primary-900/20 hover:brightness-110'
                 : 'bg-accent-500 text-[#032E1A] shadow-accent-900/20 hover:brightness-105'
@@ -176,7 +177,7 @@ export default function Signup() {
           </button>
         </form>
 
-        <div className="mt-6 relative">
+        <div className="mt-4 relative">
           <div className="absolute inset-0 flex items-center" aria-hidden="true">
             <div className="w-full border-t border-surface-border" />
           </div>
@@ -189,7 +190,7 @@ export default function Signup() {
           type="button"
           onClick={handleGoogleSignup}
           disabled={loading || googleLoading}
-          className="w-full mt-6 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 font-semibold hover:bg-surface-2 disabled:opacity-50 transition-all flex items-center justify-center gap-2 text-sm"
+          className="w-full mt-4 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-surface-1 font-semibold hover:bg-surface-2 disabled:opacity-50 transition-all flex items-center justify-center gap-2 text-sm"
         >
           {googleLoading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -206,25 +207,28 @@ export default function Signup() {
           )}
         </button>
 
-        <div className="text-center text-[13.5px] text-muted mt-6">
+        <div className="text-center text-[13px] text-muted mt-4">
           Already have an account? <Link href="/login" className="font-bold text-primary-500 dark:text-primary-400">Log in</Link>
         </div>
       </div>
 
-      {/* RIGHT: visual */}
-      <div className="relative overflow-hidden min-h-[320px] bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-400 dark:to-[#4B3FD8]">
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 30% 20%, rgba(255,255,255,0.12), transparent 50%)' }} />
-        <div className="relative h-full flex flex-col justify-center px-10 sm:px-16 py-16 text-white">
-          <div className="font-display font-extrabold text-[30px] leading-[1.25] tracking-[-0.02em] max-w-[400px] mb-6">
+      {/* RIGHT: animated visual */}
+      <div className="relative overflow-hidden hidden sm:block bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-400 dark:to-[#4B3FD8]">
+        <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 30% 20%, rgba(255,255,255,0.14), transparent 50%)' }} />
+        <div className="pointer-events-none absolute -top-24 -right-16 w-[320px] h-[320px] rounded-full blur-2xl animate-blob" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.22), transparent 70%)' }} />
+        <div className="pointer-events-none absolute bottom-0 -left-20 w-[280px] h-[280px] rounded-full blur-2xl animate-blob [animation-direction:reverse]" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.16), transparent 70%)' }} />
+
+        <div className="relative h-full flex flex-col justify-center px-10 lg:px-14 py-10 text-white">
+          <div key={role} className="font-display font-extrabold text-[26px] leading-[1.25] tracking-[-0.02em] max-w-[380px] mb-5 animate-fade-in-up">
             &ldquo;{copy.heroQuote}&rdquo;
           </div>
           <div className="text-sm text-white/80">{copy.heroAttribution}</div>
 
-          <div className="mt-14 bg-white/[0.08] border border-white/[0.15] rounded-2xl p-5 backdrop-blur-md max-w-[280px]">
-            <div className="text-xs text-white/80 mb-2.5">{copy.statLabel}</div>
+          <div className="mt-10 bg-white/[0.1] border border-white/[0.18] rounded-2xl p-5 backdrop-blur-md max-w-[270px] animate-float-card">
+            <div className="text-xs text-white/80 mb-2">{copy.statLabel}</div>
             <div className="flex justify-between items-center gap-3">
-              <div className="font-display font-extrabold text-[26px]">{copy.statValue}</div>
-              <div className="text-[12.5px] text-white/80 text-right max-w-[140px]">{copy.statCaption}</div>
+              <div className="font-display font-extrabold text-[24px]">{copy.statValue}</div>
+              <div className="text-[12px] text-white/80 text-right max-w-[140px]">{copy.statCaption}</div>
             </div>
           </div>
         </div>
