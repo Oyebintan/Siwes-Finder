@@ -3,118 +3,186 @@
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Loader2, LogOut, LayoutDashboard, Briefcase, FileText, User, BookOpen, Menu, X, Building2, Users, ShieldCheck } from 'lucide-react';
+import {
+  Loader2, LogOut, LayoutDashboard, Briefcase, FileText, User, BookOpen,
+  Menu, X, Search, ShieldCheck, Users, Plus, Building2,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
+
+type NavItem = { name: string; href: string; icon: any };
+
+const STUDENT_NAV: NavItem[] = [
+  { name: 'Dashboard', href: '/student/dashboard', icon: LayoutDashboard },
+  { name: 'Browse Opportunities', href: '/student/jobs', icon: Search },
+  { name: 'Applications', href: '/student/applications', icon: FileText },
+  { name: 'e-Logbook', href: '/student/logbook', icon: BookOpen },
+  { name: 'Profile', href: '/student/profile', icon: User },
+];
+
+const EMPLOYER_NAV: NavItem[] = [
+  { name: 'Dashboard', href: '/employer/dashboard', icon: LayoutDashboard },
+  { name: 'Post opportunity', href: '/employer/post-job', icon: Plus },
+  { name: 'Manage opportunities', href: '/employer/dashboard', icon: Briefcase },
+  { name: 'Applicants', href: '/employer/applications', icon: Users },
+  { name: 'Company profile', href: '/employer/verification', icon: Building2 },
+  { name: 'Logbooks', href: '/employer/logbook', icon: BookOpen },
+];
+
+const ADMIN_NAV: NavItem[] = [
+  { name: 'Overview', href: '/admin/dashboard', icon: LayoutDashboard },
+  { name: 'Company verification', href: '/admin/companies', icon: ShieldCheck },
+  { name: 'User management', href: '/admin/users', icon: Users },
+  { name: 'Opportunity moderation', href: '/admin/jobs', icon: Briefcase },
+];
+
+function initials(name?: string | null) {
+  if (!name) return '?';
+  return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('');
+}
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const router = useRouter();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [subline, setSubline] = useState<string>('');
+
+  const role = session?.user?.role;
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/login');
-    if (status === 'authenticated' && session.user.role === 'unassigned') router.push('/onboarding');
-  }, [status, session, router]);
+    if (status === 'authenticated' && role === 'unassigned') router.push('/onboarding');
+  }, [status, role, router]);
+
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (role === 'student') {
+      fetch('/api/profile').then((r) => (r.ok ? r.json() : null)).then((d) => {
+        if (d?.university) setSubline(d.university);
+      }).catch(() => {});
+    } else if (role === 'employer') {
+      fetch('/api/companies/verification').then((r) => (r.ok ? r.json() : null)).then((d) => {
+        if (d?.verification?.companyName) setSubline(d.verification.companyName);
+      }).catch(() => {});
+    }
+  }, [role]);
 
   if (status === 'loading') {
-    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-accent-500" /></div>;
+    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-primary-500" /></div>;
   }
-  if (!session || session.user.role === 'unassigned') return null;
+  if (!session || role === 'unassigned') return null;
 
-  const role = session.user.role;
-  const navLinks = role === 'student' ? [
-    { name: 'Dashboard', href: '/student/dashboard', icon: LayoutDashboard },
-    { name: 'Find Jobs', href: '/student/jobs', icon: Briefcase },
-    { name: 'Applications', href: '/student/applications', icon: FileText },
-    { name: 'e-Logbook', href: '/student/logbook', icon: BookOpen },
-    { name: 'Profile', href: '/student/profile', icon: User },
-  ] : role === 'admin' ? [
-    { name: 'Overview', href: '/admin/dashboard', icon: LayoutDashboard },
-    { name: 'Companies', href: '/admin/companies', icon: ShieldCheck },
-    { name: 'Users', href: '/admin/users', icon: Users },
-    { name: 'Listings', href: '/admin/jobs', icon: Briefcase },
-  ] : [
-    { name: 'Dashboard', href: '/employer/dashboard', icon: LayoutDashboard },
-    { name: 'Verification', href: '/employer/verification', icon: ShieldCheck },
-    { name: 'Post Job', href: '/employer/post-job', icon: Briefcase },
-    { name: 'Applicants', href: '/employer/applications', icon: FileText },
-    { name: 'Logbooks', href: '/employer/logbook', icon: BookOpen },
-  ];
+  const isAdmin = role === 'admin';
+  const isEmployer = role === 'employer';
+  const navItems = isAdmin ? ADMIN_NAV : isEmployer ? EMPLOYER_NAV : STUDENT_NAV;
+  const accentActive = isEmployer ? 'text-accent-500' : isAdmin ? 'text-white' : 'text-primary-500 dark:text-primary-400';
+  const accentActiveBg = isEmployer ? 'bg-accent-500/10' : isAdmin ? 'bg-primary-500' : 'bg-primary-500/10 dark:bg-primary-400/15';
 
-  return (
-    <div className="min-h-screen relative font-sans text-gray-900 dark:text-gray-100 transition-colors duration-300">
-      <nav className="fixed top-0 left-0 right-0 z-50 glass-surface border-b border-gray-200/60 dark:border-white/5 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-accent-800 to-accent-400 text-xl tracking-tight">
-              SIWES Finder
+  const SidebarContent = (
+    <div className={`flex flex-col h-full px-4 py-6 ${isAdmin ? 'bg-[#0B1220]' : 'bg-surface-1'}`}>
+      <div className="flex items-center justify-between px-2 mb-8">
+        <Link href="/" className="flex items-center gap-2">
+          <svg width="24" height="24" viewBox="0 0 64 64" aria-hidden>
+            <circle cx="22" cy="42" r="10" className="fill-primary-500 dark:fill-primary-400" />
+            <circle cx="42" cy="22" r="10" className="fill-primary-500 dark:fill-primary-400" opacity={isAdmin ? 0.5 : 0.4} />
+          </svg>
+          <span className={`font-display font-extrabold text-[15px] ${isAdmin ? 'text-white' : 'text-foreground'}`}>
+            SIWES Finder{isAdmin && <span className="text-[#8B93A3] font-semibold"> Admin</span>}
+          </span>
+        </Link>
+        <ThemeToggle />
+      </div>
+
+      <nav className="flex flex-col gap-0.5">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = pathname.startsWith(item.href);
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                isActive
+                  ? `${accentActiveBg} ${accentActive} font-bold`
+                  : isAdmin
+                    ? 'text-[#9AA2B4] hover:bg-white/[0.08] font-semibold'
+                    : 'text-muted hover:bg-surface-2 font-semibold'
+              }`}
+            >
+              <Icon className="w-[18px] h-[18px]" />
+              {item.name}
             </Link>
-
-            <div className="hidden md:flex items-center gap-1 h-full">
-              {navLinks.map((link) => {
-                const Icon = link.icon;
-                const isActive = pathname.startsWith(link.href);
-                return (
-                  <Link
-                    key={link.name}
-                    href={link.href}
-                    className={`relative flex items-center gap-2 px-4 h-16 text-sm font-bold transition-colors ${isActive ? 'text-accent-700 dark:text-accent-300' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                      }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span>{link.name}</span>
-                    {isActive && <span className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full bg-gradient-to-r from-accent-600 to-accent-300" />}
-                  </Link>
-                );
-              })}
-            </div>
-
-            <div className="hidden md:flex items-center gap-4 border-l border-gray-200 dark:border-white/10 pl-4 ml-2">
-              <ThemeToggle />
-              <button onClick={() => signOut({ callbackUrl: '/' })} className="flex items-center gap-2 text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors" title="Sign Out">
-                <LogOut className="w-4 h-4" /> Sign Out
-              </button>
-            </div>
-
-            <div className="md:hidden flex items-center gap-2">
-              <ThemeToggle />
-              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white focus:outline-none">
-                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {mobileMenuOpen && (
-          <div className="md:hidden glass-surface border-b border-gray-200/60 dark:border-white/5">
-            <div className="px-2 pt-2 pb-3 space-y-1">
-              {navLinks.map((link) => {
-                const Icon = link.icon;
-                const isActive = pathname.startsWith(link.href);
-                return (
-                  <Link
-                    key={link.name}
-                    href={link.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-3 rounded-md text-base font-bold ${isActive ? 'bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
-                      }`}
-                  >
-                    <Icon className="w-5 h-5" />
-                    {link.name}
-                  </Link>
-                );
-              })}
-              <button onClick={() => signOut({ callbackUrl: '/' })} className="flex w-full items-center gap-3 px-3 py-3 rounded-md text-base font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
-                <LogOut className="w-5 h-5" /> Sign Out
-              </button>
-            </div>
-          </div>
-        )}
+          );
+        })}
       </nav>
 
-      <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10">
+      <div className={`mt-auto flex items-center gap-2.5 p-3 rounded-[10px] ${isAdmin ? 'bg-white/[0.05]' : 'bg-background'}`}>
+        <div className={`w-[34px] h-[34px] rounded-full flex items-center justify-center font-display font-bold text-[13px] shrink-0 ${
+          isEmployer ? 'bg-accent-500 text-[#032E1A] rounded-[9px]' : 'bg-primary-500 dark:bg-primary-400 text-white'
+        }`}>
+          {initials(session.user?.name)}
+        </div>
+        <div className="min-w-0">
+          <div className={`text-[13px] font-bold truncate ${isAdmin ? 'text-white' : 'text-foreground'}`}>{session.user?.name}</div>
+          {isEmployer ? (
+            <div className="text-[11.5px] font-semibold text-success truncate">{subline ? `● ${subline}` : '● Verified'}</div>
+          ) : (
+            <div className={`text-[11.5px] truncate ${isAdmin ? 'text-[#8B93A3]' : 'text-muted'}`}>
+              {isAdmin ? 'Super admin' : subline || ' '}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <button
+        onClick={() => signOut({ callbackUrl: '/' })}
+        className={`flex items-center gap-3 px-3 py-2.5 mt-2 rounded-lg text-sm font-semibold transition-colors ${
+          isAdmin ? 'text-[#9AA2B4] hover:bg-white/[0.08]' : 'text-muted hover:bg-surface-2'
+        }`}
+      >
+        <LogOut className="w-[18px] h-[18px]" /> Sign out
+      </button>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen flex bg-background text-foreground">
+      {/* DESKTOP SIDEBAR */}
+      <aside className="hidden md:flex w-[240px] shrink-0 border-r border-surface-border sticky top-0 h-screen">
+        {SidebarContent}
+      </aside>
+
+      {/* MOBILE TOP BAR */}
+      <div className={`md:hidden fixed top-0 left-0 right-0 z-20 flex items-center justify-between px-5 py-3.5 border-b ${isAdmin ? 'bg-[#0B1220] border-white/10' : 'glass-surface border-surface-border'}`}>
+        <div className="flex items-center gap-3">
+          <button onClick={() => setDrawerOpen(true)} className={`w-8 h-8 rounded-lg border-[1.5px] flex items-center justify-center ${isAdmin ? 'border-white/20 text-white' : 'border-surface-border text-foreground'}`}>
+            <Menu className="w-4 h-4" />
+          </button>
+          <span className={`font-display font-extrabold text-[15px] ${isAdmin ? 'text-white' : 'text-foreground'}`}>SIWES Finder</span>
+        </div>
+        <ThemeToggle />
+      </div>
+
+      {/* MOBILE DRAWER */}
+      {drawerOpen && (
+        <>
+          <div onClick={() => setDrawerOpen(false)} className="md:hidden fixed inset-0 z-40 bg-black/40" />
+          <div className="md:hidden fixed top-0 left-0 bottom-0 w-[240px] z-50 shadow-2xl">
+            <div className="relative h-full">
+              <button onClick={() => setDrawerOpen(false)} className={`absolute top-6 right-3 w-7 h-7 rounded-lg flex items-center justify-center ${isAdmin ? 'text-white' : 'text-foreground'}`}>
+                <X className="w-4 h-4" />
+              </button>
+              {SidebarContent}
+            </div>
+          </div>
+        </>
+      )}
+
+      <main className="flex-1 px-5 sm:px-8 lg:px-12 pt-20 md:pt-10 pb-12 max-w-[1120px] mx-auto w-full">
         {children}
       </main>
     </div>

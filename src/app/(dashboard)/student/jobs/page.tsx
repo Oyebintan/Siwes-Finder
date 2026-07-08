@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { MapPin, Briefcase, Clock, Building2, Search, Loader2 } from 'lucide-react';
+import { Search, Bookmark, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 type Job = {
   _id: string;
@@ -10,39 +10,45 @@ type Job = {
   location: string;
   type: string;
   duration: string;
-  description: string;
-  stipend?: string;
+  requirements?: string[];
   employerId?: { name?: string; companyName?: string; industry?: string };
 };
 
-const TYPES = ['All', 'On-site', 'Remote', 'Hybrid'] as const;
+const TYPE_CHIPS = ['All', 'On-site', 'Remote', 'Hybrid'] as const;
 
-export default function StudentJobBoard() {
+function initials(name?: string) {
+  if (!name) return '??';
+  return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('');
+}
+
+const TINTS = [
+  'bg-primary-500/10 dark:bg-primary-400/15 text-primary-500 dark:text-primary-400',
+  'bg-accent-500/10 text-accent-500',
+  'bg-warning-bg text-warning',
+  'bg-error-bg text-error',
+];
+
+export default function BrowseOpportunities() {
   const [query, setQuery] = useState('');
-  const [locationInput, setLocationInput] = useState('');
-  const [type, setType] = useState<(typeof TYPES)[number]>('All');
+  const [debouncedQ, setDebouncedQ] = useState('');
+  const [type, setType] = useState<(typeof TYPE_CHIPS)[number]>('All');
+  const [sort, setSort] = useState<'newest' | 'oldest'>('newest');
   const [page, setPage] = useState(1);
 
-  // Debounced copies of the free-text inputs so we don't fetch on every keystroke.
-  const [debouncedQ, setDebouncedQ] = useState('');
-  const [debouncedLoc, setDebouncedLoc] = useState('');
-
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const t = setTimeout(() => { setDebouncedQ(query); setDebouncedLoc(locationInput); setPage(1); }, 350);
+    const t = setTimeout(() => { setDebouncedQ(query); setPage(1); }, 350);
     return () => clearTimeout(t);
-  }, [query, locationInput]);
+  }, [query]);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    const params = new URLSearchParams({ page: String(page) });
+    const params = new URLSearchParams({ page: String(page), sort });
     if (debouncedQ) params.set('q', debouncedQ);
-    if (debouncedLoc) params.set('location', debouncedLoc);
     if (type !== 'All') params.set('type', type);
 
     fetch(`/api/jobs?${params.toString()}`)
@@ -50,114 +56,103 @@ export default function StudentJobBoard() {
       .then((data) => {
         if (cancelled) return;
         setJobs(data.jobs || []);
-        setTotal(data.total || 0);
         setTotalPages(data.totalPages || 1);
       })
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
-  }, [debouncedQ, debouncedLoc, type, page]);
+  }, [debouncedQ, type, sort, page]);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-fade-in-up">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">Job Board</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Discover and apply for SIWES placements from verified companies.</p>
-        </div>
-        <div className="relative w-full md:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+    <div className="space-y-6 animate-fade-in-up">
+      <h1 className="font-display font-extrabold text-[26px] tracking-[-0.02em]">Browse opportunities</h1>
+
+      <div className="flex gap-3 flex-wrap">
+        <div className="flex-1 min-w-[220px] flex items-center gap-2.5 bg-surface-1 border-[1.5px] border-surface-border rounded-[10px] px-4 py-3">
+          <Search className="w-4 h-4 text-muted shrink-0" />
           <input
-            type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search roles..."
-            className="w-full pl-10 pr-4 py-2 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-accent-400 focus:ring-1 focus:ring-accent-400 text-gray-900 dark:text-white outline-none transition-all text-sm"
+            placeholder="Search by role, company, or skill…"
+            className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted"
           />
         </div>
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as 'newest' | 'oldest')}
+          className="border-[1.5px] border-surface-border rounded-[10px] px-4 text-[13.5px] font-semibold bg-surface-1 text-foreground"
+        >
+          <option value="newest">Sort: Newest</option>
+          <option value="oldest">Sort: Oldest</option>
+        </select>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-        <div className="flex flex-wrap gap-2">
-          {TYPES.map((t) => (
-            <button
-              key={t}
-              onClick={() => { setType(t); setPage(1); }}
-              className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${type === t ? 'bg-gradient-to-r from-accent-700 to-accent-400 text-white shadow' : 'bg-surface-1 border border-surface-border text-gray-500 dark:text-gray-400 hover:border-accent-400/40'}`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-        <div className="relative sm:w-56">
-          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            value={locationInput}
-            onChange={(e) => setLocationInput(e.target.value)}
-            placeholder="Filter by location..."
-            className="w-full pl-10 pr-4 py-2 rounded-xl bg-gray-50 dark:bg-surface-2 border border-gray-200 dark:border-surface-border focus:border-accent-400 focus:ring-1 focus:ring-accent-400 text-gray-900 dark:text-white outline-none transition-all text-sm"
-          />
-        </div>
+      <div className="flex gap-2 flex-wrap overflow-x-auto">
+        {TYPE_CHIPS.map((t) => (
+          <button
+            key={t}
+            onClick={() => { setType(t); setPage(1); }}
+            className={`px-4 py-2 rounded-full text-[13px] font-bold whitespace-nowrap transition-colors ${
+              type === t ? 'bg-primary-500 dark:bg-primary-400 text-white' : 'bg-surface-1 border-[1.5px] border-surface-border text-foreground'
+            }`}
+          >
+            {t}
+          </button>
+        ))}
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-24"><Loader2 className="w-8 h-8 animate-spin text-accent-500" /></div>
+        <div className="flex justify-center py-24"><Loader2 className="w-8 h-8 animate-spin text-primary-500" /></div>
       ) : jobs.length === 0 ? (
-        <div className="text-center py-20 bg-surface-1 border border-surface-border rounded-3xl shadow-sm">
-          <Building2 className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
-          <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">No matching placements</h3>
-          <p className="text-gray-500 dark:text-gray-400">Try adjusting your search or filters.</p>
-        </div>
+        <div className="bg-surface-1 border border-surface-border rounded-[14px] p-14 text-center text-sm text-muted">No matching opportunities. Try adjusting your search or filters.</div>
       ) : (
-        <>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{total} placement{total === 1 ? '' : 's'} found</p>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {jobs.map((job) => (
-              <div key={job._id} className="group bg-surface-1 border border-surface-border hover:border-accent-400/40 shadow-sm rounded-2xl p-6 transition-all hover:shadow-md dark:hover:shadow-[0_0_24px_-10px_rgba(52,211,153,0.4)]">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white group-hover:text-accent-600 dark:group-hover:text-accent-300 transition-colors">{job.title}</h3>
-                    {(job.employerId?.companyName || job.employerId?.name) && (
-                      <p className="text-sm font-semibold text-accent-700 dark:text-accent-300 mt-0.5">{job.employerId?.companyName || job.employerId?.name}</p>
-                    )}
-                    <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
-                      <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" /> {job.location}</span>
-                      <span className="flex items-center gap-1.5"><Briefcase className="w-4 h-4" /> {job.type}</span>
-                      <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> {job.duration}</span>
-                    </div>
-                  </div>
-                  <div className="px-3 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 rounded-full text-xs font-bold shrink-0">
-                    Active
-                  </div>
+        <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]">
+          {jobs.map((job, i) => (
+            <Link
+              key={job._id}
+              href={`/student/jobs/${job._id}`}
+              className="bg-surface-1 rounded-[14px] p-5 border border-surface-border hover:border-primary-500 transition-colors"
+            >
+              <div className="flex items-center gap-2.5 mb-3.5">
+                <div className={`w-[38px] h-[38px] rounded-[9px] flex items-center justify-center font-display font-extrabold text-[12.5px] shrink-0 ${TINTS[i % TINTS.length]}`}>
+                  {initials(job.employerId?.companyName || job.employerId?.name)}
                 </div>
-
-                <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mb-6">{job.description}</p>
-
-                <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-surface-border">
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    {job.stipend && job.stipend !== 'Unpaid' ? job.stipend : <span className="text-gray-400 dark:text-gray-500 font-normal">Unpaid</span>}
-                  </span>
-                  <Link
-                    href={`/student/jobs/${job._id}`}
-                    className="px-5 py-2 rounded-xl bg-gray-50 dark:bg-surface-2 hover:bg-gradient-to-r hover:from-accent-700 hover:to-accent-400 hover:text-white text-gray-700 dark:text-gray-200 text-sm font-bold transition-all"
-                  >
-                    View Details
-                  </Link>
+                <div className="flex-1 min-w-0">
+                  <div className="font-display font-bold text-[15px] truncate">{job.title}</div>
+                  <div className="text-xs text-muted truncate">{job.employerId?.companyName || job.employerId?.name} · {job.location}</div>
                 </div>
+                <Bookmark className="w-[18px] h-[18px] text-muted shrink-0" />
               </div>
-            ))}
-          </div>
+              <div className="flex gap-2 flex-wrap mb-3.5">
+                {(job.requirements || []).slice(0, 1).map((r) => (
+                  <span key={r} className="text-[11.5px] px-2.5 py-1 rounded-full bg-background text-muted">{r}</span>
+                ))}
+                <span className="text-[11.5px] px-2.5 py-1 rounded-full bg-background text-muted">{job.duration}</span>
+              </div>
+              <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-success-bg text-success">● Verified</span>
+            </Link>
+          ))}
+        </div>
+      )}
 
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-4 pt-2">
-              <button onClick={() => setPage((p) => p - 1)} disabled={page <= 1} className="px-4 py-2 rounded-xl bg-surface-1 border border-surface-border font-bold text-sm disabled:opacity-40 hover:border-accent-400/40 transition-all">Previous</button>
-              <span className="text-sm text-gray-500 dark:text-gray-400">Page {page} of {totalPages}</span>
-              <button onClick={() => setPage((p) => p + 1)} disabled={page >= totalPages} className="px-4 py-2 rounded-xl bg-surface-1 border border-surface-border font-bold text-sm disabled:opacity-40 hover:border-accent-400/40 transition-all">Next</button>
-            </div>
-          )}
-        </>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-1.5 pt-4">
+          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} className="w-[34px] h-[34px] rounded-lg border border-surface-border bg-surface-1 flex items-center justify-center text-muted disabled:opacity-40">
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).slice(0, 5).map((n) => (
+            <button
+              key={n}
+              onClick={() => setPage(n)}
+              className={`w-[34px] h-[34px] rounded-lg text-[13px] font-bold ${n === page ? 'bg-primary-500 dark:bg-primary-400 text-white' : 'border border-surface-border bg-surface-1 text-foreground'}`}
+            >
+              {n}
+            </button>
+          ))}
+          <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="w-[34px] h-[34px] rounded-lg border border-surface-border bg-surface-1 flex items-center justify-center text-muted disabled:opacity-40">
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
       )}
     </div>
   );

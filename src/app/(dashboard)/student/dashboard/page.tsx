@@ -5,91 +5,186 @@ import Job from "@/models/Job";
 import Application from "@/models/Application";
 import User from "@/models/User";
 import Link from "next/link";
-import { Briefcase, FileText, CheckCircle, XCircle } from "lucide-react";
+import { Search, CheckCircle2, UploadCloud, Building2 } from "lucide-react";
+
+function initials(name?: string) {
+  if (!name) return '??';
+  return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('');
+}
+
+const STATUS_STYLE: Record<string, string> = {
+  Pending: 'bg-warning-bg text-warning',
+  Accepted: 'bg-success-bg text-success',
+  Rejected: 'bg-error-bg text-error',
+};
+const STATUS_LABEL: Record<string, string> = {
+  Pending: 'Under review',
+  Accepted: 'Accepted',
+  Rejected: 'Not selected',
+};
 
 export default async function StudentDashboard() {
   const session = await getServerSession(authOptions);
   await connectToDatabase();
 
-  const [availableJobsCount, applicationsCount, acceptedCount, user] = await Promise.all([
+  const userId = session!.user.id;
+  const [availableJobsCount, applicationsCount, pendingCount, acceptedCount, user, recentApps, recommended] = await Promise.all([
     Job.countDocuments({ isActive: true }),
-    Application.countDocuments({ student: session!.user.id }),
-    Application.countDocuments({ student: session!.user.id, status: 'Accepted' }),
-    User.findById(session!.user.id).select('university courseOfStudy resumeUrl'),
+    Application.countDocuments({ student: userId }),
+    Application.countDocuments({ student: userId, status: 'Pending' }),
+    Application.countDocuments({ student: userId, status: 'Accepted' }),
+    User.findById(userId).select('name university courseOfStudy resumeUrl skills'),
+    Application.find({ student: userId })
+      .populate({ path: 'job', select: 'title employerId', populate: { path: 'employerId', select: 'companyName name' } })
+      .sort({ createdAt: -1 })
+      .limit(3),
+    Job.find({ isActive: true }).populate('employerId', 'companyName name').sort({ createdAt: -1 }).limit(2),
   ]);
 
-  const hasUniversity = Boolean(user?.university);
+  const hasAcademic = Boolean(user?.university && user?.courseOfStudy);
   const hasResume = Boolean(user?.resumeUrl);
+  const hasSkills = Boolean(user?.skills && user.skills.length > 0);
+  const hasApplied = applicationsCount > 0;
+  const completedSteps = [hasAcademic, hasResume, hasSkills, hasApplied].filter(Boolean).length;
+  const progressPct = completedSteps * 25;
+
+  const circumference = 2 * Math.PI * 32;
+  const dashOffset = circumference * (1 - progressPct / 100);
+
+  const firstName = session?.user?.name?.split(' ')[0] || 'there';
 
   return (
-    <div className="space-y-10 animate-fade-in-up">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div className="space-y-6 animate-fade-in-up">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">Welcome, {session?.user?.name}</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Here is an overview of your SIWES placement journey.</p>
+          <h1 className="font-display font-extrabold text-[26px] tracking-[-0.02em] mb-1">Welcome back, {firstName} 👋</h1>
+          <div className="text-sm text-muted">Here&apos;s where your SIWES search stands today.</div>
         </div>
-        <Link href="/student/jobs" className="px-6 py-3 rounded-xl bg-gradient-to-r from-accent-700 to-accent-400 text-white font-bold shadow-lg shadow-accent-900/30 hover:shadow-xl hover:brightness-110 hover:-translate-y-0.5 transition-all">
-          Find Placements
+        <Link href="/student/jobs" className="bg-primary-500 dark:bg-primary-400 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-primary-900/20 hover:brightness-110 transition-all">
+          Find opportunities
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard icon={Briefcase} label="Available IT Slots" value={availableJobsCount} />
-        <StatCard icon={FileText} label="My Applications" value={applicationsCount} />
-        <StatCard icon={CheckCircle} label="Offers Received" value={acceptedCount} />
+      {/* Hero progress banner */}
+      <div className="relative overflow-hidden rounded-[18px] p-7 flex items-center gap-7 flex-wrap bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-400 dark:to-[#4B3FD8]">
+        <div className="pointer-events-none absolute -top-16 -right-10 w-[220px] h-[220px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.14), transparent 70%)' }} />
+        <div className="relative w-[76px] h-[76px] shrink-0">
+          <svg width="76" height="76" viewBox="0 0 76 76">
+            <circle cx="38" cy="38" r="32" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="8" />
+            <circle
+              cx="38" cy="38" r="32" fill="none" stroke="#fff" strokeWidth="8"
+              strokeDasharray={circumference} strokeDashoffset={dashOffset}
+              strokeLinecap="round" transform="rotate(-90 38 38)"
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center font-display font-extrabold text-[15px] text-white">{progressPct}%</div>
+        </div>
+        <div className="flex-1 min-w-[200px] relative">
+          <div className="font-display font-bold text-[16px] text-white mb-1">Placement progress</div>
+          <div className="text-[13.5px] text-white/80">
+            {hasApplied
+              ? `${applicationsCount} application${applicationsCount === 1 ? '' : 's'} submitted. ${!hasResume ? 'Add a resume to boost your match score.' : 'Keep your profile fresh to stay competitive.'}`
+              : 'Complete your profile and submit your first application.'}
+          </div>
+        </div>
+        <Link href="/student/profile" className="relative text-[13.5px] font-bold text-white bg-white/[0.14] px-4 py-2.5 rounded-lg whitespace-nowrap">
+          Complete profile →
+        </Link>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-4">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white">Recent Applications</h3>
-          <div className="p-10 rounded-3xl bg-surface-1 border border-surface-border shadow-sm text-center">
-            <div className="w-14 h-14 rounded-2xl bg-accent-100 dark:bg-accent-500/10 flex items-center justify-center mx-auto mb-5">
-              <FileText className="w-7 h-7 text-accent-600 dark:text-accent-300" />
+      {/* KPI row */}
+      <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]">
+        <Kpi value={applicationsCount} label="Applications sent" />
+        <Kpi value={pendingCount} label="Under review" tone="warning" />
+        <Kpi value={acceptedCount} label="Offers received" tone="success" />
+        <Kpi value={availableJobsCount} label="Open opportunities" />
+      </div>
+
+      {/* Quick actions */}
+      <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
+        <QuickAction href="/student/jobs" icon={Search} label="Search opportunities" tint="primary" />
+        <QuickAction href="/student/applications" icon={CheckCircle2} label="Track applications" tint="accent" />
+        <QuickAction href="/student/profile" icon={UploadCloud} label="Upload resume" tint="warning" />
+      </div>
+
+      {/* Recommended */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <div className="font-display font-bold text-[17px]">Recommended for you</div>
+          <Link href="/student/jobs" className="text-[13.5px] font-bold">See all →</Link>
+        </div>
+        {recommended.length === 0 ? (
+          <div className="bg-surface-1 rounded-2xl border border-surface-border p-8 text-center text-sm text-muted">No opportunities available yet — check back soon.</div>
+        ) : (
+          <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]">
+            {recommended.map((job: any) => (
+              <Link key={job._id.toString()} href={`/student/jobs/${job._id}`} className="bg-surface-1 rounded-[14px] p-5 border border-surface-border hover:border-primary-500 transition-colors">
+                <div className="flex items-center gap-2.5 mb-3.5">
+                  <div className="w-9 h-9 rounded-[9px] bg-primary-500/10 dark:bg-primary-400/15 flex items-center justify-center font-display font-extrabold text-primary-500 dark:text-primary-400 text-[12px]">
+                    {initials(job.employerId?.companyName || job.employerId?.name)}
+                  </div>
+                  <span className="ml-auto text-[11px] font-bold px-2.5 py-1 rounded-full bg-success-bg text-success">● Verified</span>
+                </div>
+                <div className="font-display font-bold text-[15px] mb-1">{job.title}</div>
+                <div className="text-[12.5px] text-muted">{job.employerId?.companyName || job.employerId?.name} · {job.location} · {job.duration}</div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Recent applications */}
+      <div>
+        <div className="font-display font-bold text-[17px] mb-4">Recent applications</div>
+        {recentApps.length === 0 ? (
+          <div className="bg-surface-1 rounded-2xl border border-surface-border p-10 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-primary-500/10 dark:bg-primary-400/15 flex items-center justify-center mx-auto mb-4">
+              <Building2 className="w-7 h-7 text-primary-500 dark:text-primary-400" />
             </div>
-            <p className="text-gray-500 dark:text-gray-400 font-medium">
-              {applicationsCount === 0 ? "You haven't applied to any IT placements yet." : `You have ${applicationsCount} active application${applicationsCount === 1 ? '' : 's'}.`}
-            </p>
-            <Link href="/student/applications" className="text-accent-600 dark:text-accent-300 hover:text-accent-500 dark:hover:text-accent-200 font-bold mt-3 inline-block">
-              View all applications &rarr;
-            </Link>
+            <p className="text-muted font-medium">You haven&apos;t applied to any placements yet.</p>
+            <Link href="/student/jobs" className="text-primary-500 dark:text-primary-400 font-bold mt-2 inline-block">Browse opportunities →</Link>
           </div>
-        </div>
-
-        <div className="space-y-4">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white">Profile Status</h3>
-          <div className="p-6 rounded-3xl bg-surface-1 border border-surface-border shadow-sm flex flex-col gap-1">
-            <ChecklistRow label="Basic Info" done />
-            <ChecklistRow label="University Details" done={hasUniversity} />
-            <ChecklistRow label="IT Letter / Resume" done={hasResume} />
-            <Link href="/student/profile" className="mt-5 w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-gradient-to-r from-accent-700 to-accent-400 text-white text-sm font-bold hover:brightness-110 transition-all">
-              Complete Profile
-            </Link>
+        ) : (
+          <div className="bg-surface-1 rounded-[14px] border border-surface-border overflow-hidden">
+            {recentApps.map((app: any, i: number) => (
+              <div key={app._id.toString()} className={`flex items-center gap-3 px-5 py-4 flex-wrap ${i < recentApps.length - 1 ? 'border-b border-surface-border' : ''}`}>
+                <div className="flex-1 text-sm font-semibold">
+                  {app.job?.title || 'Untitled role'} — {app.job?.employerId?.companyName || app.job?.employerId?.name || 'Unknown company'}
+                </div>
+                <span className={`text-[11.5px] font-bold px-3 py-1 rounded-full ${STATUS_STYLE[app.status] || 'bg-surface-2 text-muted'}`}>
+                  {STATUS_LABEL[app.status] || app.status}
+                </span>
+              </div>
+            ))}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
 }
 
-function StatCard({ icon: Icon, label, value }: { icon: any; label: string; value: number }) {
+function Kpi({ value, label, tone }: { value: number | string; label: string; tone?: 'warning' | 'success' }) {
+  const color = tone === 'warning' ? 'text-warning' : tone === 'success' ? 'text-success' : 'text-foreground';
   return (
-    <div className="p-6 rounded-2xl bg-surface-1 border border-surface-border shadow-sm hover:border-accent-400/40 hover:shadow-md dark:hover:shadow-[0_0_24px_-8px_rgba(52,211,153,0.35)] transition-all">
-      <div className="flex items-center gap-3 mb-5">
-        <div className="p-2.5 rounded-xl bg-accent-100 dark:bg-accent-500/10">
-          <Icon className="w-5 h-5 text-accent-600 dark:text-accent-300" />
-        </div>
-        <h3 className="font-bold text-sm text-gray-500 dark:text-gray-400">{label}</h3>
-      </div>
-      <p className="text-4xl font-extrabold text-accent-600 dark:text-accent-200">{value}</p>
+    <div className="glass-card bg-surface-1 rounded-[14px] p-4">
+      <div className={`font-mono font-bold text-[22px] ${color}`}>{value}</div>
+      <div className="text-xs text-muted mt-0.5">{label}</div>
     </div>
   );
 }
 
-function ChecklistRow({ label, done }: { label: string; done: boolean }) {
+function QuickAction({ href, icon: Icon, label, tint }: { href: string; icon: any; label: string; tint: 'primary' | 'accent' | 'warning' }) {
+  const tintClasses = {
+    primary: 'bg-primary-500/10 dark:bg-primary-400/15 text-primary-500 dark:text-primary-400',
+    accent: 'bg-accent-500/10 text-accent-500',
+    warning: 'bg-warning-bg text-warning',
+  }[tint];
   return (
-    <div className="flex items-center justify-between py-2.5">
-      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</span>
-      {done ? <CheckCircle className="w-5 h-5 text-accent-500" /> : <XCircle className="w-5 h-5 text-red-500/80" />}
-    </div>
+    <Link href={href} className="bg-surface-1 border border-surface-border rounded-[14px] p-[18px] flex items-center gap-3 hover:border-primary-500/40 transition-colors">
+      <div className={`w-[38px] h-[38px] rounded-[10px] flex items-center justify-center shrink-0 ${tintClasses}`}>
+        <Icon className="w-[18px] h-[18px]" />
+      </div>
+      <div className="text-[13.5px] font-bold">{label}</div>
+    </Link>
   );
 }

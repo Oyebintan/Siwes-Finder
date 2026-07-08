@@ -105,6 +105,7 @@ export async function GET(req: Request) {
     const location = (searchParams.get('location') || '').trim();
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '12', 10) || 12));
+    const sort = (searchParams.get('sort') || 'newest').trim();
 
     const approvedEmployerIds = await User.find({
       role: 'employer',
@@ -129,7 +130,7 @@ export async function GET(req: Request) {
     const total = await Job.countDocuments(filter);
     const jobs = await Job.find(filter)
       .populate('employerId', 'name companyName industry')
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: sort === 'oldest' ? 1 : -1 })
       .skip((page - 1) * limit)
       .limit(limit);
 
