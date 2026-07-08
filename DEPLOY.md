@@ -5,12 +5,22 @@ verified locally). `vercel login` and `vercel link` need an interactive
 browser session (or a personal access token) tied to your own Vercel
 account, so the steps below are for you to run.
 
+**Current state:** already deployed and live at
+https://siwes-finder-eight.vercel.app (project `siwes-finder` under the
+`oyebintans-projects` Vercel team). The GitHub repo is connected via
+`vercel git connect`, so **pushes to `main` now deploy automatically** —
+you generally won't need to run `vercel --prod` by hand anymore. The steps
+below are for re-linking from scratch (e.g. a new machine or a fresh
+Vercel project) or as a reference for what's already configured.
+
 ## 1. One-time setup
 
 ```bash
 npm install -g vercel   # or use `npx vercel` for every command below
 vercel login            # or: export VERCEL_TOKEN=<your token>
 vercel link             # run from the repo root; creates/links the Vercel project
+                         # non-interactively: vercel link --yes --scope <team> --project <name>
+vercel git connect https://github.com/<owner>/<repo>.git   # enables auto-deploy on push to main
 ```
 
 ## 2. Set environment variables
@@ -42,7 +52,7 @@ storage when `BLOB_READ_WRITE_TOKEN` is present — you just need to connect a
 store so Vercel injects that variable:
 
 ```bash
-vercel blob store add   # from the repo root, after `vercel link`
+vercel blob create-store <name> --access public --environment production
 ```
 
 Or via the dashboard: Project → Storage → Create Database → Blob. Either way,
