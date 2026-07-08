@@ -66,6 +66,13 @@ export async function POST(req: Request) {
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
     const filename = `${spec.prefix}-${uniqueSuffix}.pdf`;
 
+    // KNOWN PRODUCTION GAP: Vercel's serverless functions have a read-only
+    // filesystem outside /tmp, and /tmp itself doesn't persist or get served
+    // as a static asset across invocations. Writing to public/uploads works
+    // in local dev only — on Vercel this call will throw (or silently write
+    // to a file no later request/deploy can see). Before relying on uploads
+    // in production, swap this for a persistent object store (e.g. Vercel
+    // Blob, S3) and store the returned URL instead of a local path.
     const uploadDir = path.join(process.cwd(), 'public/uploads');
     await mkdir(uploadDir, { recursive: true });
 
