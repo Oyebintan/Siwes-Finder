@@ -8,13 +8,15 @@ if (!MONGODB_URI) {
   );
 }
 
+type MongooseCache = { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null };
+
+declare global {
+  var mongoose: MongooseCache | undefined;
+}
+
 // In Next.js in development, we want to cache the connection
 // to avoid creating multiple connections during hot reloading.
-let cached = (global as any).mongoose;
-
-if (!cached) {
-  cached = (global as any).mongoose = { conn: null, promise: null };
-}
+const cached: MongooseCache = global.mongoose ?? (global.mongoose = { conn: null, promise: null });
 
 async function connectToDatabase() {
   if (cached.conn) {

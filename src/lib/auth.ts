@@ -82,7 +82,7 @@ export const authOptions: AuthOptions = {
             role: isAdminEmail(user.email) ? "admin" : "unassigned",
           });
           user.id = newUser._id.toString();
-          (user as any).role = newUser.role;
+          user.role = newUser.role;
         } else {
           // Promote allowlisted emails to admin on sign-in.
           if (isAdminEmail(existingUser.email) && existingUser.role !== "admin") {
@@ -90,7 +90,7 @@ export const authOptions: AuthOptions = {
             await existingUser.save();
           }
           user.id = existingUser._id.toString();
-          (user as any).role = existingUser.role;
+          user.role = existingUser.role;
         }
       }
       return true;
@@ -98,7 +98,7 @@ export const authOptions: AuthOptions = {
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
-        token.role = (user as any).role;
+        token.role = user.role;
       }
       if (trigger === "update" && session?.role) {
         token.role = session.role;

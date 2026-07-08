@@ -40,6 +40,8 @@ export default function AdminUsersPage() {
     }
   }, [role, page]);
 
+  // `load` sets loading state before fetching; that's the intended fetch-on-mount/dependency-change pattern.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
 
   async function remove(id: string, name: string) {

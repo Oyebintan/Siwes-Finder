@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ message: 'Role updated successfully', role }, { status: 200 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

@@ -46,6 +46,7 @@ export default function BrowseOpportunities() {
 
   useEffect(() => {
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), sort });
     if (debouncedQ) params.set('q', debouncedQ);

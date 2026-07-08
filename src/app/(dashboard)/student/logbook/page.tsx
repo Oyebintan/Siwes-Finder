@@ -31,14 +31,15 @@ export default function StudentLogbook() {
       if (!res.ok) throw new Error('Failed to fetch logbook');
       const data = await res.json();
       setLogs(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch logbook');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchLogs();
   }, []);
 
@@ -66,8 +67,8 @@ export default function StudentLogbook() {
 
       setDesc('');
       fetchLogs();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to submit log');
     } finally {
       setSubmitting(false);
     }

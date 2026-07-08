@@ -2,10 +2,10 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import Application from "@/models/Application";
-import EmployerApplicationCard from "@/components/EmployerApplicationCard";
+import EmployerApplicationCard, { type EmployerApplication } from "@/components/EmployerApplicationCard";
 import { UserCheck } from "lucide-react";
 
-async function getEmployerApplications(employerId: string) {
+async function getEmployerApplications(employerId: string): Promise<EmployerApplication[]> {
   await connectToDatabase();
   const apps = await Application.find({ employer: employerId })
     .populate('job', 'title')
@@ -33,7 +33,7 @@ export default async function EmployerApplications() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {applications.map((app: any) => (
+          {applications.map((app) => (
             <EmployerApplicationCard key={app._id} app={app} />
           ))}
         </div>

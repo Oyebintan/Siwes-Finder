@@ -77,8 +77,8 @@ export default function ApplyButton({
       }
       setSuccess(true);
       router.refresh();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to apply');
     } finally {
       setLoading(false);
     }

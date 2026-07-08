@@ -7,6 +7,14 @@ import Link from "next/link";
 import { ShieldCheck, ShieldX } from "lucide-react";
 import { redirect } from "next/navigation";
 
+type PendingCompany = { _id: { toString(): string }; name: string; companyName?: string; createdAt: string | Date };
+type RecentJob = {
+  _id: { toString(): string };
+  title: string;
+  isActive: boolean;
+  employerId?: { name?: string; companyName?: string };
+};
+
 export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== "admin") redirect("/login");
@@ -43,7 +51,7 @@ export default async function AdminDashboard() {
           <div className="bg-surface-1 rounded-2xl border border-surface-border p-8 text-center text-sm text-muted">No companies awaiting review.</div>
         ) : (
           <div className="bg-surface-1 rounded-2xl border border-surface-border overflow-hidden">
-            {pendingCompanies.map((c: any, i: number) => (
+            {pendingCompanies.map((c: PendingCompany, i: number) => (
               <div key={c._id.toString()} className={`flex items-center gap-3.5 px-5 py-4 flex-wrap ${i < pendingCompanies.length - 1 ? 'border-b border-surface-border' : ''}`}>
                 <div className="w-[34px] h-[34px] rounded-[9px] bg-primary-500/10 dark:bg-primary-400/15 flex items-center justify-center font-display font-extrabold text-primary-500 dark:text-primary-400 text-xs shrink-0">
                   {initials(c.companyName || c.name)}
@@ -64,7 +72,7 @@ export default async function AdminDashboard() {
           <div className="bg-surface-1 rounded-2xl border border-surface-border p-8 text-center text-sm text-muted">No listings yet.</div>
         ) : (
           <div className="bg-surface-1 rounded-2xl border border-surface-border overflow-hidden">
-            {recentJobs.map((j: any, i: number) => (
+            {recentJobs.map((j: RecentJob, i: number) => (
               <div key={j._id.toString()} className={`flex items-center gap-3 px-5 py-4 flex-wrap ${i < recentJobs.length - 1 ? 'border-b border-surface-border' : ''}`}>
                 <div className="flex-1 text-sm font-semibold min-w-[160px]">{j.title} <span className="text-muted font-normal">— {j.employerId?.companyName || j.employerId?.name || 'Unknown'}</span></div>
                 <span className={`text-[11.5px] font-bold px-3 py-1 rounded-full flex items-center gap-1 ${j.isActive ? 'bg-success-bg text-success' : 'bg-surface-2 text-muted'}`}>

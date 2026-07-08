@@ -22,7 +22,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       return NextResponse.json({ error: 'Job not found' }, { status: 404 });
     }
 
-    const employer = job.employerId as any;
+    const employer = job.employerId as unknown as {
+      _id?: { toString(): string };
+      verificationStatus?: string;
+    } | null;
     const isOwner = employer?._id?.toString() === session.user.id;
     const isAdmin = session.user.role === 'admin';
     if (!isOwner && !isAdmin) {
@@ -57,7 +60,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     const editable = ['title', 'location', 'type', 'duration', 'requirements', 'description', 'stipend', 'isActive'] as const;
     for (const field of editable) {
-      if (body[field] !== undefined) (job as any)[field] = body[field];
+      if (body[field] !== undefined) job.set(field, body[field]);
     }
 
     // Re-validate application method if it's being changed.

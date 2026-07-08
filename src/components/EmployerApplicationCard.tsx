@@ -4,7 +4,21 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CheckCircle, XCircle, FileText, User, MapPin } from 'lucide-react';
 
-export default function EmployerApplicationCard({ app }: { app: any }) {
+export type EmployerApplication = {
+  _id: string;
+  status: 'Pending' | 'Accepted' | 'Rejected';
+  createdAt: string;
+  job: { title: string };
+  student: {
+    name: string;
+    email: string;
+    university?: string;
+    courseOfStudy?: string;
+    resumeUrl?: string;
+  };
+};
+
+export default function EmployerApplicationCard({ app }: { app: EmployerApplication }) {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(app.status);
   const router = useRouter();

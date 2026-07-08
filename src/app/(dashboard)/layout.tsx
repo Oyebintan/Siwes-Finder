@@ -5,12 +5,12 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Loader2, LogOut, LayoutDashboard, Briefcase, FileText, User, BookOpen,
-  Menu, X, Search, ShieldCheck, Users, Plus, Building2,
+  Menu, X, Search, ShieldCheck, Users, Plus, Building2, type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
-type NavItem = { name: string; href: string; icon: any };
+type NavItem = { name: string; href: string; icon: LucideIcon };
 
 const STUDENT_NAV: NavItem[] = [
   { name: 'Dashboard', href: '/student/dashboard', icon: LayoutDashboard },
@@ -56,6 +56,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [status, role, router]);
 
   useEffect(() => {
+    // Close the mobile drawer on every route change.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDrawerOpen(false);
   }, [pathname]);
 

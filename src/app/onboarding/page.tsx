@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Loader2, GraduationCap, Building2 } from 'lucide-react';
 
 export default function Onboarding() {
-  const { data: session, update } = useSession();
+  const { update } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -23,8 +23,8 @@ export default function Onboarding() {
       if (!res.ok) throw new Error('Failed to update role');
       await update({ role });
       router.push(role === 'student' ? '/profile-setup' : '/employer/dashboard');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update role');
       setLoading(false);
     }
   };

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Loader2, CheckCircle2, Clock } from 'lucide-react';
+import { Loader2, CheckCircle2 } from 'lucide-react';
 
 interface LogbookEntry {
   _id: string;
@@ -29,14 +29,15 @@ export default function EmployerLogbook() {
       if (!res.ok) throw new Error('Failed to fetch logbooks');
       const data = await res.json();
       setLogs(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch logbooks');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchLogs();
   }, []);
 
@@ -46,8 +47,8 @@ export default function EmployerLogbook() {
       const res = await fetch(`/api/logbook/${id}`, { method: 'PUT' });
       if (!res.ok) throw new Error('Failed to approve');
       fetchLogs();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to approve');
     } finally {
       setApprovingId(null);
     }

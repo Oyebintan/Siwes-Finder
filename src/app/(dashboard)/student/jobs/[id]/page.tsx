@@ -1,6 +1,5 @@
 import { connectToDatabase } from "@/lib/mongodb";
 import Job from "@/models/Job";
-import User from "@/models/User";
 import Link from "next/link";
 import { Bookmark, ShieldCheck } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -17,13 +16,15 @@ function initials(name?: string) {
   return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('');
 }
 
+type RelatedJob = { _id: string; title: string; location: string; employerId?: { companyName?: string; name?: string } };
+
 async function getJob(id: string) {
   try {
     await connectToDatabase();
     const job = await Job.findById(id).populate('employerId', 'name companyName industry verificationStatus');
     if (!job) return null;
 
-    const employer = job.employerId as any;
+    const employer = job.employerId as unknown as { verificationStatus?: string } | null;
     if (!job.isActive || employer?.verificationStatus !== 'approved') return null;
 
     const related = await Job.find({
@@ -33,7 +34,7 @@ async function getJob(id: string) {
       .sort({ createdAt: -1 })
       .limit(6);
 
-    const relatedVisible = related.filter((r: any) => r.employerId).slice(0, 2);
+    const relatedVisible = related.filter((r) => r.employerId).slice(0, 2);
 
     return { job: JSON.parse(JSON.stringify(job)), related: JSON.parse(JSON.stringify(relatedVisible)) };
   } catch {
@@ -103,7 +104,7 @@ export default async function JobDetails({ params }: { params: Promise<{ id: str
             <section className="bg-surface-1 rounded-2xl border border-surface-border p-7">
               <div className="font-display font-bold text-base mb-3.5">Related opportunities</div>
               <div className="flex flex-col gap-px bg-surface-border rounded-xl overflow-hidden">
-                {related.map((r: any) => (
+                {related.map((r: RelatedJob) => (
                   <Link key={r._id} href={`/student/jobs/${r._id}`} className="bg-surface-1 px-4 py-3.5 flex justify-between gap-3 text-sm">
                     <span className="font-semibold">{r.title} — {r.employerId?.companyName || r.employerId?.name}</span>
                     <span className="text-muted whitespace-nowrap">{r.location}</span>
