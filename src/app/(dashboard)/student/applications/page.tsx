@@ -28,7 +28,14 @@ const STATUS_LABEL: Record<string, string> = {
   Rejected: 'Not selected',
 };
 
-async function getApplications(studentId: string) {
+type StudentApplication = {
+  _id: string;
+  status: 'Pending' | 'Accepted' | 'Rejected';
+  updatedAt: string;
+  job?: { title?: string; location?: string; employerId?: { companyName?: string; name?: string } };
+};
+
+async function getApplications(studentId: string): Promise<StudentApplication[]> {
   await connectToDatabase();
   const apps = await Application.find({ student: studentId })
     .populate({ path: 'job', select: 'title location', populate: { path: 'employerId', select: 'companyName name' } })
@@ -41,9 +48,9 @@ export default async function StudentApplications() {
   const applications = await getApplications(session!.user.id);
 
   const total = applications.length;
-  const underReview = applications.filter((a: any) => a.status === 'Pending').length;
-  const accepted = applications.filter((a: any) => a.status === 'Accepted').length;
-  const rejected = applications.filter((a: any) => a.status === 'Rejected').length;
+  const underReview = applications.filter((a) => a.status === 'Pending').length;
+  const accepted = applications.filter((a) => a.status === 'Accepted').length;
+  const rejected = applications.filter((a) => a.status === 'Rejected').length;
 
   return (
     <div className="max-w-[900px] mx-auto space-y-8 animate-fade-in-up">
@@ -67,7 +74,7 @@ export default async function StudentApplications() {
         </div>
       ) : (
         <div className="space-y-4">
-          {applications.map((app: any, i: number) => {
+          {applications.map((app, i: number) => {
             const companyName = app.job?.employerId?.companyName || app.job?.employerId?.name || 'Unknown company';
             return (
               <div key={app._id} className="bg-surface-1 rounded-2xl border border-surface-border p-6">

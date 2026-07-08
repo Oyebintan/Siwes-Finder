@@ -4,7 +4,6 @@ import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Logbook from '@/models/Logbook';
 import Application from '@/models/Application';
-import User from '@/models/User';
 
 export async function POST(req: Request) {
   try {
@@ -43,7 +42,7 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

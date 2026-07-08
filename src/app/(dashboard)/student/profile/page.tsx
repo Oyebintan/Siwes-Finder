@@ -99,8 +99,8 @@ export default function StudentProfile() {
       if (!res.ok) throw new Error('Failed to update profile');
 
       setSuccess(true);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update profile');
     } finally {
       setSaving(false);
       setUploading(false);

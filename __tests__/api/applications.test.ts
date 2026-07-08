@@ -116,13 +116,13 @@ describe('GET /api/applications', () => {
 
   it('rejects unauthenticated requests', async () => {
     (getServerSession as any).mockResolvedValue(null);
-    const res = await GET(new Request('http://localhost/api/applications'));
+    const res = await GET();
     expect(res.status).toBe(401);
   });
 
   it('returns the invalid-role error for a session with no recognized role', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'u1', role: 'admin' } });
-    const res = await GET(new Request('http://localhost/api/applications'));
+    const res = await GET();
     expect(res.status).toBe(400);
   });
 
@@ -132,7 +132,7 @@ describe('GET /api/applications', () => {
     const populate = vi.fn().mockReturnValue({ sort });
     (Application.find as any).mockReturnValue({ populate });
 
-    const res = await GET(new Request('http://localhost/api/applications'));
+    const res = await GET();
     const data = await res.json();
 
     expect(Application.find).toHaveBeenCalledWith({ student: 'stu1' });

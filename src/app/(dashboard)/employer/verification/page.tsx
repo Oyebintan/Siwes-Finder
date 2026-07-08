@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Loader2, ShieldCheck, Clock, ShieldX, UploadCloud, FileText } from 'lucide-react';
+import { Loader2, ShieldCheck, Clock, ShieldX, UploadCloud, FileText, type LucideIcon } from 'lucide-react';
 
 type Verification = {
   companyName?: string;
@@ -159,7 +159,7 @@ function Field({ label, value, onChange, type = 'text', required }: { label: str
   );
 }
 
-function Banner({ tone, icon: Icon, title, desc }: { tone: 'success' | 'pending' | 'error'; icon: any; title: string; desc: string }) {
+function Banner({ tone, icon: Icon, title, desc }: { tone: 'success' | 'pending' | 'error'; icon: LucideIcon; title: string; desc: string }) {
   const tones = {
     success: 'bg-accent-100 dark:bg-accent-500/10 text-accent-700 dark:text-accent-300 border-accent-400/40',
     pending: 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-400/40',

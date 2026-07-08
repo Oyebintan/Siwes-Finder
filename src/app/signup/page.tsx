@@ -72,8 +72,8 @@ export default function Signup() {
       if (signInRes?.error) throw new Error(signInRes.error || 'Failed to auto-login. Please log in manually.');
 
       router.push(isStudent ? '/profile-setup' : '/login-redirect');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong');
       setLoading(false);
     }
   };

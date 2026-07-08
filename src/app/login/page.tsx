@@ -59,8 +59,8 @@ export default function Login() {
       const res = await signIn('credentials', { email, password, redirect: false });
       if (res?.error) throw new Error(res.error);
       router.push('/login-redirect');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to log in');
       setLoading(false);
     }
   };

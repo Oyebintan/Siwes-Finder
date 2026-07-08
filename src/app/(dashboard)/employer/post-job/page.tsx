@@ -76,8 +76,8 @@ export default function EmployerPostJob() {
       }
 
       router.push('/employer/dashboard');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to post job');
       setLoading(false);
     }
   };
@@ -114,7 +114,7 @@ export default function EmployerPostJob() {
                   <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Lagos, Nigeria" className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[14.5px] focus:outline-none focus:border-accent-500 transition-all" />
                 </Field>
                 <Field label="Work type">
-                  <select value={type} onChange={(e) => setType(e.target.value as any)} className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[14.5px] focus:outline-none focus:border-accent-500 transition-all">
+                  <select value={type} onChange={(e) => setType(e.target.value as 'On-site' | 'Remote' | 'Hybrid')} className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[14.5px] focus:outline-none focus:border-accent-500 transition-all">
                     <option value="On-site">On-site</option>
                     <option value="Remote">Remote</option>
                     <option value="Hybrid">Hybrid</option>
@@ -167,7 +167,7 @@ export default function EmployerPostJob() {
           {step === 3 && (
             <div className="space-y-5">
               <Field label="How should students apply?">
-                <select value={applicationMethod} onChange={(e) => setApplicationMethod(e.target.value as any)} className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[14.5px] focus:outline-none focus:border-accent-500 transition-all">
+                <select value={applicationMethod} onChange={(e) => setApplicationMethod(e.target.value as 'platform' | 'email' | 'external')} className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[14.5px] focus:outline-none focus:border-accent-500 transition-all">
                   <option value="platform">On this platform (students apply here)</option>
                   <option value="email">By email (students email you)</option>
                   <option value="external">External link (redirect to your site)</option>

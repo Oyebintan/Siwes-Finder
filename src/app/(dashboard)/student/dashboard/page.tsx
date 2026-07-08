@@ -5,7 +5,21 @@ import Job from "@/models/Job";
 import Application from "@/models/Application";
 import User from "@/models/User";
 import Link from "next/link";
-import { Search, CheckCircle2, UploadCloud, Building2 } from "lucide-react";
+import { Search, CheckCircle2, UploadCloud, Building2, type LucideIcon } from "lucide-react";
+
+type RecommendedJob = {
+  _id: { toString(): string };
+  title: string;
+  location: string;
+  duration: string;
+  employerId?: { name?: string; companyName?: string };
+};
+
+type RecentApp = {
+  _id: { toString(): string };
+  status: string;
+  job?: { title?: string; employerId?: { name?: string; companyName?: string } };
+};
 
 function initials(name?: string) {
   if (!name) return '??';
@@ -117,7 +131,7 @@ export default async function StudentDashboard() {
           <div className="bg-surface-1 rounded-2xl border border-surface-border p-8 text-center text-sm text-muted">No opportunities available yet — check back soon.</div>
         ) : (
           <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]">
-            {recommended.map((job: any) => (
+            {recommended.map((job: RecommendedJob) => (
               <Link key={job._id.toString()} href={`/student/jobs/${job._id}`} className="bg-surface-1 rounded-[14px] p-5 border border-surface-border hover:border-primary-500 transition-colors">
                 <div className="flex items-center gap-2.5 mb-3.5">
                   <div className="w-9 h-9 rounded-[9px] bg-primary-500/10 dark:bg-primary-400/15 flex items-center justify-center font-display font-extrabold text-primary-500 dark:text-primary-400 text-[12px]">
@@ -146,7 +160,7 @@ export default async function StudentDashboard() {
           </div>
         ) : (
           <div className="bg-surface-1 rounded-[14px] border border-surface-border overflow-hidden">
-            {recentApps.map((app: any, i: number) => (
+            {recentApps.map((app: RecentApp, i: number) => (
               <div key={app._id.toString()} className={`flex items-center gap-3 px-5 py-4 flex-wrap ${i < recentApps.length - 1 ? 'border-b border-surface-border' : ''}`}>
                 <div className="flex-1 text-sm font-semibold">
                   {app.job?.title || 'Untitled role'} — {app.job?.employerId?.companyName || app.job?.employerId?.name || 'Unknown company'}
@@ -173,7 +187,7 @@ function Kpi({ value, label, tone }: { value: number | string; label: string; to
   );
 }
 
-function QuickAction({ href, icon: Icon, label, tint }: { href: string; icon: any; label: string; tint: 'primary' | 'accent' | 'warning' }) {
+function QuickAction({ href, icon: Icon, label, tint }: { href: string; icon: LucideIcon; label: string; tint: 'primary' | 'accent' | 'warning' }) {
   const tintClasses = {
     primary: 'bg-primary-500/10 dark:bg-primary-400/15 text-primary-500 dark:text-primary-400',
     accent: 'bg-accent-500/10 text-accent-500',

@@ -99,8 +99,8 @@ export default function ProfileSetup() {
       });
       if (!res.ok) throw new Error('Could not save your profile. Please try again.');
       router.push('/student/dashboard');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save your profile. Please try again.');
       setSaving(false);
     }
   };

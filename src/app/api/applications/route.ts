@@ -45,10 +45,10 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(application, { status: 201 });
-  } catch (error: any) {
+  } catch (error) {
     // Duplicate key from the unique (job, student) index — a race with the
     // check above, or a concurrent double-submit. Return the friendly message.
-    if (error?.code === 11000) {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
       return NextResponse.json({ error: 'You have already applied for this placement' }, { status: 400 });
     }
     console.error('Application POST error:', error);
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -85,7 +85,7 @@ export async function GET(req: Request) {
     }
 
     return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

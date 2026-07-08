@@ -18,6 +18,13 @@ const STATUS_STYLE: Record<string, string> = {
   Rejected: 'bg-error-bg text-error',
 };
 
+type RecentApplicant = {
+  _id: { toString(): string };
+  status: string;
+  student?: { name?: string };
+  job?: { title?: string };
+};
+
 export default async function EmployerDashboard() {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== "employer") redirect("/login");
@@ -101,7 +108,7 @@ export default async function EmployerDashboard() {
           <div className="bg-surface-1 rounded-2xl border border-surface-border p-10 text-center text-sm text-muted">No applications yet.</div>
         ) : (
           <div className="bg-surface-1 rounded-2xl border border-surface-border overflow-hidden">
-            {recentApplicants.map((app: any, i: number) => (
+            {recentApplicants.map((app: RecentApplicant, i: number) => (
               <div key={app._id.toString()} className={`flex items-center gap-3.5 px-5 py-4 flex-wrap ${i < recentApplicants.length - 1 ? 'border-b border-surface-border' : ''}`}>
                 <div className="w-8 h-8 rounded-full bg-primary-500 dark:bg-primary-400 text-white flex items-center justify-center font-display font-bold text-xs shrink-0">
                   {initials(app.student?.name)}

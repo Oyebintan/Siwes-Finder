@@ -75,7 +75,7 @@ export async function PUT(req: Request) {
       { message: 'Profile updated successfully', user: updatedUser },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error('Profile update error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
