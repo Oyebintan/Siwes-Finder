@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('next-auth/next', () => ({ getServerSession: vi.fn() }));
 vi.mock('@/lib/mongodb', () => ({ connectToDatabase: vi.fn() }));
-vi.mock('@/models/User', () => ({ default: { findByIdAndUpdate: vi.fn() } }));
+vi.mock('@/models/User', () => ({
+  default: { findById: vi.fn(), findByIdAndUpdate: vi.fn() },
+}));
 
 import { POST } from '@/app/api/auth/role/route';
 import { getServerSession } from 'next-auth/next';
@@ -14,6 +16,12 @@ function makeRequest(body: unknown) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
+  });
+}
+
+function mockExistingRole(role: string | null) {
+  (User.findById as any).mockReturnValue({
+    select: vi.fn().mockResolvedValue(role === null ? null : { role }),
   });
 }
 
@@ -37,13 +45,30 @@ describe('POST /api/auth/role', () => {
 
   it('404s when the user record is gone', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'u1' } });
-    (User.findByIdAndUpdate as any).mockResolvedValue(null);
+    mockExistingRole(null);
     const res = await POST(makeRequest({ role: 'student' }));
     expect(res.status).toBe(404);
   });
 
-  it('updates the role on success', async () => {
+  it('rejects changing a role that is already set (e.g. protects an existing admin)', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'u1' } });
+    mockExistingRole('admin');
+    const res = await POST(makeRequest({ role: 'student' }));
+    expect(res.status).toBe(403);
+    expect(User.findByIdAndUpdate).not.toHaveBeenCalled();
+  });
+
+  it('rejects changing an already-set employer role too', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'u1' } });
+    mockExistingRole('employer');
+    const res = await POST(makeRequest({ role: 'student' }));
+    expect(res.status).toBe(403);
+    expect(User.findByIdAndUpdate).not.toHaveBeenCalled();
+  });
+
+  it('updates the role on success when currently unassigned', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'u1' } });
+    mockExistingRole('unassigned');
     (User.findByIdAndUpdate as any).mockResolvedValue({ _id: 'u1', role: 'employer' });
 
     const res = await POST(makeRequest({ role: 'employer' }));

@@ -17,6 +17,8 @@ export default function LoginRedirect() {
         router.replace('/student/dashboard');
       } else if (session?.user?.role === 'employer') {
         router.replace('/employer/dashboard');
+      } else if (session?.user?.role === 'admin') {
+        router.replace('/admin/dashboard');
       } else {
         router.replace('/onboarding');
       }

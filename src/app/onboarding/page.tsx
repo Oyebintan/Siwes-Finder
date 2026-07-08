@@ -1,15 +1,40 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Loader2, GraduationCap, Building2 } from 'lucide-react';
 
+const ROLE_HOME: Record<string, string> = {
+  admin: '/admin/dashboard',
+  employer: '/employer/dashboard',
+  student: '/student/dashboard',
+};
+
 export default function Onboarding() {
-  const { update } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // This picker is only for brand-new Google sign-ins with no role assigned
+  // yet. Anyone who already has a real role (most importantly: admin) must
+  // never be able to reach the buttons below -- clicking one would call
+  // /api/auth/role and silently overwrite their existing role.
+  const existingRole = session?.user?.role;
+  useEffect(() => {
+    if (status === 'authenticated' && existingRole && existingRole !== 'unassigned') {
+      router.replace(ROLE_HOME[existingRole] ?? '/login-redirect');
+    }
+  }, [status, existingRole, router]);
+
+  if (status === 'loading' || (status === 'authenticated' && existingRole && existingRole !== 'unassigned')) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+      </div>
+    );
+  }
 
   const handleRoleSelection = async (role: 'student' | 'employer') => {
     setLoading(true);
