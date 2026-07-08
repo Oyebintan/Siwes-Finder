@@ -12,7 +12,7 @@ export async function GET() {
 
   await connectToDatabase();
   const user = await User.findById(session.user.id).select(
-    'university courseOfStudy resumeUrl isProfileComplete'
+    'university courseOfStudy level skills resumeUrl siwesStartDate siwesDuration preferredState isProfileComplete'
   );
 
   if (!user) {
@@ -31,22 +31,37 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json();
-    const { university, course, resumeLink } = body;
+    const { university, course, resumeLink, level, skills, siwesStartDate, siwesDuration, preferredState } = body;
 
     await connectToDatabase();
+
+    const existing = await User.findById(session.user.id).select('university courseOfStudy resumeUrl');
+    if (!existing) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Only overwrite fields that were actually sent, so the wizard can save
+    // progress step-by-step without clobbering fields from other steps.
+    const update: Record<string, unknown> = {};
+    if (university !== undefined) update.university = university;
+    if (course !== undefined) update.courseOfStudy = course;
+    if (resumeLink !== undefined) update.resumeUrl = resumeLink;
+    if (level !== undefined) update.level = level;
+    if (Array.isArray(skills)) update.skills = skills;
+    if (siwesStartDate !== undefined) update.siwesStartDate = siwesStartDate;
+    if (siwesDuration !== undefined) update.siwesDuration = siwesDuration;
+    if (preferredState !== undefined) update.preferredState = preferredState;
+
+    const finalUniversity = university !== undefined ? university : existing.university;
+    const finalCourse = course !== undefined ? course : existing.courseOfStudy;
+    const finalResume = resumeLink !== undefined ? resumeLink : existing.resumeUrl;
+    update.isProfileComplete = Boolean(finalUniversity && finalCourse && finalResume);
 
     // Field names here must match the User schema exactly (courseOfStudy / resumeUrl),
     // otherwise Mongoose silently drops them and nothing is actually saved.
     const updatedUser = await User.findByIdAndUpdate(
       session.user.id,
-      {
-        $set: {
-          university,
-          courseOfStudy: course,
-          resumeUrl: resumeLink,
-          isProfileComplete: Boolean(university && course && resumeLink),
-        },
-      },
+      { $set: update },
       { new: true }
     );
 

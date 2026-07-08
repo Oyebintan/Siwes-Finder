@@ -14,6 +14,9 @@ export interface IUser extends Document {
   level?: string;
   skills?: string[];
   resumeUrl?: string;
+  siwesStartDate?: Date;
+  siwesDuration?: string;
+  preferredState?: string;
   isProfileComplete?: boolean;
   // Employer / Company Specific
   companyName?: string;
@@ -42,6 +45,9 @@ const UserSchema: Schema = new Schema(
     level: { type: String },
     skills: { type: [String], default: [] },
     resumeUrl: { type: String },
+    siwesStartDate: { type: Date },
+    siwesDuration: { type: String },
+    preferredState: { type: String },
     isProfileComplete: { type: Boolean, default: false },
 
     // Employer / Company fields
