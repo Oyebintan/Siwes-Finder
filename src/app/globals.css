@@ -107,6 +107,7 @@
   --circuit-opacity: 0.16;
   --circuit-color: var(--color-primary-500);
   --page-glow: radial-gradient(ellipse at top, #eaf0ff 0%, #f6f7fa 55%);
+  --grid-line: rgba(37, 87, 235, 0.07);
 }
 
 .dark {
@@ -131,6 +132,7 @@
   --circuit-opacity: 0.42;
   --circuit-color: var(--color-primary-400);
   --page-glow: radial-gradient(ellipse at top, #101d40 0%, #07080d 62%);
+  --grid-line: rgba(140, 173, 255, 0.14);
 }
 
 html,
@@ -140,6 +142,18 @@ body {
   font-family: var(--font-geist-sans), sans-serif;
   scroll-behavior: smooth;
   min-height: 100vh;
+}
+
+/* App-wide subtle grid backdrop -- a faint boxed-line pattern behind every
+   page. Overrides (not replaces) the generated `bg-background` utility so
+   every full-page wrapper that already uses it picks up the pattern too. */
+html,
+body,
+.bg-background {
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: 42px 42px;
 }
 
 /* Headings use the display face by default so the type pairing applies

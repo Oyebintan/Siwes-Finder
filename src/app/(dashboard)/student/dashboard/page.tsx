@@ -62,7 +62,8 @@ export default async function StudentDashboard() {
   const completedSteps = [hasAcademic, hasResume, hasSkills, hasApplied].filter(Boolean).length;
   const progressPct = completedSteps * 25;
 
-  const circumference = 2 * Math.PI * 32;
+  const ringRadius = 34;
+  const circumference = 2 * Math.PI * ringRadius;
   const dashOffset = circumference * (1 - progressPct / 100);
 
   const firstName = session?.user?.name?.split(' ')[0] || 'there';
@@ -75,32 +76,42 @@ export default async function StudentDashboard() {
       </div>
 
       {/* Hero progress banner */}
-      <div className="relative overflow-hidden rounded-[18px] p-7 flex items-center gap-7 flex-wrap bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-400 dark:to-[#4B3FD8]">
+      <div className="relative overflow-hidden rounded-[18px] p-6 sm:p-7 flex items-center gap-5 sm:gap-7 flex-wrap bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-400 dark:to-[#4B3FD8]">
         <div className="pointer-events-none absolute -top-16 -right-10 w-[220px] h-[220px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.14), transparent 70%)' }} />
-        <div className="relative w-[76px] h-[76px] shrink-0">
-          <svg width="76" height="76" viewBox="0 0 76 76">
-            <circle cx="38" cy="38" r="32" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="8" />
+        <div className="relative w-[84px] h-[84px] shrink-0">
+          <div className="absolute inset-0 rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.16), transparent 72%)' }} />
+          <svg width="84" height="84" viewBox="0 0 84 84" className="relative">
+            <defs>
+              <linearGradient id="dashboardRingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#ffffff" />
+                <stop offset="100%" stopColor="#bfd1ff" />
+              </linearGradient>
+            </defs>
+            <circle cx="42" cy="42" r={ringRadius} fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="7" />
             <circle
-              cx="38" cy="38" r="32" fill="none" stroke="#fff" strokeWidth="8"
+              cx="42" cy="42" r={ringRadius} fill="none" stroke="url(#dashboardRingGradient)" strokeWidth="7"
               strokeDasharray={circumference} strokeDashoffset={dashOffset}
-              strokeLinecap="round" transform="rotate(-90 38 38)"
+              strokeLinecap="round" transform="rotate(-90 42 42)"
             />
           </svg>
-          <div className="absolute inset-0 flex items-center justify-center font-display font-extrabold text-[15px] text-white">{progressPct}%</div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="font-display font-extrabold text-[18px] text-white leading-none">{progressPct}%</span>
+            <span className="font-mono text-[8px] tracking-wider text-white/70 mt-1 uppercase">Profile</span>
+          </div>
         </div>
         <div className="flex-1 min-w-[200px] relative">
-          <div className="font-display font-bold text-[16px] text-white mb-1">Placement progress</div>
+          <div className="font-display font-bold text-[16px] text-white mb-1">Profile completion</div>
           <div className="text-[13.5px] text-white/80">
             {hasApplied
               ? `${applicationsCount} application${applicationsCount === 1 ? '' : 's'} submitted. ${!hasResume ? 'Add a resume to boost your match score.' : 'Keep your profile fresh to stay competitive.'}`
               : 'Complete your profile and submit your first application.'}
           </div>
         </div>
-        <div className="relative flex items-center gap-2 shrink-0 flex-wrap">
-          <Link href="/student/jobs" className="text-[13.5px] font-bold text-primary-600 bg-white px-4 py-2.5 rounded-lg whitespace-nowrap hover:brightness-95 transition-all flex items-center gap-1.5">
+        <div className="relative flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          <Link href="/student/jobs" className="text-[13.5px] font-bold text-primary-600 bg-white px-4 py-2.5 rounded-lg whitespace-nowrap hover:brightness-95 transition-all flex items-center justify-center gap-1.5">
             <Search className="w-4 h-4" /> Find opportunities
           </Link>
-          <Link href="/student/profile" className="text-[13.5px] font-bold text-white bg-white/[0.14] px-4 py-2.5 rounded-lg whitespace-nowrap hover:bg-white/[0.2] transition-colors">
+          <Link href="/student/profile" className="text-[13.5px] font-bold text-white bg-white/[0.14] px-4 py-2.5 rounded-lg whitespace-nowrap hover:bg-white/[0.2] transition-colors flex items-center justify-center">
             Complete profile →
           </Link>
         </div>
