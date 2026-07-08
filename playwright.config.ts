@@ -29,9 +29,13 @@ export default defineConfig({
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        launchOptions: {
-          executablePath: '/opt/pw-browsers/chromium',
-        },
+        // Only override the browser binary when explicitly pointed at one
+        // (e.g. a CI sandbox with a pre-installed Chromium at a fixed path).
+        // Otherwise use Playwright's own managed install (`npx playwright
+        // install chromium`) so this works on any machine, including Windows.
+        ...(process.env.PLAYWRIGHT_CHROMIUM_PATH
+          ? { launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH } }
+          : {}),
       },
     },
   ],

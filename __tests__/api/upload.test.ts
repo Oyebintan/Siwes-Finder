@@ -1,12 +1,14 @@
 // @vitest-environment node
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('next-auth/next', () => ({ getServerSession: vi.fn() }));
 vi.mock('fs/promises', () => ({ writeFile: vi.fn(), mkdir: vi.fn() }));
+vi.mock('@vercel/blob', () => ({ put: vi.fn() }));
 
 import { POST } from '@/app/api/upload/route';
 import { getServerSession } from 'next-auth/next';
 import { writeFile } from 'fs/promises';
+import { put } from '@vercel/blob';
 
 const PDF_BYTES = Buffer.from('%PDF-1.4 fake pdf content');
 const NOT_PDF_BYTES = Buffer.from('<html>not a pdf</html>');
@@ -22,8 +24,16 @@ function pdfFile(bytes: Buffer = PDF_BYTES, name = 'resume.pdf', type = 'applica
 }
 
 describe('POST /api/upload', () => {
+  const originalBlobToken = process.env.BLOB_READ_WRITE_TOKEN;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    delete process.env.BLOB_READ_WRITE_TOKEN;
+  });
+
+  afterEach(() => {
+    if (originalBlobToken === undefined) delete process.env.BLOB_READ_WRITE_TOKEN;
+    else process.env.BLOB_READ_WRITE_TOKEN = originalBlobToken;
   });
 
   it('rejects unauthenticated requests', async () => {
@@ -128,5 +138,39 @@ describe('POST /api/upload', () => {
 
     expect(res.status).toBe(200);
     expect(data.url).toMatch(/^\/uploads\/verification-\d+-\d+\.pdf$/);
+  });
+
+  describe('when a Vercel Blob store is connected (BLOB_READ_WRITE_TOKEN set)', () => {
+    beforeEach(() => {
+      process.env.BLOB_READ_WRITE_TOKEN = 'vercel_blob_rw_test_token';
+    });
+
+    it('uploads to Blob storage instead of local disk and returns its public URL', async () => {
+      (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+      (put as any).mockResolvedValue({ url: 'https://example.public.blob.vercel-storage.com/resume-123-456.pdf' });
+
+      const form = new FormData();
+      form.set('file', pdfFile());
+      form.set('type', 'resume');
+
+      const res = await POST(makeRequest(form));
+      const data = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(data.url).toBe('https://example.public.blob.vercel-storage.com/resume-123-456.pdf');
+      expect(put).toHaveBeenCalledTimes(1);
+      expect(writeFile).not.toHaveBeenCalled();
+    });
+
+    it('still validates the file before ever calling Blob storage', async () => {
+      (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+      const form = new FormData();
+      form.set('file', pdfFile(NOT_PDF_BYTES, 'resume.pdf', 'application/pdf'));
+      form.set('type', 'resume');
+
+      const res = await POST(makeRequest(form));
+      expect(res.status).toBe(400);
+      expect(put).not.toHaveBeenCalled();
+    });
   });
 });

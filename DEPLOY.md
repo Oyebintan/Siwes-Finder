@@ -1,9 +1,9 @@
 # Deploying to Vercel
 
 This repo builds and boots cleanly for production (`npm run build && npm run start`
-verified locally). Deploying itself has to happen from a machine with normal
-internet access — the sandbox this was prepared in has outbound access to
-`api.vercel.com` blocked by policy, so the steps below are for you to run.
+verified locally). `vercel login` and `vercel link` need an interactive
+browser session (or a personal access token) tied to your own Vercel
+account, so the steps below are for you to run.
 
 ## 1. One-time setup
 
@@ -25,6 +25,7 @@ the Vercel dashboard → Project → Settings → Environment Variables):
 | `NEXTAUTH_URL` | Your production URL. Unknown until the first deploy — use the assigned `*.vercel.app` URL (or your custom domain), then redeploy if it changes. |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | From Google Cloud Console, if enabling Google sign-in. |
 | `ADMIN_EMAILS` | Comma-separated list of emails that should be promoted to admin on sign-in. |
+| `BLOB_READ_WRITE_TOKEN` | Auto-injected once a Vercel Blob store is connected to the project (see step 3 below) — don't set this by hand. |
 
 ## 3. Before the first deploy actually works
 
@@ -32,6 +33,22 @@ the Vercel dashboard → Project → Settings → Environment Variables):
 Network Access allowlist. Vercel's serverless functions don't have a fixed
 IP on the free tier, so add `0.0.0.0/0` ("Allow Access from Anywhere") under
 Atlas → Network Access.
+
+**Connect a Vercel Blob store** (required for resume / CAC document uploads):
+Vercel's serverless functions have a read-only filesystem outside `/tmp`, and
+`/tmp` doesn't persist across invocations, so `src/app/api/upload/route.ts`
+cannot write to local disk in production. It already branches to Vercel Blob
+storage when `BLOB_READ_WRITE_TOKEN` is present — you just need to connect a
+store so Vercel injects that variable:
+
+```bash
+vercel blob store add   # from the repo root, after `vercel link`
+```
+
+Or via the dashboard: Project → Storage → Create Database → Blob. Either way,
+redeploy afterward so the function picks up the new env var. Uploaded files
+become publicly readable at a `*.public.blob.vercel-storage.com` URL (no extra
+CDN/proxy config needed).
 
 ## 4. Deploy
 
@@ -47,15 +64,3 @@ vercel --prod
   redirect_uri_mismatch error until this is done.
 - **`NEXTAUTH_URL`**: if you didn't know the final domain in step 2, update
   the env var to match and redeploy (`vercel --prod`).
-
-## Known gap: file uploads
-
-`src/app/api/upload/route.ts` (resumes, CAC verification documents) writes
-to `public/uploads` on local disk. **This does not persist on Vercel** —
-serverless functions have a read-only filesystem outside `/tmp`, and `/tmp`
-itself isn't shared across invocations or served as a static asset. Uploads
-will fail (or silently vanish) in production until this is swapped for a
-persistent object store (Vercel Blob is the natural fit — same platform,
-`@vercel/blob` package). This wasn't fixed as part of E2E/deploy prep
-because verifying an object-storage integration end-to-end isn't possible
-without network access to provision one from this environment.

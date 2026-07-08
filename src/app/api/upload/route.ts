@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
+import { put } from '@vercel/blob';
 
 // fs access requires the Node.js runtime (not Edge).
 export const runtime = 'nodejs';
@@ -66,13 +67,20 @@ export async function POST(req: Request) {
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
     const filename = `${spec.prefix}-${uniqueSuffix}.pdf`;
 
-    // KNOWN PRODUCTION GAP: Vercel's serverless functions have a read-only
-    // filesystem outside /tmp, and /tmp itself doesn't persist or get served
-    // as a static asset across invocations. Writing to public/uploads works
-    // in local dev only — on Vercel this call will throw (or silently write
-    // to a file no later request/deploy can see). Before relying on uploads
-    // in production, swap this for a persistent object store (e.g. Vercel
-    // Blob, S3) and store the returned URL instead of a local path.
+    // Vercel's serverless functions have a read-only filesystem outside /tmp,
+    // and /tmp itself doesn't persist or get served as a static asset across
+    // invocations, so local-disk writes only work in dev. Once the project's
+    // Vercel Blob store is connected, BLOB_READ_WRITE_TOKEN is auto-injected
+    // and we upload there instead, returning its public URL.
+    if (process.env.BLOB_READ_WRITE_TOKEN) {
+      const blob = await put(filename, buffer, {
+        access: 'public',
+        contentType: 'application/pdf',
+        addRandomSuffix: false,
+      });
+      return NextResponse.json({ url: blob.url }, { status: 200 });
+    }
+
     const uploadDir = path.join(process.cwd(), 'public/uploads');
     await mkdir(uploadDir, { recursive: true });
 

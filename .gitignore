@@ -40,6 +40,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# git worktrees created under .claude are local dev checkouts on their own
+# branch state -- never track them or let tools recurse into them.
+/.claude/worktrees/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

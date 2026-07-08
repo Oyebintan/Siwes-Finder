@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Nested git worktrees under .claude are separate checkouts on their own
+    // branch state, not part of this project -- never lint their contents.
+    ".claude/worktrees/**",
   ]),
   {
     // Test files lean on `as any` to type third-party mocks (e.g. a mocked
