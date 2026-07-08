@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { cloneElement, isValidElement, useEffect, useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -223,10 +223,11 @@ export default function ProfileSetup() {
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  const id = useId();
   return (
     <div>
-      <label className="block text-[13px] font-semibold mb-1.5">{label}</label>
-      {children}
+      <label htmlFor={id} className="block text-[13px] font-semibold mb-1.5">{label}</label>
+      {isValidElement(children) ? cloneElement(children, { id } as { id: string }) : children}
     </div>
   );
 }

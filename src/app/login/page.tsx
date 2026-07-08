@@ -119,8 +119,9 @@ export default function Login() {
 
         <form onSubmit={handleCredentialsLogin} className="space-y-3.5">
           <div>
-            <label className="block text-[12.5px] font-semibold mb-1">Email address</label>
+            <label htmlFor="login-email" className="block text-[12.5px] font-semibold mb-1">Email address</label>
             <input
+              id="login-email"
               type="email"
               required
               value={email}
@@ -132,10 +133,11 @@ export default function Login() {
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-[12.5px] font-semibold">Password</label>
+              <label htmlFor="login-password" className="block text-[12.5px] font-semibold">Password</label>
               <a href="#" className="text-[12.5px] font-semibold text-primary-500 dark:text-primary-400">Forgot password?</a>
             </div>
             <input
+              id="login-password"
               type="password"
               required
               value={password}

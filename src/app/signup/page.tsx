@@ -128,8 +128,9 @@ export default function Signup() {
 
         <form onSubmit={handleCredentialsSignup} className="space-y-3">
           <div>
-            <label className="block text-[12.5px] font-semibold mb-1">{isStudent ? 'Full name' : 'Company name'}</label>
+            <label htmlFor="signup-name" className="block text-[12.5px] font-semibold mb-1">{isStudent ? 'Full name' : 'Company name'}</label>
             <input
+              id="signup-name"
               type="text"
               required
               value={name}
@@ -140,8 +141,9 @@ export default function Signup() {
           </div>
 
           <div>
-            <label className="block text-[12.5px] font-semibold mb-1">{isStudent ? 'School email' : 'Work email'}</label>
+            <label htmlFor="signup-email" className="block text-[12.5px] font-semibold mb-1">{isStudent ? 'School email' : 'Work email'}</label>
             <input
+              id="signup-email"
               type="email"
               required
               value={email}
@@ -152,8 +154,9 @@ export default function Signup() {
           </div>
 
           <div>
-            <label className="block text-[12.5px] font-semibold mb-1">Password</label>
+            <label htmlFor="signup-password" className="block text-[12.5px] font-semibold mb-1">Password</label>
             <input
+              id="signup-password"
               type="password"
               required
               minLength={6}

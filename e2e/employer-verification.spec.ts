@@ -20,12 +20,9 @@ test('employer signs up, submits verification, and an admin approves it', async 
 
   await test.step('submit CAC verification details', async () => {
     await page.goto('/employer/verification');
-    // The verification form's <label> isn't associated with its <input> via
-    // for/id, so getByLabel() can't find these — fall back to the label's
-    // following sibling.
-    await page.locator('label:text("Company name") + input').fill(companyName);
-    await page.locator('label:text("CAC registration number") + input').fill('RC-E2E-12345');
-    await page.locator('label:text("Official company email") + input').fill(companyEmail);
+    await page.getByLabel('Company name').fill(companyName);
+    await page.getByLabel('CAC registration number').fill('RC-E2E-12345');
+    await page.getByLabel('Official company email').fill(companyEmail);
     await page.locator('input[type="file"]').setInputFiles(DOC_PATH);
     await expect(page.getByText(/document uploaded/i)).toBeVisible({ timeout: 10_000 });
     await page.getByRole('button', { name: 'Submit for verification' }).click();

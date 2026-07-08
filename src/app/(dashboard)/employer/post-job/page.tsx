@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { cloneElement, isValidElement, useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Loader2, X, Plus } from 'lucide-react';
@@ -209,10 +209,11 @@ export default function EmployerPostJob() {
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  const id = useId();
   return (
     <div>
-      <label className="block text-[13px] font-semibold mb-1.5">{label}</label>
-      {children}
+      <label htmlFor={id} className="block text-[13px] font-semibold mb-1.5">{label}</label>
+      {isValidElement(children) ? cloneElement(children, { id } as { id: string }) : children}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { Loader2, Plus, CheckCircle2, Clock } from 'lucide-react';
 
 interface LogbookEntry {
@@ -14,6 +14,10 @@ interface LogbookEntry {
 }
 
 export default function StudentLogbook() {
+  const weekId = useId();
+  const hoursId = useId();
+  const dayId = useId();
+  const descId = useId();
   const [logs, setLogs] = useState<LogbookEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -105,8 +109,9 @@ export default function StudentLogbook() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Week</label>
+                  <label htmlFor={weekId} className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Week</label>
                   <input
+                    id={weekId}
                     type="number"
                     min="1"
                     max="24"
@@ -117,8 +122,9 @@ export default function StudentLogbook() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Hours</label>
+                  <label htmlFor={hoursId} className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Hours</label>
                   <input
+                    id={hoursId}
                     type="number"
                     min="1"
                     max="12"
@@ -131,8 +137,9 @@ export default function StudentLogbook() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Day of Week</label>
+                <label htmlFor={dayId} className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Day of Week</label>
                 <select
+                  id={dayId}
                   value={day}
                   onChange={(e) => setDay(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-900 dark:text-white outline-none text-sm"
@@ -146,8 +153,9 @@ export default function StudentLogbook() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description of Work</label>
+                <label htmlFor={descId} className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description of Work</label>
                 <textarea
+                  id={descId}
                   required
                   rows={4}
                   value={desc}

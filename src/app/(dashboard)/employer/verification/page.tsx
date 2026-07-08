@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { Loader2, ShieldCheck, Clock, ShieldX, UploadCloud, FileText, type LucideIcon } from 'lucide-react';
 
 type Verification = {
@@ -15,6 +15,7 @@ type Verification = {
 };
 
 export default function EmployerVerificationPage() {
+  const companyDescriptionId = useId();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<Verification | null>(null);
 
@@ -110,8 +111,9 @@ export default function EmployerVerificationPage() {
           </div>
           <Field label="Industry" value={form.industry} onChange={(v) => setForm({ ...form, industry: v })} />
           <div>
-            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">About the company</label>
+            <label htmlFor={companyDescriptionId} className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">About the company</label>
             <textarea
+              id={companyDescriptionId}
               value={form.companyDescription}
               onChange={(e) => setForm({ ...form, companyDescription: e.target.value })}
               rows={3}
@@ -145,10 +147,12 @@ export default function EmployerVerificationPage() {
 }
 
 function Field({ label, value, onChange, type = 'text', required }: { label: string; value: string; onChange: (v: string) => void; type?: string; required?: boolean }) {
+  const id = useId();
   return (
     <div>
-      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">{label}{required && <span className="text-red-500"> *</span>}</label>
+      <label htmlFor={id} className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">{label}{required && <span className="text-red-500"> *</span>}</label>
       <input
+        id={id}
         type={type}
         value={value}
         required={required}
