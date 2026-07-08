@@ -42,7 +42,7 @@ export default function AdminCompaniesPage() {
     let reason: string | undefined;
     if (action === 'reject') {
       reason = window.prompt('Reason for rejection (shown to the company):') || undefined;
-      if (reason === undefined) return; // cancelled
+      if (reason === undefined) return;
     }
     setActioningId(id);
     try {
@@ -60,8 +60,8 @@ export default function AdminCompaniesPage() {
   return (
     <div className="space-y-8 animate-fade-in-up">
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">Company Verification</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">Approve legitimate organizations so their opportunities become publicly visible.</p>
+        <h1 className="font-display font-extrabold text-[26px] tracking-[-0.02em]">Company verification</h1>
+        <p className="text-sm text-muted mt-1">Approve legitimate organizations so their opportunities become publicly visible.</p>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -69,7 +69,7 @@ export default function AdminCompaniesPage() {
           <button
             key={t}
             onClick={() => setStatus(t)}
-            className={`px-4 py-2 rounded-xl text-sm font-bold capitalize transition-all ${status === t ? 'bg-gradient-to-r from-accent-700 to-accent-400 text-white shadow' : 'bg-surface-1 border border-surface-border text-gray-500 dark:text-gray-400 hover:border-accent-400/40'}`}
+            className={`px-4 py-2 rounded-full text-[13px] font-bold capitalize transition-all ${status === t ? 'bg-primary-500 dark:bg-primary-400 text-white' : 'bg-surface-1 border-[1.5px] border-surface-border text-muted'}`}
           >
             {t}
           </button>
@@ -77,18 +77,18 @@ export default function AdminCompaniesPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-accent-500" /></div>
+        <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary-500" /></div>
       ) : companies.length === 0 ? (
         <EmptyState label={`No ${status === 'all' ? '' : status} companies.`} />
       ) : (
         <div className="space-y-4">
           {companies.map((c) => (
-            <div key={c._id} className="p-6 rounded-2xl bg-surface-1 border border-surface-border shadow-sm">
+            <div key={c._id} className="p-6 rounded-2xl bg-surface-1 border border-surface-border">
               <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="w-5 h-5 text-accent-600 dark:text-accent-300" />
-                    <h3 className="font-bold text-lg text-gray-900 dark:text-white">{c.companyName || c.name}</h3>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Building2 className="w-5 h-5 text-primary-500 dark:text-primary-400" />
+                    <h3 className="font-display font-bold text-base">{c.companyName || c.name}</h3>
                     <StatusBadge status={c.verificationStatus} />
                   </div>
                   <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1 text-sm">
@@ -98,12 +98,12 @@ export default function AdminCompaniesPage() {
                     <Detail label="CAC number" value={c.cacNumber} />
                     <Detail label="Industry" value={c.industry} />
                   </dl>
-                  {c.companyDescription && <p className="text-sm text-gray-500 dark:text-gray-400 max-w-2xl pt-1">{c.companyDescription}</p>}
+                  {c.companyDescription && <p className="text-sm text-muted max-w-2xl pt-1">{c.companyDescription}</p>}
                   {c.verificationStatus === 'rejected' && c.verificationRejectionReason && (
-                    <p className="text-sm text-red-600 dark:text-red-400">Rejected: {c.verificationRejectionReason}</p>
+                    <p className="text-sm text-error">Rejected: {c.verificationRejectionReason}</p>
                   )}
                   {c.verificationDocumentUrl && (
-                    <a href={c.verificationDocumentUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-bold text-accent-700 dark:text-accent-300 hover:underline">
+                    <a href={c.verificationDocumentUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-bold text-primary-500 dark:text-primary-400 hover:underline">
                       <FileText className="w-4 h-4" /> View CAC document <ExternalLink className="w-3 h-3" />
                     </a>
                   )}
@@ -115,7 +115,7 @@ export default function AdminCompaniesPage() {
                       <button
                         onClick={() => review(c._id, 'approve')}
                         disabled={actioningId === c._id}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-accent-700 to-accent-400 text-white text-sm font-bold hover:brightness-110 disabled:opacity-50 transition-all"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-success text-[#032E1A] text-sm font-bold hover:brightness-105 disabled:opacity-50 transition-all"
                       >
                         {actioningId === c._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />} Approve
                       </button>
@@ -124,7 +124,7 @@ export default function AdminCompaniesPage() {
                       <button
                         onClick={() => review(c._id, 'reject')}
                         disabled={actioningId === c._id}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-2 border border-surface-border text-red-600 dark:text-red-400 text-sm font-bold hover:border-red-400/50 disabled:opacity-50 transition-all"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-surface-2 border border-surface-border text-error text-sm font-bold disabled:opacity-50 transition-all"
                       >
                         <ShieldX className="w-4 h-4" /> Reject
                       </button>
@@ -144,29 +144,29 @@ function Detail({ label, value }: { label: string; value?: string }) {
   if (!value) return null;
   return (
     <div className="flex gap-2">
-      <dt className="text-gray-400 dark:text-gray-500">{label}:</dt>
-      <dd className="text-gray-700 dark:text-gray-200 font-medium break-all">{value}</dd>
+      <dt className="text-muted">{label}:</dt>
+      <dd className="font-medium break-all">{value}</dd>
     </div>
   );
 }
 
 function StatusBadge({ status }: { status: Company['verificationStatus'] }) {
   const styles: Record<string, string> = {
-    pending: 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400',
-    approved: 'bg-accent-100 text-accent-700 dark:bg-accent-500/10 dark:text-accent-300',
-    rejected: 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400',
-    unsubmitted: 'bg-gray-100 text-gray-500 dark:bg-white/5 dark:text-gray-400',
+    pending: 'bg-warning-bg text-warning',
+    approved: 'bg-success-bg text-success',
+    rejected: 'bg-error-bg text-error',
+    unsubmitted: 'bg-surface-2 text-muted',
   };
   return <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold capitalize ${styles[status]}`}>{status}</span>;
 }
 
 function EmptyState({ label }: { label: string }) {
   return (
-    <div className="p-14 rounded-3xl bg-surface-1 border border-surface-border shadow-sm text-center flex flex-col items-center">
-      <div className="w-16 h-16 rounded-2xl bg-accent-100 dark:bg-accent-500/10 flex items-center justify-center mb-5">
-        <ShieldCheck className="w-8 h-8 text-accent-600 dark:text-accent-300" />
+    <div className="p-14 rounded-3xl bg-surface-1 border border-surface-border text-center flex flex-col items-center">
+      <div className="w-16 h-16 rounded-2xl bg-primary-500/10 dark:bg-primary-400/15 flex items-center justify-center mb-5">
+        <ShieldCheck className="w-8 h-8 text-primary-500 dark:text-primary-400" />
       </div>
-      <h4 className="text-lg font-bold text-gray-900 dark:text-white">{label}</h4>
+      <h4 className="font-display font-bold text-lg">{label}</h4>
     </div>
   );
 }

@@ -57,8 +57,8 @@ export default function AdminUsersPage() {
   return (
     <div className="space-y-8 animate-fade-in-up">
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">User Management</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">Browse and remove accounts across the platform.</p>
+        <h1 className="font-display font-extrabold text-[26px] tracking-[-0.02em]">User management</h1>
+        <p className="text-sm text-muted mt-1">Browse and remove accounts across the platform.</p>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -66,7 +66,7 @@ export default function AdminUsersPage() {
           <button
             key={t}
             onClick={() => { setRole(t); setPage(1); }}
-            className={`px-4 py-2 rounded-xl text-sm font-bold capitalize transition-all ${role === t ? 'bg-gradient-to-r from-accent-700 to-accent-400 text-white shadow' : 'bg-surface-1 border border-surface-border text-gray-500 dark:text-gray-400 hover:border-accent-400/40'}`}
+            className={`px-4 py-2 rounded-full text-[13px] font-bold capitalize transition-all ${role === t ? 'bg-primary-500 dark:bg-primary-400 text-white' : 'bg-surface-1 border-[1.5px] border-surface-border text-muted'}`}
           >
             {t}
           </button>
@@ -74,20 +74,20 @@ export default function AdminUsersPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-accent-500" /></div>
+        <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary-500" /></div>
       ) : users.length === 0 ? (
-        <div className="p-14 rounded-3xl bg-surface-1 border border-surface-border shadow-sm text-center flex flex-col items-center">
-          <div className="w-16 h-16 rounded-2xl bg-accent-100 dark:bg-accent-500/10 flex items-center justify-center mb-5">
-            <Users className="w-8 h-8 text-accent-600 dark:text-accent-300" />
+        <div className="p-14 rounded-3xl bg-surface-1 border border-surface-border text-center flex flex-col items-center">
+          <div className="w-16 h-16 rounded-2xl bg-primary-500/10 dark:bg-primary-400/15 flex items-center justify-center mb-5">
+            <Users className="w-8 h-8 text-primary-500 dark:text-primary-400" />
           </div>
-          <h4 className="text-lg font-bold text-gray-900 dark:text-white">No users found.</h4>
+          <h4 className="font-display font-bold text-lg">No users found.</h4>
         </div>
       ) : (
-        <div className="rounded-2xl bg-surface-1 border border-surface-border shadow-sm overflow-hidden">
+        <div className="rounded-2xl bg-surface-1 border border-surface-border overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-surface-border text-left text-gray-400 dark:text-gray-500">
+                <tr className="border-b border-surface-border text-left text-muted">
                   <th className="px-5 py-3 font-bold">Name</th>
                   <th className="px-5 py-3 font-bold">Email</th>
                   <th className="px-5 py-3 font-bold">Role</th>
@@ -98,18 +98,18 @@ export default function AdminUsersPage() {
               <tbody>
                 {users.map((u) => (
                   <tr key={u._id} className="border-b border-surface-border/60 last:border-0">
-                    <td className="px-5 py-3 font-medium text-gray-900 dark:text-white whitespace-nowrap">{u.name}</td>
-                    <td className="px-5 py-3 text-gray-500 dark:text-gray-400 break-all">{u.email}</td>
-                    <td className="px-5 py-3"><span className="px-2.5 py-0.5 rounded-full text-xs font-bold capitalize bg-surface-2 text-gray-600 dark:text-gray-300">{u.role}</span></td>
-                    <td className="px-5 py-3 text-gray-500 dark:text-gray-400">{u.companyName || u.university || (u.verificationStatus ?? '—')}</td>
+                    <td className="px-5 py-3 font-medium whitespace-nowrap">{u.name}</td>
+                    <td className="px-5 py-3 text-muted break-all">{u.email}</td>
+                    <td className="px-5 py-3"><span className="px-2.5 py-0.5 rounded-full text-xs font-bold capitalize bg-surface-2">{u.role}</span></td>
+                    <td className="px-5 py-3 text-muted">{u.companyName || u.university || (u.verificationStatus ?? '—')}</td>
                     <td className="px-5 py-3 text-right">
                       {u._id === session?.user?.id ? (
-                        <span className="text-xs text-gray-400">You</span>
+                        <span className="text-xs text-muted">You</span>
                       ) : (
                         <button
                           onClick={() => remove(u._id, u.name)}
                           disabled={deletingId === u._id}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 font-bold disabled:opacity-50 transition-colors"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-error hover:bg-error-bg font-bold disabled:opacity-50 transition-colors"
                         >
                           {deletingId === u._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Delete
                         </button>
@@ -132,9 +132,9 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
   if (totalPages <= 1) return null;
   return (
     <div className="flex items-center justify-center gap-4">
-      <button onClick={() => onChange(page - 1)} disabled={page <= 1} className="px-4 py-2 rounded-xl bg-surface-1 border border-surface-border font-bold text-sm disabled:opacity-40 hover:border-accent-400/40 transition-all">Previous</button>
-      <span className="text-sm text-gray-500 dark:text-gray-400">Page {page} of {totalPages}</span>
-      <button onClick={() => onChange(page + 1)} disabled={page >= totalPages} className="px-4 py-2 rounded-xl bg-surface-1 border border-surface-border font-bold text-sm disabled:opacity-40 hover:border-accent-400/40 transition-all">Next</button>
+      <button onClick={() => onChange(page - 1)} disabled={page <= 1} className="px-4 py-2 rounded-xl bg-surface-1 border border-surface-border font-bold text-sm disabled:opacity-40 transition-all">Previous</button>
+      <span className="text-sm text-muted">Page {page} of {totalPages}</span>
+      <button onClick={() => onChange(page + 1)} disabled={page >= totalPages} className="px-4 py-2 rounded-xl bg-surface-1 border border-surface-border font-bold text-sm disabled:opacity-40 transition-all">Next</button>
     </div>
   );
 }
