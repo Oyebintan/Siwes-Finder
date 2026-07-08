@@ -3,64 +3,115 @@ import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import Job from "@/models/Job";
 import Application from "@/models/Application";
+import User from "@/models/User";
 import Link from "next/link";
-import { Building2, Users, FileText, Briefcase } from "lucide-react";
 import { redirect } from "next/navigation";
+
+function initials(name?: string) {
+  if (!name) return '??';
+  return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('');
+}
+
+const STATUS_STYLE: Record<string, string> = {
+  Pending: 'bg-warning-bg text-warning',
+  Accepted: 'bg-success-bg text-success',
+  Rejected: 'bg-error-bg text-error',
+};
 
 export default async function EmployerDashboard() {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== "employer") redirect("/login");
 
   await connectToDatabase();
-  const [jobsCount, applicantsCount, unreviewedCount, activeJobs] = await Promise.all([
-    Job.countDocuments({ employerId: session.user.id }),
-    Application.countDocuments({ employer: session.user.id }),
-    Application.countDocuments({ employer: session.user.id, status: 'Pending' }),
-    Job.find({ employerId: session.user.id }).sort({ createdAt: -1 }).limit(5),
+  const employerId = session.user.id;
+
+  const [employer, activeJobsCount, jobs, applicantsCount, unreviewedCount, recentApplicants] = await Promise.all([
+    User.findById(employerId).select('companyName industry verificationStatus'),
+    Job.countDocuments({ employerId, isActive: true }),
+    Job.find({ employerId }).sort({ createdAt: -1 }).limit(5),
+    Application.countDocuments({ employer: employerId }),
+    Application.countDocuments({ employer: employerId, status: 'Pending' }),
+    Application.find({ employer: employerId })
+      .populate('student', 'name')
+      .populate('job', 'title')
+      .sort({ createdAt: -1 })
+      .limit(3),
   ]);
 
+  const jobsWithCounts = await Promise.all(
+    jobs.map(async (job) => ({
+      job,
+      applicantCount: await Application.countDocuments({ job: job._id }),
+    }))
+  );
+
+  const subtitle = [employer?.companyName, employer?.industry].filter(Boolean).join(' · ');
+
   return (
-    <div className="space-y-10 animate-fade-in-up">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div className="space-y-8 animate-fade-in-up">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">Organization Dashboard</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Manage your job postings and review student applications.</p>
+          <h1 className="font-display font-extrabold text-[26px] tracking-[-0.02em] mb-1">Employer Dashboard</h1>
+          <div className="text-sm text-muted">{subtitle || 'Complete your company profile to add more detail here.'}</div>
         </div>
-        <Link href="/employer/post-job" className="px-6 py-3 rounded-xl bg-gradient-to-r from-accent-700 to-accent-400 text-white font-bold shadow-lg shadow-accent-900/30 hover:shadow-xl hover:brightness-110 hover:-translate-y-0.5 transition-all">
-          Post New Job
+        <Link href="/employer/post-job" className="bg-accent-500 text-[#032E1A] px-5 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-accent-900/20 hover:brightness-105 transition-all">
+          + Post opportunity
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard icon={Building2} label="Active Postings" value={jobsCount} />
-        <StatCard icon={Users} label="Total Applicants" value={applicantsCount} />
-        <StatCard icon={FileText} label="Unreviewed Apps" value={unreviewedCount} />
+      <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(160px,1fr))]">
+        <Kpi value={activeJobsCount} label="Active opportunities" />
+        <Kpi value={applicantsCount} label="Applications received" />
+        <Kpi value={unreviewedCount} label="Unreviewed" tone="warning" />
+        <Kpi
+          value={employer?.verificationStatus === 'approved' ? 'Verified' : employer?.verificationStatus === 'pending' ? 'Pending' : 'Unverified'}
+          label="Verification status"
+          tone={employer?.verificationStatus === 'approved' ? 'success' : employer?.verificationStatus === 'pending' ? 'warning' : undefined}
+        />
       </div>
 
-      <div className="space-y-4">
-        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Your Recent Placements</h3>
-        {activeJobs.length === 0 ? (
-          <div className="p-14 rounded-3xl bg-surface-1 border border-surface-border shadow-sm text-center flex flex-col items-center">
-            <div className="w-16 h-16 rounded-2xl bg-accent-100 dark:bg-accent-500/10 flex items-center justify-center mb-5">
-              <Briefcase className="w-8 h-8 text-accent-600 dark:text-accent-300" />
-            </div>
-            <h4 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">No active placements</h4>
-            <p className="text-gray-500 dark:text-gray-400 max-w-md mb-6">You haven't posted any SIWES/IT roles yet. Create your first opening to start receiving applications from students.</p>
-            <Link href="/employer/post-job" className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-accent-700 to-accent-400 text-white font-bold hover:brightness-110 transition-all">
-              Create a posting
+      <div>
+        <div className="font-display font-bold text-[17px] mb-4">Active opportunities</div>
+        {jobsWithCounts.length === 0 ? (
+          <div className="bg-surface-1 rounded-2xl border border-surface-border p-14 text-center">
+            <h4 className="font-display font-bold text-lg mb-2">No opportunities yet</h4>
+            <p className="text-muted max-w-md mx-auto mb-5">You haven&apos;t posted any SIWES/IT roles yet. Create your first opening to start receiving applications from students.</p>
+            <Link href="/employer/post-job" className="px-6 py-2.5 rounded-xl bg-accent-500 text-[#032E1A] font-bold hover:brightness-105 transition-all">
+              Post opportunity
             </Link>
           </div>
         ) : (
-          <div className="space-y-4">
-            {activeJobs.map((job) => (
-              <div key={job._id.toString()} className="p-6 rounded-2xl bg-surface-1 border border-surface-border shadow-sm flex justify-between items-center hover:border-accent-400/40 transition-all">
-                <div>
-                  <h4 className="font-bold text-lg text-gray-900 dark:text-white">{job.title}</h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{job.location}</p>
+          <div className="bg-surface-1 rounded-2xl border border-surface-border overflow-hidden">
+            {jobsWithCounts.map(({ job, applicantCount }, i) => (
+              <div key={job._id.toString()} className={`flex items-center gap-4 px-5 py-4 flex-wrap ${i < jobsWithCounts.length - 1 ? 'border-b border-surface-border' : ''}`}>
+                <div className="flex-1 text-sm font-bold min-w-[160px]">{job.title}</div>
+                <div className="w-[100px] text-[13px] text-muted">{applicantCount} applicant{applicantCount === 1 ? '' : 's'}</div>
+                <span className={`text-[11.5px] font-bold px-3 py-1 rounded-full ${job.isActive ? 'bg-success-bg text-success' : 'bg-surface-2 text-muted'}`}>
+                  {job.isActive ? 'Open' : 'Inactive'}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <div className="font-display font-bold text-[17px] mb-4">Recent applicants</div>
+        {recentApplicants.length === 0 ? (
+          <div className="bg-surface-1 rounded-2xl border border-surface-border p-10 text-center text-sm text-muted">No applications yet.</div>
+        ) : (
+          <div className="bg-surface-1 rounded-2xl border border-surface-border overflow-hidden">
+            {recentApplicants.map((app: any, i: number) => (
+              <div key={app._id.toString()} className={`flex items-center gap-3.5 px-5 py-4 flex-wrap ${i < recentApplicants.length - 1 ? 'border-b border-surface-border' : ''}`}>
+                <div className="w-8 h-8 rounded-full bg-primary-500 dark:bg-primary-400 text-white flex items-center justify-center font-display font-bold text-xs shrink-0">
+                  {initials(app.student?.name)}
                 </div>
-                <Link href="/employer/applications" className="px-4 py-2 text-sm font-bold bg-gradient-to-r from-accent-700 to-accent-400 rounded-xl text-white hover:brightness-110 transition-all">
-                  View Applicants
-                </Link>
+                <div className="flex-1 text-sm font-semibold min-w-[160px]">
+                  {app.student?.name} <span className="text-muted font-normal">— {app.job?.title}</span>
+                </div>
+                <span className={`text-[11.5px] font-bold px-3 py-1 rounded-full ${STATUS_STYLE[app.status] || 'bg-surface-2 text-muted'}`}>
+                  {app.status}
+                </span>
               </div>
             ))}
           </div>
@@ -70,16 +121,12 @@ export default async function EmployerDashboard() {
   );
 }
 
-function StatCard({ icon: Icon, label, value }: { icon: any; label: string; value: number }) {
+function Kpi({ value, label, tone }: { value: number | string; label: string; tone?: 'warning' | 'success' }) {
+  const color = tone === 'warning' ? 'text-warning' : tone === 'success' ? 'text-success' : 'text-foreground';
   return (
-    <div className="p-6 rounded-2xl bg-surface-1 border border-surface-border shadow-sm hover:border-accent-400/40 hover:shadow-md dark:hover:shadow-[0_0_24px_-8px_rgba(52,211,153,0.35)] transition-all">
-      <div className="flex items-center gap-3 mb-5">
-        <div className="p-2.5 rounded-xl bg-accent-100 dark:bg-accent-500/10">
-          <Icon className="w-5 h-5 text-accent-600 dark:text-accent-300" />
-        </div>
-        <h3 className="font-bold text-sm text-gray-500 dark:text-gray-400">{label}</h3>
-      </div>
-      <p className="text-4xl font-extrabold text-accent-600 dark:text-accent-200">{value}</p>
+    <div className="glass-card bg-surface-1 rounded-[14px] p-5">
+      <div className={`font-mono font-bold text-[26px] ${color}`}>{value}</div>
+      <div className="text-[12.5px] text-muted mt-1">{label}</div>
     </div>
   );
 }
