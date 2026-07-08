@@ -1,0 +1,56 @@
+// @vitest-environment node
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('next-auth/next', () => ({ getServerSession: vi.fn() }));
+vi.mock('@/lib/mongodb', () => ({ connectToDatabase: vi.fn() }));
+vi.mock('@/models/User', () => ({ default: { findByIdAndUpdate: vi.fn() } }));
+
+import { POST } from '@/app/api/auth/role/route';
+import { getServerSession } from 'next-auth/next';
+import User from '@/models/User';
+
+function makeRequest(body: unknown) {
+  return new Request('http://localhost/api/auth/role', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+describe('POST /api/auth/role', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('rejects unauthenticated requests', async () => {
+    (getServerSession as any).mockResolvedValue(null);
+    const res = await POST(makeRequest({ role: 'student' }));
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects roles outside student/employer (e.g. admin self-promotion)', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'u1' } });
+    const res = await POST(makeRequest({ role: 'admin' }));
+    expect(res.status).toBe(400);
+    expect(User.findByIdAndUpdate).not.toHaveBeenCalled();
+  });
+
+  it('404s when the user record is gone', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'u1' } });
+    (User.findByIdAndUpdate as any).mockResolvedValue(null);
+    const res = await POST(makeRequest({ role: 'student' }));
+    expect(res.status).toBe(404);
+  });
+
+  it('updates the role on success', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'u1' } });
+    (User.findByIdAndUpdate as any).mockResolvedValue({ _id: 'u1', role: 'employer' });
+
+    const res = await POST(makeRequest({ role: 'employer' }));
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.role).toBe('employer');
+    expect(User.findByIdAndUpdate).toHaveBeenCalledWith('u1', { role: 'employer' }, { new: true });
+  });
+});
