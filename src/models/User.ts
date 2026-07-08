@@ -13,6 +13,7 @@ export interface IUser extends Document {
   courseOfStudy?: string;
   level?: string;
   skills?: string[];
+  phone?: string;
   resumeUrl?: string;
   siwesStartDate?: Date;
   siwesDuration?: string;
@@ -44,6 +45,7 @@ const UserSchema: Schema = new Schema(
     courseOfStudy: { type: String },
     level: { type: String },
     skills: { type: [String], default: [] },
+    phone: { type: String },
     resumeUrl: { type: String },
     siwesStartDate: { type: Date },
     siwesDuration: { type: String },

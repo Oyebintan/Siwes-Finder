@@ -12,7 +12,7 @@ export async function GET() {
 
   await connectToDatabase();
   const user = await User.findById(session.user.id).select(
-    'university courseOfStudy level skills resumeUrl siwesStartDate siwesDuration preferredState isProfileComplete'
+    'name email phone university courseOfStudy level skills resumeUrl siwesStartDate siwesDuration preferredState isProfileComplete'
   );
 
   if (!user) {
@@ -31,7 +31,7 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json();
-    const { university, course, resumeLink, level, skills, siwesStartDate, siwesDuration, preferredState } = body;
+    const { university, course, resumeLink, level, skills, siwesStartDate, siwesDuration, preferredState, name, phone } = body;
 
     await connectToDatabase();
 
@@ -51,6 +51,8 @@ export async function PUT(req: Request) {
     if (siwesStartDate !== undefined) update.siwesStartDate = siwesStartDate;
     if (siwesDuration !== undefined) update.siwesDuration = siwesDuration;
     if (preferredState !== undefined) update.preferredState = preferredState;
+    if (name !== undefined && String(name).trim()) update.name = String(name).trim();
+    if (phone !== undefined) update.phone = phone;
 
     const finalUniversity = university !== undefined ? university : existing.university;
     const finalCourse = course !== undefined ? course : existing.courseOfStudy;
