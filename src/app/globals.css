@@ -11,7 +11,7 @@
   --color-primary-100: #dce6ff;
   --color-primary-200: #b9cdff;
   --color-primary-300: #8fadff;
-  --color-primary-400: #6e93ff;
+  --color-primary-400: #5c86ff;
   --color-primary-500: #2557eb;
   --color-primary-600: #1b3fb8;
   --color-primary-700: #17307a;
@@ -22,7 +22,7 @@
   --color-secondary-50: #f1eeff;
   --color-secondary-100: #e1daff;
   --color-secondary-200: #c6b8ff;
-  --color-secondary-300: #a594ff;
+  --color-secondary-300: #9b7bff;
   --color-secondary-400: #8a72f2;
   --color-secondary-500: #5b3fe0;
   --color-secondary-600: #4b3fd8;
@@ -110,12 +110,12 @@
 }
 
 .dark {
-  --background: #08090d;
+  --background: #07080d;
   --foreground: #f3f5f8;
-  --surface-0: #08090d;
-  --surface-1: #12141b;
-  --surface-2: #1a1f29;
-  --surface-border: #22262f;
+  --surface-0: #07080d;
+  --surface-1: #14171f;
+  --surface-2: #1c2029;
+  --surface-border: #262b36;
   --muted: #8b93a3;
 
   --success: #3fe6a0;
@@ -125,12 +125,12 @@
   --error: #ff6b6b;
   --error-bg: rgba(255, 107, 107, 0.13);
 
-  --glass-bg: rgba(255, 255, 255, 0.045);
-  --glass-border: rgba(255, 255, 255, 0.09);
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
 
   --circuit-opacity: 0.42;
   --circuit-color: var(--color-primary-400);
-  --page-glow: radial-gradient(ellipse at top, #0a1230 0%, #08090d 60%);
+  --page-glow: radial-gradient(ellipse at top, #101d40 0%, #07080d 62%);
 }
 
 html,
@@ -161,6 +161,17 @@ h1, h2, h3, h4, .font-display {
   border: 1px solid var(--glass-border);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+}
+
+/* Floating marketing cards — plain box-shadow reads as nothing on a near-black
+   background, so dark mode gets a soft colored glow + brighter border instead
+   of relying on shadow alone to convey elevation. */
+.floating-card {
+  box-shadow: 0 20px 45px -12px rgba(15, 23, 42, 0.22);
+}
+.dark .floating-card {
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 24px 60px -16px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05), 0 12px 40px -8px rgba(92, 134, 255, 0.22);
 }
 
 /* ---- Ambient background (preserved from prior design) ---- */

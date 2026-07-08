@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { LogIn, ArrowRight, ArrowUpRight, CheckCircle2 } from 'lucide-react';
 
 const companies = ['Paystack', 'Flutterwave', 'Andela', 'MTN Nigeria', 'Interswitch', 'Nigerian Breweries'];
 
@@ -63,16 +64,30 @@ export default function Home() {
             <a href="#opportunities" className="text-sm font-semibold text-muted hover:text-foreground transition-colors">Opportunities</a>
             <a href="#faq" className="text-sm font-semibold text-muted hover:text-foreground transition-colors">FAQ</a>
           </nav>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
-            <Link href="/login" className="text-sm font-semibold px-1 py-2 hover:text-primary-500 dark:hover:text-primary-400 transition-colors">Log in</Link>
-            <Link href="/signup" className="bg-primary-500 dark:bg-primary-400 text-white px-5 py-2.5 rounded-[9px] text-sm font-bold shadow-lg shadow-primary-900/20 hover:brightness-110 transition-all">Get Started</Link>
+            <Link
+              href="/login"
+              aria-label="Log in"
+              className="flex items-center justify-center p-2.5 sm:px-1 sm:py-2 rounded-full sm:rounded-none text-sm font-semibold hover:bg-surface-2 sm:hover:bg-transparent hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+            >
+              <LogIn className="w-[18px] h-[18px] sm:hidden" />
+              <span className="hidden sm:inline">Log in</span>
+            </Link>
+            <Link
+              href="/signup"
+              aria-label="Get started"
+              className="flex items-center justify-center p-2.5 sm:px-5 sm:py-2.5 rounded-full sm:rounded-[9px] bg-primary-500 dark:bg-primary-400 text-white text-sm font-bold shadow-lg shadow-primary-900/20 hover:brightness-110 transition-all"
+            >
+              <ArrowRight className="w-[18px] h-[18px] sm:hidden" />
+              <span className="hidden sm:inline">Get Started</span>
+            </Link>
           </div>
         </div>
       </header>
 
       {/* HERO */}
-      <section className="relative max-w-[1220px] mx-auto px-6 sm:px-7 pt-24 pb-20">
+      <section className="relative max-w-[1220px] mx-auto px-6 sm:px-7 pt-10 sm:pt-14 pb-14 sm:pb-16">
         <div className="pointer-events-none absolute -top-36 -right-40 w-[520px] h-[520px] rounded-full blur-md animate-blob" style={{ background: 'radial-gradient(circle, var(--color-primary-500), transparent 70%)', opacity: 0.13 }} />
         <div className="pointer-events-none absolute top-20 right-28 w-[340px] h-[340px] rounded-full blur-md animate-blob [animation-direction:reverse]" style={{ background: 'radial-gradient(circle, var(--color-secondary-500), transparent 70%)', opacity: 0.12 }} />
 
@@ -93,12 +108,15 @@ export default function Home() {
 
           {/* Floating cards */}
           <div className="relative h-[440px] min-w-[280px] animate-fade-in-up [animation-delay:100ms]">
-            <div className="absolute top-5 right-0 w-[250px] bg-surface-1 border border-surface-border rounded-[18px] shadow-2xl p-[22px] animate-float-card">
+            <Link href="/signup" className="floating-card group absolute top-5 right-0 w-[260px] bg-surface-1 border border-surface-border rounded-[18px] p-[22px] animate-float-card transition-transform hover:-translate-y-1">
               <div className="flex items-center gap-2.5 mb-4">
-                <div className="w-[38px] h-[38px] rounded-[10px] bg-primary-500/10 dark:bg-primary-400/15 flex items-center justify-center font-display font-extrabold text-primary-500 dark:text-primary-400 text-[13px]">PS</div>
-                <div>
+                <div className="w-[38px] h-[38px] rounded-[10px] bg-primary-500/10 dark:bg-primary-400/15 flex items-center justify-center font-display font-extrabold text-primary-500 dark:text-primary-400 text-[13px] shrink-0">PS</div>
+                <div className="flex-1 min-w-0">
                   <div className="text-[13.5px] font-bold">Frontend Intern</div>
                   <div className="text-[11.5px] text-muted">Paystack · Lagos</div>
+                </div>
+                <div className="w-7 h-7 rounded-full bg-primary-500/10 dark:bg-primary-400/15 flex items-center justify-center shrink-0 group-hover:bg-primary-500 dark:group-hover:bg-primary-400 transition-colors">
+                  <ArrowUpRight className="w-3.5 h-3.5 text-primary-500 dark:text-primary-400 group-hover:text-white transition-colors" />
                 </div>
               </div>
               <div className="flex items-center justify-between mb-3">
@@ -106,20 +124,25 @@ export default function Home() {
                 <span className="font-mono text-[16px] font-bold text-success">92%</span>
               </div>
               <span className="inline-block text-[11px] font-bold px-2.5 py-1 rounded-full bg-success-bg text-success">● Verified company</span>
-            </div>
-            <div className="absolute bottom-5 left-0 w-[230px] bg-surface-1 border border-surface-border rounded-[18px] shadow-xl p-5">
-              <div className="font-mono text-[10.5px] text-muted mb-2 tracking-wide">APPLICATION STATUS</div>
+            </Link>
+            <Link href="/signup" className="floating-card group absolute bottom-5 left-0 w-[240px] bg-surface-1 border border-surface-border rounded-[18px] p-5 transition-transform hover:-translate-y-1">
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="font-mono text-[10.5px] text-muted tracking-wide">APPLICATION STATUS</span>
+                <div className="w-6 h-6 rounded-full bg-success-bg flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-success" />
+                </div>
+              </div>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-success" />
+                <div className="w-2 h-2 rounded-full bg-success shrink-0" />
                 <span className="text-[13.5px] font-semibold">Accepted at MTN Nigeria</span>
               </div>
-            </div>
+            </Link>
           </div>
         </div>
       </section>
 
       {/* MARQUEE */}
-      <section className="pt-2 pb-[72px] overflow-hidden">
+      <section className="pt-2 pb-14 overflow-hidden">
         <div className="text-center font-mono text-[11.5px] font-bold text-muted tracking-widest uppercase mb-7">Verified companies hiring on SIWES Finder</div>
         <div className="flex w-max animate-marquee">
           {[0, 1].map((dup) => (
@@ -134,7 +157,7 @@ export default function Home() {
 
       {/* HOW IT WORKS */}
       <section id="how-it-works" className="border-y border-surface-border bg-surface-1">
-        <div className="max-w-[1220px] mx-auto px-6 sm:px-7 py-[88px]">
+        <div className="max-w-[1220px] mx-auto px-6 sm:px-7 py-16 sm:py-20">
           <div className="mb-[52px]">
             <div className="font-mono font-bold text-[11.5px] tracking-widest text-primary-500 dark:text-primary-400 uppercase mb-3.5">01 / How it works</div>
             <h2 className="font-display font-extrabold text-[38px] tracking-[-0.025em] max-w-[520px]">Two journeys, one platform.</h2>
@@ -153,7 +176,7 @@ export default function Home() {
       </section>
 
       {/* FEATURED */}
-      <section id="opportunities" className="max-w-[1220px] mx-auto px-6 sm:px-7 py-[88px]">
+      <section id="opportunities" className="max-w-[1220px] mx-auto px-6 sm:px-7 py-16 sm:py-20">
         <div className="flex items-end justify-between mb-9 gap-4">
           <div>
             <div className="font-mono font-bold text-[11.5px] tracking-widest text-primary-500 dark:text-primary-400 uppercase mb-3.5">02 / Featured</div>
@@ -181,7 +204,7 @@ export default function Home() {
       </section>
 
       {/* STATS */}
-      <section className="bg-[#0B1220] dark:bg-black py-[72px] px-6 sm:px-7">
+      <section className="bg-[#0B1220] dark:bg-black py-14 sm:py-16 px-6 sm:px-7">
         <div className="max-w-[1220px] mx-auto grid gap-4 text-center [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]">
           {stats.map((s) => (
             <div key={s.label} className="rounded-2xl px-4 py-6 bg-white/[0.045] border border-white/[0.09] backdrop-blur-md">
@@ -193,7 +216,7 @@ export default function Home() {
       </section>
 
       {/* TESTIMONIALS */}
-      <section className="max-w-[1220px] mx-auto px-6 sm:px-7 py-[88px]">
+      <section className="max-w-[1220px] mx-auto px-6 sm:px-7 py-16 sm:py-20">
         <h2 className="font-display font-extrabold text-[32px] tracking-[-0.02em] mb-9 text-center">Students trust SIWES Finder</h2>
         <div className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]">
           {testimonials.map((t) => (
@@ -208,7 +231,7 @@ export default function Home() {
 
       {/* FAQ */}
       <section id="faq" className="border-t border-surface-border bg-surface-1">
-        <div className="max-w-[800px] mx-auto px-6 sm:px-7 py-[88px]">
+        <div className="max-w-[800px] mx-auto px-6 sm:px-7 py-16 sm:py-20">
           <h2 className="font-display font-extrabold text-[32px] tracking-[-0.02em] mb-9 text-center">Frequently asked questions</h2>
           <div className="flex flex-col gap-px bg-surface-border rounded-2xl overflow-hidden">
             {faqs.map((f) => (
@@ -222,10 +245,10 @@ export default function Home() {
       </section>
 
       {/* FINAL CTA */}
-      <section className="max-w-[1220px] mx-auto px-6 sm:px-7 py-[88px]">
-        <div className="rounded-[26px] p-[clamp(32px,6vw,64px)] text-center bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-400 dark:to-[#4B3FD8]">
-          <h2 className="font-display font-extrabold text-[34px] text-white mb-4.5 tracking-[-0.02em]">Your SIWES placement is one search away.</h2>
-          <Link href="/signup" className="inline-block bg-white text-primary-600 px-8 py-4 rounded-[9px] text-[15px] font-bold mt-2 hover:brightness-95 transition-all">Create your free profile</Link>
+      <section className="max-w-[1220px] mx-auto px-6 sm:px-7 py-16 sm:py-20">
+        <div className="rounded-[26px] p-[clamp(28px,5vw,56px)] text-center bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-400 dark:to-[#4B3FD8]">
+          <h2 className="font-display font-extrabold text-[30px] text-white mb-4 tracking-[-0.02em]">Your SIWES placement is one search away.</h2>
+          <Link href="/signup" className="inline-block bg-white text-primary-600 px-6 py-3 rounded-[9px] text-sm font-bold mt-2 hover:brightness-95 transition-all">Create your free profile</Link>
         </div>
       </section>
 

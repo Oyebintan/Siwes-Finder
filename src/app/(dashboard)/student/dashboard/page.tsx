@@ -55,14 +55,9 @@ export default async function StudentDashboard() {
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display font-extrabold text-[26px] tracking-[-0.02em] mb-1">Welcome back, {firstName} 👋</h1>
-          <div className="text-sm text-muted">Here&apos;s where your SIWES search stands today.</div>
-        </div>
-        <Link href="/student/jobs" className="bg-primary-500 dark:bg-primary-400 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-primary-900/20 hover:brightness-110 transition-all">
-          Find opportunities
-        </Link>
+      <div>
+        <h1 className="font-display font-extrabold text-[26px] tracking-[-0.02em] mb-1">Welcome back, {firstName} 👋</h1>
+        <div className="text-sm text-muted">Here&apos;s where your SIWES search stands today.</div>
       </div>
 
       {/* Hero progress banner */}
@@ -87,9 +82,14 @@ export default async function StudentDashboard() {
               : 'Complete your profile and submit your first application.'}
           </div>
         </div>
-        <Link href="/student/profile" className="relative text-[13.5px] font-bold text-white bg-white/[0.14] px-4 py-2.5 rounded-lg whitespace-nowrap">
-          Complete profile →
-        </Link>
+        <div className="relative flex items-center gap-2 shrink-0">
+          <Link href="/student/jobs" aria-label="Find opportunities" className="w-10 h-10 rounded-lg bg-white text-primary-600 flex items-center justify-center shrink-0 hover:brightness-95 transition-all" title="Find opportunities">
+            <Search className="w-[18px] h-[18px]" />
+          </Link>
+          <Link href="/student/profile" className="text-[13.5px] font-bold text-white bg-white/[0.14] px-4 py-2.5 rounded-lg whitespace-nowrap hover:bg-white/[0.2] transition-colors">
+            Complete profile →
+          </Link>
+        </div>
       </div>
 
       {/* KPI row */}
