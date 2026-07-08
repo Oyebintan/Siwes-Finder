@@ -99,6 +99,20 @@ describe('GET /api/jobs/[id]', () => {
     const res = await GET(makeGetRequest(), p);
     expect(res.status).toBe(200);
   });
+
+  it('lets a super_admin see any job regardless of status', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'sa1', role: 'super_admin' } });
+    const jobDoc = {
+      _id: 'job1',
+      isActive: false,
+      employerId: { _id: { toString: () => 'emp1' }, verificationStatus: 'pending' },
+    };
+    const populate = vi.fn().mockResolvedValue(jobDoc);
+    (Job.findById as any).mockReturnValue({ populate });
+
+    const res = await GET(makeGetRequest(), p);
+    expect(res.status).toBe(200);
+  });
 });
 
 describe('PUT /api/jobs/[id]', () => {
@@ -192,6 +206,18 @@ describe('DELETE /api/jobs/[id]', () => {
     expect(res.status).toBe(200);
     expect(Job.findOne).toHaveBeenCalledWith({ _id: 'job1' });
     expect(Application.deleteMany).toHaveBeenCalledWith({ job: 'job1' });
+    expect(jobDoc.deleteOne).toHaveBeenCalled();
+  });
+
+  it('lets a super_admin delete any job by id alone', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'sa1', role: 'super_admin' } });
+    const jobDoc: any = { _id: 'job1', deleteOne: vi.fn().mockResolvedValue(undefined) };
+    (Job.findOne as any).mockResolvedValue(jobDoc);
+
+    const res = await DELETE(makeDeleteRequest(), p);
+
+    expect(res.status).toBe(200);
+    expect(Job.findOne).toHaveBeenCalledWith({ _id: 'job1' });
     expect(jobDoc.deleteOne).toHaveBeenCalled();
   });
 

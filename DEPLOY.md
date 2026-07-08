@@ -35,6 +35,7 @@ the Vercel dashboard → Project → Settings → Environment Variables):
 | `NEXTAUTH_URL` | Your production URL. Unknown until the first deploy — use the assigned `*.vercel.app` URL (or your custom domain), then redeploy if it changes. |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | From Google Cloud Console, if enabling Google sign-in. |
 | `ADMIN_EMAILS` | Comma-separated list of emails that should be promoted to admin on sign-in. |
+| `SUPER_ADMIN_EMAILS` | Comma-separated list of emails promoted to `super_admin` on sign-in — same access as admin, plus it outranks plain admins (e.g. only a super_admin can delete another super_admin's account). |
 | `BLOB_READ_WRITE_TOKEN` | Auto-injected once a Vercel Blob store is connected to the project (see step 3 below) — don't set this by hand. |
 
 ## 3. Before the first deploy actually works

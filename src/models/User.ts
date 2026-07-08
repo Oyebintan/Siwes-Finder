@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export type UserRole = 'student' | 'employer' | 'admin' | 'unassigned';
+export type UserRole = 'student' | 'employer' | 'admin' | 'super_admin' | 'unassigned';
 export type VerificationStatus = 'unsubmitted' | 'pending' | 'approved' | 'rejected';
 
 export interface IUser extends Document {
@@ -38,7 +38,7 @@ const UserSchema: Schema = new Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String },
-    role: { type: String, enum: ['student', 'employer', 'admin', 'unassigned'], default: 'unassigned' },
+    role: { type: String, enum: ['student', 'employer', 'admin', 'super_admin', 'unassigned'], default: 'unassigned' },
 
     // Student fields
     university: { type: String },

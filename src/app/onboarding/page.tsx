@@ -7,6 +7,7 @@ import { Loader2, GraduationCap, Building2 } from 'lucide-react';
 
 const ROLE_HOME: Record<string, string> = {
   admin: '/admin/dashboard',
+  super_admin: '/admin/dashboard',
   employer: '/employer/dashboard',
   student: '/student/dashboard',
 };

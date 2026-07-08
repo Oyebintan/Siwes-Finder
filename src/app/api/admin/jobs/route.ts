@@ -3,13 +3,14 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Job from '@/models/Job';
+import { isAdminRole } from '@/lib/roles';
 
 // GET: paginated feed of all jobs for moderation (admin only).
 // ?page=  &  ?limit=
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== 'admin') {
+    if (!session || !isAdminRole(session.user.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

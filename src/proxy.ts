@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
+import { isAdminRole } from '@/lib/roles';
 
 // Next.js 16 renamed `middleware` to `proxy`. This is a first-line, optimistic
 // role gate for the dashboard route groups — the authoritative authorization
 // checks still live in each API route handler.
 const ROLE_HOME: Record<string, string> = {
   admin: '/admin/dashboard',
+  super_admin: '/admin/dashboard',
   employer: '/employer/dashboard',
   student: '/student/dashboard',
 };
@@ -34,8 +36,9 @@ export async function proxy(request: NextRequest) {
         : null;
 
   // Wrong role for this area → bounce to the user's own home (or onboarding if
-  // they haven't picked a role yet).
-  if (requiredRole && role !== requiredRole) {
+  // they haven't picked a role yet). Admin and super_admin share /admin.
+  const hasAccess = requiredRole === 'admin' ? isAdminRole(role) : role === requiredRole;
+  if (requiredRole && !hasAccess) {
     const home = ROLE_HOME[role] ?? '/onboarding';
     return NextResponse.redirect(new URL(home, request.url));
   }

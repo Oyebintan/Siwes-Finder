@@ -38,6 +38,28 @@ describe('DELETE /api/admin/users/[id]', () => {
     expect(User.findById).not.toHaveBeenCalled();
   });
 
+  it('refuses to let a plain admin delete a super_admin account', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'admin1', role: 'admin' } });
+    (User.findById as any).mockResolvedValue({ _id: 'sa1', role: 'super_admin' });
+
+    const res = await DELETE(makeRequest(), { params: Promise.resolve({ id: 'sa1' }) });
+    const data = await res.json();
+
+    expect(res.status).toBe(403);
+    expect(data.error).toMatch(/only a super admin/i);
+  });
+
+  it('lets a super_admin delete another super_admin account', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'sa1', role: 'super_admin' } });
+    const user: any = { _id: 'sa2', role: 'super_admin', deleteOne: vi.fn().mockResolvedValue(undefined) };
+    (User.findById as any).mockResolvedValue(user);
+
+    const res = await DELETE(makeRequest(), { params: Promise.resolve({ id: 'sa2' }) });
+
+    expect(res.status).toBe(200);
+    expect(user.deleteOne).toHaveBeenCalled();
+  });
+
   it('404s when the target user does not exist', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'admin1', role: 'admin' } });
     (User.findById as any).mockResolvedValue(null);

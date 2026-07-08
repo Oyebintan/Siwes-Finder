@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { isAdminRole } from '@/lib/roles';
 
 type NavItem = { name: string; href: string; icon: LucideIcon };
 
@@ -78,7 +79,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
   if (!session || role === 'unassigned') return null;
 
-  const isAdmin = role === 'admin';
+  const isAdmin = isAdminRole(role);
   const isEmployer = role === 'employer';
   const navItems = isAdmin ? ADMIN_NAV : isEmployer ? EMPLOYER_NAV : STUDENT_NAV;
   const accentActive = isEmployer ? 'text-accent-500' : isAdmin ? 'text-white' : 'text-primary-500 dark:text-primary-400';
@@ -134,7 +135,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="text-[11.5px] font-semibold text-success truncate">{subline ? `● ${subline}` : '● Verified'}</div>
           ) : (
             <div className={`text-[11.5px] truncate ${isAdmin ? 'text-[#8B93A3]' : 'text-muted'}`}>
-              {isAdmin ? 'Super admin' : subline || ' '}
+              {isAdmin ? (role === 'super_admin' ? 'Super admin' : 'Admin') : subline || ' '}
             </div>
           )}
         </div>

@@ -15,7 +15,7 @@ type ManagedUser = {
   createdAt: string;
 };
 
-const ROLE_TABS = ['all', 'student', 'employer', 'admin', 'unassigned'] as const;
+const ROLE_TABS = ['all', 'student', 'employer', 'admin', 'super_admin', 'unassigned'] as const;
 
 export default function AdminUsersPage() {
   const { data: session } = useSession();
@@ -70,7 +70,7 @@ export default function AdminUsersPage() {
             onClick={() => { setRole(t); setPage(1); }}
             className={`px-4 py-2 rounded-full text-[13px] font-bold capitalize transition-all ${role === t ? 'bg-primary-500 dark:bg-primary-400 text-white' : 'bg-surface-1 border-[1.5px] border-surface-border text-muted'}`}
           >
-            {t}
+            {t.replace('_', ' ')}
           </button>
         ))}
       </div>
@@ -102,7 +102,7 @@ export default function AdminUsersPage() {
                   <tr key={u._id} className="border-b border-surface-border/60 last:border-0">
                     <td className="px-5 py-3 font-medium whitespace-nowrap">{u.name}</td>
                     <td className="px-5 py-3 text-muted break-all">{u.email}</td>
-                    <td className="px-5 py-3"><span className="px-2.5 py-0.5 rounded-full text-xs font-bold capitalize bg-surface-2">{u.role}</span></td>
+                    <td className="px-5 py-3"><span className="px-2.5 py-0.5 rounded-full text-xs font-bold capitalize bg-surface-2">{u.role.replace('_', ' ')}</span></td>
                     <td className="px-5 py-3 text-muted">{u.companyName || u.university || (u.verificationStatus ?? '—')}</td>
                     <td className="px-5 py-3 text-right">
                       {u._id === session?.user?.id ? (

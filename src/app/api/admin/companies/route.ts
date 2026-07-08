@@ -3,13 +3,14 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
+import { isAdminRole } from '@/lib/roles';
 
 // GET: list employer/company accounts for the verification queue.
 // ?status=pending|approved|rejected|unsubmitted|all  (default: pending)
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== 'admin') {
+    if (!session || !isAdminRole(session.user.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

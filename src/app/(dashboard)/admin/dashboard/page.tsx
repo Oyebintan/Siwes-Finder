@@ -6,6 +6,7 @@ import Job from "@/models/Job";
 import Link from "next/link";
 import { ShieldCheck, ShieldX } from "lucide-react";
 import { redirect } from "next/navigation";
+import { isAdminRole } from "@/lib/roles";
 
 type PendingCompany = { _id: { toString(): string }; name: string; companyName?: string; createdAt: string | Date };
 type RecentJob = {
@@ -17,7 +18,7 @@ type RecentJob = {
 
 export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "admin") redirect("/login");
+  if (!session || !isAdminRole(session.user.role)) redirect("/login");
 
   await connectToDatabase();
   const [studentsCount, companiesCount, pendingCount, activeListingsCount, pendingCompanies, recentJobs] = await Promise.all([

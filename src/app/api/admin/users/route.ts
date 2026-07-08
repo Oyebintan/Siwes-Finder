@@ -3,13 +3,14 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
+import { isAdminRole } from '@/lib/roles';
 
 // GET: paginated user list for admin user management.
-// ?role=student|employer|admin|unassigned  &  ?page=  &  ?limit=
+// ?role=student|employer|admin|super_admin|unassigned  &  ?page=  &  ?limit=
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== 'admin') {
+    if (!session || !isAdminRole(session.user.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -21,7 +22,7 @@ export async function GET(req: Request) {
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '25', 10) || 25));
 
     const filter: Record<string, unknown> = {};
-    if (['student', 'employer', 'admin', 'unassigned'].includes(role)) {
+    if (['student', 'employer', 'admin', 'super_admin', 'unassigned'].includes(role)) {
       filter.role = role;
     }
 

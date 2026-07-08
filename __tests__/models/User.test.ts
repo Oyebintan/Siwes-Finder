@@ -18,6 +18,11 @@ describe('User model', () => {
     await expect(user.validate()).resolves.toBeUndefined();
   });
 
+  it('accepts the super_admin role', async () => {
+    const user = new User({ name: 'Ada', email: 'ada@example.com', role: 'super_admin' });
+    await expect(user.validate()).resolves.toBeUndefined();
+  });
+
   it('rejects an invalid role', async () => {
     const user = new User({ name: 'Ada', email: 'ada@example.com', role: 'superadmin' });
     await expect(user.validate()).rejects.toMatchObject({

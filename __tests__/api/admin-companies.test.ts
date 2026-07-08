@@ -33,6 +33,16 @@ describe('GET /api/admin/companies', () => {
     expect(res.status).toBe(401);
   });
 
+  it('accepts a super_admin session', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'sa1', role: 'super_admin' } });
+    const select = vi.fn().mockReturnThis();
+    const sort = vi.fn().mockResolvedValue([]);
+    (User.find as any).mockReturnValue({ select, sort });
+
+    const res = await GET(makeGetRequest());
+    expect(res.status).toBe(200);
+  });
+
   it('defaults to pending companies', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'admin1', role: 'admin' } });
     const select = vi.fn().mockReturnThis();

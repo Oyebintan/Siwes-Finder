@@ -16,14 +16,33 @@ if (!NEXTAUTH_SECRET) {
 
 // Admins are provisioned by email allowlist (there is no public admin signup).
 // Set ADMIN_EMAILS="a@x.com,b@y.com" in the environment. Matching users are
-// promoted to the 'admin' role the next time they sign in.
+// promoted to the 'admin' role the next time they sign in. SUPER_ADMIN_EMAILS
+// works the same way but promotes to 'super_admin', which outranks 'admin'
+// (e.g. a plain admin can't delete a super_admin's account).
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "")
+  .split(",")
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean);
+
+const SUPER_ADMIN_EMAILS = (process.env.SUPER_ADMIN_EMAILS || "")
   .split(",")
   .map((e) => e.trim().toLowerCase())
   .filter(Boolean);
 
 function isAdminEmail(email?: string | null): boolean {
   return !!email && ADMIN_EMAILS.includes(email.toLowerCase());
+}
+
+function isSuperAdminEmail(email?: string | null): boolean {
+  return !!email && SUPER_ADMIN_EMAILS.includes(email.toLowerCase());
+}
+
+// Resolves the allowlist-driven role for an email, or null if it isn't on
+// either list. Super admin takes priority over plain admin.
+function resolvePrivilegedRole(email?: string | null): "super_admin" | "admin" | null {
+  if (isSuperAdminEmail(email)) return "super_admin";
+  if (isAdminEmail(email)) return "admin";
+  return null;
 }
 
 export const authOptions: AuthOptions = {
@@ -60,9 +79,10 @@ export const authOptions: AuthOptions = {
           throw new Error("Incorrect password");
         }
 
-        // Promote allowlisted emails to admin on sign-in.
-        if (isAdminEmail(user.email) && user.role !== "admin") {
-          user.role = "admin";
+        // Promote allowlisted emails to admin/super_admin on sign-in.
+        const privilegedRole = resolvePrivilegedRole(user.email);
+        if (privilegedRole && user.role !== privilegedRole) {
+          user.role = privilegedRole;
           await user.save();
         }
 
@@ -79,14 +99,15 @@ export const authOptions: AuthOptions = {
           const newUser = await User.create({
             name: user.name,
             email: user.email,
-            role: isAdminEmail(user.email) ? "admin" : "unassigned",
+            role: resolvePrivilegedRole(user.email) ?? "unassigned",
           });
           user.id = newUser._id.toString();
           user.role = newUser.role;
         } else {
-          // Promote allowlisted emails to admin on sign-in.
-          if (isAdminEmail(existingUser.email) && existingUser.role !== "admin") {
-            existingUser.role = "admin";
+          // Promote allowlisted emails to admin/super_admin on sign-in.
+          const privilegedRole = resolvePrivilegedRole(existingUser.email);
+          if (privilegedRole && existingUser.role !== privilegedRole) {
+            existingUser.role = privilegedRole;
             await existingUser.save();
           }
           user.id = existingUser._id.toString();

@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Job from '@/models/Job';
 import Application from '@/models/Application';
+import { isAdminRole } from '@/lib/roles';
 
 // GET one job. Owners (and admins) always see it; everyone else only sees
 // active jobs from verified employers.
@@ -27,7 +28,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       verificationStatus?: string;
     } | null;
     const isOwner = employer?._id?.toString() === session.user.id;
-    const isAdmin = session.user.role === 'admin';
+    const isAdmin = isAdminRole(session.user.role);
     if (!isOwner && !isAdmin) {
       if (!job.isActive || employer?.verificationStatus !== 'approved') {
         return NextResponse.json({ error: 'Job not found' }, { status: 404 });
@@ -99,7 +100,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     await connectToDatabase();
     const { id } = await params;
 
-    const isAdmin = session.user.role === 'admin';
+    const isAdmin = isAdminRole(session.user.role);
     const query = isAdmin ? { _id: id } : { _id: id, employerId: session.user.id };
 
     const job = await Job.findOne(query);

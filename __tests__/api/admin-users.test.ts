@@ -26,6 +26,19 @@ describe('GET /api/admin/users', () => {
     expect(res.status).toBe(401);
   });
 
+  it('accepts a super_admin session', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'sa1', role: 'super_admin' } });
+    (User.countDocuments as any).mockResolvedValue(0);
+    const select = vi.fn().mockReturnThis();
+    const sort = vi.fn().mockReturnThis();
+    const skip = vi.fn().mockReturnThis();
+    const limit = vi.fn().mockResolvedValue([]);
+    (User.find as any).mockReturnValue({ select, sort, skip, limit });
+
+    const res = await GET(makeRequest());
+    expect(res.status).toBe(200);
+  });
+
   it('ignores an unrecognized role filter', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'admin1', role: 'admin' } });
     (User.countDocuments as any).mockResolvedValue(0);
