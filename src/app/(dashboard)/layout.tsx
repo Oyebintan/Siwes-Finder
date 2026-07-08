@@ -27,7 +27,6 @@ const EMPLOYER_NAV: NavItem[] = [
   { name: 'Manage opportunities', href: '/employer/dashboard', icon: Briefcase },
   { name: 'Applicants', href: '/employer/applications', icon: Users },
   { name: 'Company profile', href: '/employer/verification', icon: Building2 },
-  { name: 'Logbooks', href: '/employer/logbook', icon: BookOpen },
 ];
 
 const ADMIN_NAV: NavItem[] = [

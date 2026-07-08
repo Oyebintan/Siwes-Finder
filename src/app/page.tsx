@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { LogIn, ArrowRight, ArrowUpRight, CheckCircle2 } from 'lucide-react';
+import { LogIn, ArrowUpRight, CheckCircle2 } from 'lucide-react';
 
 const companies = ['Paystack', 'Flutterwave', 'Andela', 'MTN Nigeria', 'Interswitch', 'Nigerian Breweries'];
 
@@ -68,19 +68,11 @@ export default function Home() {
             <ThemeToggle />
             <Link
               href="/login"
-              aria-label="Log in"
-              className="flex items-center justify-center p-2.5 sm:px-1 sm:py-2 rounded-full sm:rounded-none text-sm font-semibold hover:bg-surface-2 sm:hover:bg-transparent hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+              aria-label="Sign in"
+              className="flex items-center justify-center gap-1.5 p-2.5 sm:px-5 sm:py-2.5 rounded-full sm:rounded-[9px] bg-primary-500 dark:bg-primary-400 text-white text-sm font-bold shadow-lg shadow-primary-900/20 hover:brightness-110 transition-all"
             >
               <LogIn className="w-[18px] h-[18px] sm:hidden" />
-              <span className="hidden sm:inline">Log in</span>
-            </Link>
-            <Link
-              href="/signup"
-              aria-label="Get started"
-              className="flex items-center justify-center p-2.5 sm:px-5 sm:py-2.5 rounded-full sm:rounded-[9px] bg-primary-500 dark:bg-primary-400 text-white text-sm font-bold shadow-lg shadow-primary-900/20 hover:brightness-110 transition-all"
-            >
-              <ArrowRight className="w-[18px] h-[18px] sm:hidden" />
-              <span className="hidden sm:inline">Get Started</span>
+              <span className="hidden sm:inline">Sign in</span>
             </Link>
           </div>
         </div>

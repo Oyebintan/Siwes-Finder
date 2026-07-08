@@ -96,9 +96,9 @@ export default async function StudentDashboard() {
               : 'Complete your profile and submit your first application.'}
           </div>
         </div>
-        <div className="relative flex items-center gap-2 shrink-0">
-          <Link href="/student/jobs" aria-label="Find opportunities" className="w-10 h-10 rounded-lg bg-white text-primary-600 flex items-center justify-center shrink-0 hover:brightness-95 transition-all" title="Find opportunities">
-            <Search className="w-[18px] h-[18px]" />
+        <div className="relative flex items-center gap-2 shrink-0 flex-wrap">
+          <Link href="/student/jobs" className="text-[13.5px] font-bold text-primary-600 bg-white px-4 py-2.5 rounded-lg whitespace-nowrap hover:brightness-95 transition-all flex items-center gap-1.5">
+            <Search className="w-4 h-4" /> Find opportunities
           </Link>
           <Link href="/student/profile" className="text-[13.5px] font-bold text-white bg-white/[0.14] px-4 py-2.5 rounded-lg whitespace-nowrap hover:bg-white/[0.2] transition-colors">
             Complete profile →
