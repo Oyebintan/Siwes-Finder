@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- SIWES Finder logomark (same as the in-app Logo component). The
+       embedded media query switches to the dark-mode brand blue when the
+       browser UI is dark, mirroring fill-primary-500 / dark:fill-primary-400. -->
+  <style>
+    .brand { fill: #2557eb; }
+    .brand-stroke { stroke: #2557eb; }
+    @media (prefers-color-scheme: dark) {
+      .brand { fill: #5c86ff; }
+      .brand-stroke { stroke: #5c86ff; }
+    }
+  </style>
+  <circle cx="22" cy="42" r="10" class="brand" />
+  <circle cx="42" cy="22" r="10" class="brand" opacity="0.4" />
+  <path d="M28 36 L38 28" class="brand-stroke" stroke-width="4" stroke-linecap="round" fill="none" />
+</svg>

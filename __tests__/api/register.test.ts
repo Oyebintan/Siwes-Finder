@@ -31,6 +31,50 @@ describe('POST /api/auth/register', () => {
     expect(connectToDatabase).not.toHaveBeenCalled();
   });
 
+  it.each(['admin', 'super_admin', 'unassigned', 'anything-else'])(
+    'rejects self-registration with role %s (privileged roles come from the allowlists only)',
+    async (role) => {
+      const res = await POST(
+        makeRequest({ name: 'Mallory', email: 'mallory@example.com', password: 'secret123', role })
+      );
+      const data = await res.json();
+
+      expect(res.status).toBe(400);
+      expect(data.error).toMatch(/invalid role/i);
+      expect(User.create).not.toHaveBeenCalled();
+    }
+  );
+
+  it('rejects a malformed email address', async () => {
+    const res = await POST(
+      makeRequest({ name: 'Ada', email: 'not-an-email', password: 'secret123', role: 'student' })
+    );
+    expect(res.status).toBe(400);
+    expect(User.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects a password shorter than 6 characters', async () => {
+    const res = await POST(
+      makeRequest({ name: 'Ada', email: 'ada@example.com', password: 'abc', role: 'student' })
+    );
+    expect(res.status).toBe(400);
+    expect(User.create).not.toHaveBeenCalled();
+  });
+
+  it('translates a duplicate-key race (E11000) into the same 409 as the pre-check', async () => {
+    (User.findOne as any).mockResolvedValue(null);
+    (bcrypt.hash as any).mockResolvedValue('hashed-password');
+    (User.create as any).mockRejectedValue(Object.assign(new Error('dup'), { code: 11000 }));
+
+    const res = await POST(
+      makeRequest({ name: 'Ada', email: 'ada@example.com', password: 'secret123', role: 'student' })
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(409);
+    expect(data.error).toMatch(/already exists/i);
+  });
+
   it('rejects registration for an email that already exists', async () => {
     (User.findOne as any).mockResolvedValue({ _id: '1', email: 'ada@example.com' });
 

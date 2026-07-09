@@ -14,6 +14,22 @@ export async function POST(req: Request) {
 
     const { weekNumber, dayOfWeek, activityDescription, hoursWorked } = await req.json();
 
+    // Validate up front so bad input gets a 400, not a 500 from the
+    // Mongoose required-field/cast error it would otherwise trigger.
+    const week = Number(weekNumber);
+    const hours = Number(hoursWorked);
+    if (
+      !Number.isFinite(week) || week < 1 ||
+      !dayOfWeek || typeof dayOfWeek !== 'string' ||
+      !activityDescription || !String(activityDescription).trim() ||
+      !Number.isFinite(hours) || hours < 1 || hours > 24
+    ) {
+      return NextResponse.json(
+        { error: 'Week number, day, activity description and hours worked are all required.' },
+        { status: 400 }
+      );
+    }
+
     await connectToDatabase();
 
     // Find the accepted application to know the employer
@@ -29,10 +45,10 @@ export async function POST(req: Request) {
     const log = await Logbook.create({
       studentId: session.user.id,
       employerId: acceptedApp.employer,
-      weekNumber,
+      weekNumber: week,
       dayOfWeek,
       activityDescription,
-      hoursWorked,
+      hoursWorked: hours,
     });
 
     return NextResponse.json(log, { status: 201 });

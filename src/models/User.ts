@@ -19,6 +19,7 @@ export interface IUser extends Document {
   siwesDuration?: string;
   preferredState?: string;
   isProfileComplete?: boolean;
+  savedJobs?: mongoose.Types.ObjectId[];
   communityJoined?: boolean;
   // Employer / Company Specific
   companyName?: string;
@@ -58,6 +59,7 @@ const UserSchema: Schema = new Schema(
     siwesDuration: { type: String },
     preferredState: { type: String },
     isProfileComplete: { type: Boolean, default: false },
+    savedJobs: { type: [Schema.Types.ObjectId], ref: 'Job', default: [] },
     // Opt-in flag for the student Community directory/chat -- students must
     // explicitly join before appearing to peers or being able to post.
     communityJoined: { type: Boolean, default: false },

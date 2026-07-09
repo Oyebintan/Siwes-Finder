@@ -32,8 +32,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Job not found' }, { status: 404 });
     }
 
+    // An unverified employer's job was never publicly visible — report it as
+    // 404 so a direct API call can't confirm the listing exists.
+    const employer = await User.findById(job.employerId);
+    if (employer?.verificationStatus !== 'approved') {
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+    }
+
+    // Inactive, past its deadline, or at its applicant cap.
     if (!(await isJobOpenForApplications(job))) {
       return NextResponse.json({ error: 'This opportunity is no longer accepting applications.' }, { status: 400 });
+    }
+
+    // Email/external jobs are applied to off-platform; an in-app Application
+    // record would never be seen by the employer.
+    if (job.applicationMethod && job.applicationMethod !== 'platform') {
+      return NextResponse.json(
+        { error: 'This placement accepts applications outside the platform. Use the application link on the job page.' },
+        { status: 400 }
+      );
     }
 
     // Check if already applied

@@ -24,6 +24,8 @@ function makePostRequest(body: unknown) {
 }
 
 const completeStudent = { university: 'UNILAG', courseOfStudy: 'CS', resumeUrl: 'http://x/resume.pdf' };
+const approvedEmployer = { verificationStatus: 'approved' };
+const visibleJob = { _id: 'job1', employerId: 'emp1', isActive: true, applicationMethod: 'platform' };
 
 describe('POST /api/applications', () => {
   beforeEach(() => {
@@ -63,10 +65,40 @@ describe('POST /api/applications', () => {
     expect(res.status).toBe(404);
   });
 
+  it("hides an unverified employer's job (404, matching the browse feed)", async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (User.findById as any)
+      .mockResolvedValueOnce(completeStudent)
+      .mockResolvedValueOnce({ verificationStatus: 'pending' });
+    (Job.findById as any).mockResolvedValue(visibleJob);
+
+    const res = await POST(makePostRequest({ jobId: 'job1' }));
+
+    expect(res.status).toBe(404);
+    expect(Application.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects in-app applications to email/external jobs', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (User.findById as any)
+      .mockResolvedValueOnce(completeStudent)
+      .mockResolvedValueOnce(approvedEmployer);
+    (Job.findById as any).mockResolvedValue({ ...visibleJob, applicationMethod: 'email' });
+
+    const res = await POST(makePostRequest({ jobId: 'job1' }));
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/outside the platform/i);
+    expect(Application.create).not.toHaveBeenCalled();
+  });
+
   it('rejects a duplicate application (pre-check)', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
-    (User.findById as any).mockResolvedValue(completeStudent);
-    (Job.findById as any).mockResolvedValue({ _id: 'job1', employerId: 'emp1', isActive: true, applicantCount: 0 });
+    (User.findById as any)
+      .mockResolvedValueOnce(completeStudent)
+      .mockResolvedValueOnce(approvedEmployer);
+    (Job.findById as any).mockResolvedValue({ ...visibleJob, applicantCount: 0 });
     (Application.findOne as any).mockResolvedValue({ _id: 'existing' });
 
     const res = await POST(makePostRequest({ jobId: 'job1' }));
@@ -78,8 +110,10 @@ describe('POST /api/applications', () => {
 
   it('translates a duplicate-key race (E11000) into the same friendly message', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
-    (User.findById as any).mockResolvedValue(completeStudent);
-    (Job.findById as any).mockResolvedValue({ _id: 'job1', employerId: 'emp1', isActive: true, applicantCount: 0 });
+    (User.findById as any)
+      .mockResolvedValueOnce(completeStudent)
+      .mockResolvedValueOnce(approvedEmployer);
+    (Job.findById as any).mockResolvedValue({ ...visibleJob, applicantCount: 0 });
     (Application.findOne as any).mockResolvedValue(null);
     (Application.create as any).mockRejectedValue(Object.assign(new Error('dup'), { code: 11000 }));
 
@@ -92,8 +126,10 @@ describe('POST /api/applications', () => {
 
   it('rejects applying to a job that is no longer open (inactive)', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
-    (User.findById as any).mockResolvedValue(completeStudent);
-    (Job.findById as any).mockResolvedValue({ _id: 'job1', employerId: 'emp1', isActive: false, applicantCount: 0 });
+    (User.findById as any)
+      .mockResolvedValueOnce(completeStudent)
+      .mockResolvedValueOnce(approvedEmployer);
+    (Job.findById as any).mockResolvedValue({ ...visibleJob, isActive: false, applicantCount: 0 });
 
     const res = await POST(makePostRequest({ jobId: 'job1' }));
     const data = await res.json();
@@ -105,11 +141,11 @@ describe('POST /api/applications', () => {
 
   it('rejects applying to a job whose application deadline has passed, and persists the auto-close', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
-    (User.findById as any).mockResolvedValue(completeStudent);
+    (User.findById as any)
+      .mockResolvedValueOnce(completeStudent)
+      .mockResolvedValueOnce(approvedEmployer);
     const job: any = {
-      _id: 'job1',
-      employerId: 'emp1',
-      isActive: true,
+      ...visibleJob,
       applicantCount: 0,
       applicationDeadline: new Date('2000-01-01'),
       save: vi.fn().mockResolvedValue(undefined),
@@ -127,8 +163,10 @@ describe('POST /api/applications', () => {
 
   it('creates the application on success', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
-    (User.findById as any).mockResolvedValue(completeStudent);
-    const job: any = { _id: 'job1', employerId: 'emp1', isActive: true, applicantCount: 0, save: vi.fn().mockResolvedValue(undefined) };
+    (User.findById as any)
+      .mockResolvedValueOnce(completeStudent)
+      .mockResolvedValueOnce(approvedEmployer);
+    const job: any = { ...visibleJob, applicantCount: 0, save: vi.fn().mockResolvedValue(undefined) };
     (Job.findById as any).mockResolvedValue(job);
     (Application.findOne as any).mockResolvedValue(null);
     (Application.create as any).mockResolvedValue({ _id: 'app1', status: 'Pending' });
@@ -148,11 +186,11 @@ describe('POST /api/applications', () => {
 
   it('auto-closes the job when this application fills the last available slot', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
-    (User.findById as any).mockResolvedValue(completeStudent);
+    (User.findById as any)
+      .mockResolvedValueOnce(completeStudent)
+      .mockResolvedValueOnce(approvedEmployer);
     const job: any = {
-      _id: 'job1',
-      employerId: 'emp1',
-      isActive: true,
+      ...visibleJob,
       applicantCount: 4,
       maxApplicants: 5,
       save: vi.fn().mockResolvedValue(undefined),
