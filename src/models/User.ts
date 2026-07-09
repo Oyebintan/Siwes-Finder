@@ -19,6 +19,7 @@ export interface IUser extends Document {
   siwesDuration?: string;
   preferredState?: string;
   isProfileComplete?: boolean;
+  savedJobs?: mongoose.Types.ObjectId[];
   // Employer / Company Specific
   companyName?: string;
   industry?: string;
@@ -51,6 +52,7 @@ const UserSchema: Schema = new Schema(
     siwesDuration: { type: String },
     preferredState: { type: String },
     isProfileComplete: { type: Boolean, default: false },
+    savedJobs: { type: [Schema.Types.ObjectId], ref: 'Job', default: [] },
 
     // Employer / Company fields
     companyName: { type: String },

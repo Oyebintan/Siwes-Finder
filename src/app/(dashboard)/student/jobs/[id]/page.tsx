@@ -1,9 +1,10 @@
 import { connectToDatabase } from "@/lib/mongodb";
 import Job from "@/models/Job";
 import Link from "next/link";
-import { Bookmark, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { notFound } from "next/navigation";
 import ApplyButton from "@/components/ApplyButton";
+import SaveJobButton from "@/components/SaveJobButton";
 
 const METHOD_LABEL: Record<string, string> = {
   platform: 'In-app',
@@ -76,9 +77,7 @@ export default async function JobDetails({ params }: { params: Promise<{ id: str
               jobTitle={job.title}
             />
           </div>
-          <button className="bg-surface-1 border-[1.5px] border-surface-border px-5 py-3 rounded-lg text-[14.5px] font-bold flex items-center gap-2 h-fit">
-            <Bookmark className="w-4 h-4" /> Save
-          </button>
+          <SaveJobButton jobId={job._id} />
         </div>
       </div>
 

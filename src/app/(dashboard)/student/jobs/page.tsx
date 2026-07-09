@@ -34,10 +34,12 @@ export default function BrowseOpportunities() {
   const [type, setType] = useState<(typeof TYPE_CHIPS)[number]>('All');
   const [sort, setSort] = useState<'newest' | 'oldest'>('newest');
   const [page, setPage] = useState(1);
+  const [savedOnly, setSavedOnly] = useState(false);
 
   const [jobs, setJobs] = useState<Job[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const t = setTimeout(() => { setDebouncedQ(query); setPage(1); }, 350);
@@ -46,23 +48,65 @@ export default function BrowseOpportunities() {
 
   useEffect(() => {
     let cancelled = false;
+    fetch('/api/saved-jobs?ids=1')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!cancelled && Array.isArray(data?.ids)) setSavedIds(new Set<string>(data.ids));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
-    const params = new URLSearchParams({ page: String(page), sort });
-    if (debouncedQ) params.set('q', debouncedQ);
-    if (type !== 'All') params.set('type', type);
 
-    fetch(`/api/jobs?${params.toString()}`)
+    // Saved view is a small, personal list — fetch it whole (no pagination).
+    const url = savedOnly
+      ? '/api/saved-jobs'
+      : (() => {
+          const params = new URLSearchParams({ page: String(page), sort });
+          if (debouncedQ) params.set('q', debouncedQ);
+          if (type !== 'All') params.set('type', type);
+          return `/api/jobs?${params.toString()}`;
+        })();
+
+    fetch(url)
       .then((r) => r.json())
       .then((data) => {
         if (cancelled) return;
         setJobs(data.jobs || []);
-        setTotalPages(data.totalPages || 1);
+        setTotalPages(savedOnly ? 1 : data.totalPages || 1);
       })
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
-  }, [debouncedQ, type, sort, page]);
+  }, [debouncedQ, type, sort, page, savedOnly]);
+
+  const toggleSave = async (jobId: string) => {
+    try {
+      const res = await fetch('/api/saved-jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setSavedIds((prev) => {
+        const next = new Set(prev);
+        if (data.saved) next.add(jobId);
+        else next.delete(jobId);
+        return next;
+      });
+      // In the saved view, unsaving removes the card from the list.
+      if (savedOnly && !data.saved) {
+        setJobs((prev) => prev.filter((j) => j._id !== jobId));
+      }
+    } catch {
+      // Leave the current state; the user can retry.
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in-up">
@@ -92,20 +136,32 @@ export default function BrowseOpportunities() {
         {TYPE_CHIPS.map((t) => (
           <button
             key={t}
-            onClick={() => { setType(t); setPage(1); }}
+            onClick={() => { setType(t); setPage(1); setSavedOnly(false); }}
             className={`px-4 py-2 rounded-full text-[13px] font-bold whitespace-nowrap transition-colors ${
-              type === t ? 'bg-primary-500 dark:bg-primary-400 text-white' : 'bg-surface-1 border-[1.5px] border-surface-border text-foreground'
+              !savedOnly && type === t ? 'bg-primary-500 dark:bg-primary-400 text-white' : 'bg-surface-1 border-[1.5px] border-surface-border text-foreground'
             }`}
           >
             {t}
           </button>
         ))}
+        <button
+          onClick={() => { setSavedOnly((v) => !v); setPage(1); }}
+          className={`px-4 py-2 rounded-full text-[13px] font-bold whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+            savedOnly ? 'bg-primary-500 dark:bg-primary-400 text-white' : 'bg-surface-1 border-[1.5px] border-surface-border text-foreground'
+          }`}
+        >
+          <Bookmark className={`w-3.5 h-3.5 ${savedOnly ? 'fill-current' : ''}`} /> Saved
+        </button>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-24"><Loader2 className="w-8 h-8 animate-spin text-primary-500" /></div>
       ) : jobs.length === 0 ? (
-        <div className="bg-surface-1 border border-surface-border rounded-[14px] p-14 text-center text-sm text-muted">No matching opportunities. Try adjusting your search or filters.</div>
+        <div className="bg-surface-1 border border-surface-border rounded-[14px] p-14 text-center text-sm text-muted">
+          {savedOnly
+            ? 'No saved opportunities yet. Tap the bookmark on any listing to save it for later.'
+            : 'No matching opportunities. Try adjusting your search or filters.'}
+        </div>
       ) : (
         <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]">
           {jobs.map((job, i) => (
@@ -122,7 +178,15 @@ export default function BrowseOpportunities() {
                   <div className="font-display font-bold text-[15px] truncate">{job.title}</div>
                   <div className="text-xs text-muted truncate">{job.employerId?.companyName || job.employerId?.name} · {job.location}</div>
                 </div>
-                <Bookmark className="w-[18px] h-[18px] text-muted shrink-0" />
+                <button
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); toggleSave(job._id); }}
+                  aria-pressed={savedIds.has(job._id)}
+                  aria-label={savedIds.has(job._id) ? 'Remove from saved' : 'Save for later'}
+                  className="shrink-0 p-1 -m-1 text-muted hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+                >
+                  <Bookmark className={`w-[18px] h-[18px] ${savedIds.has(job._id) ? 'fill-primary-500 text-primary-500 dark:fill-primary-400 dark:text-primary-400' : ''}`} />
+                </button>
               </div>
               <div className="flex gap-2 flex-wrap mb-3.5">
                 {(job.requirements || []).slice(0, 1).map((r) => (
