@@ -120,6 +120,7 @@
   --circuit-color: var(--color-primary-500);
   --page-glow: radial-gradient(ellipse at top, #eaf0ff 0%, #f6f7fa 55%);
   --grid-line: rgba(37, 87, 235, 0.035);
+  --dot-color: rgba(37, 87, 235, 0.16);
 }
 
 .dark {
@@ -145,6 +146,7 @@
   --circuit-color: var(--color-primary-400);
   --page-glow: radial-gradient(ellipse at top, #101d40 0%, #07080d 62%);
   --grid-line: rgba(140, 173, 255, 0.055);
+  --dot-color: rgba(140, 173, 255, 0.24);
 }
 
 html,
@@ -172,8 +174,8 @@ body {
 }
 
 .bg-dots {
-  background-image: radial-gradient(var(--grid-line) 1px, transparent 1px);
-  background-size: 26px 26px;
+  background-image: radial-gradient(var(--dot-color) 1.5px, transparent 1.5px);
+  background-size: 24px 24px;
 }
 
 /* A slowly panning gradient so hero/showcase cards read as "alive" rather

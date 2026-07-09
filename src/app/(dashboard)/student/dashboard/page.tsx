@@ -75,7 +75,7 @@ export default async function StudentDashboard() {
       </div>
 
       {/* Hero progress banner */}
-      <div className="relative overflow-hidden rounded-[18px] p-6 sm:p-7 animate-gradient-flow bg-gradient-to-br from-primary-500 via-secondary-500 to-[#17307A] dark:from-primary-400 dark:via-secondary-400 dark:to-[#4B3FD8]">
+      <div className="relative overflow-hidden rounded-[18px] p-6 sm:p-7 animate-gradient-flow bg-gradient-to-br from-primary-500 via-secondary-500 to-[#17307A] dark:from-primary-500 dark:via-secondary-600 dark:to-secondary-900">
         <div className="pointer-events-none absolute -top-16 -right-10 w-[220px] h-[220px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.14), transparent 70%)' }} />
 
         <div className="relative flex items-start justify-between gap-4 flex-wrap mb-4">

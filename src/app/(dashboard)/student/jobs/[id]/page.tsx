@@ -126,7 +126,7 @@ export default async function JobDetails({ params }: { params: Promise<{ id: str
               {job.stipend && <OverviewRow label="Stipend" value={job.stipend} />}
             </div>
           </div>
-          <div className="bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-400 dark:to-[#4B3FD8] rounded-2xl p-[22px] text-white">
+          <div className="bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-500 dark:via-secondary-600 dark:to-secondary-900 rounded-2xl p-[22px] text-white">
             <ShieldCheck className="w-6 h-6 mb-2" />
             <div className="font-display font-bold text-[15px] mb-1">Verified by our admin team</div>
             <div className="text-[13px] text-white/80">This company submitted CAC registration details and was manually approved before this listing went live.</div>

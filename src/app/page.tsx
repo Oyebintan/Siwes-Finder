@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { KeyRound, ArrowUpRight, CheckCircle2, Users } from 'lucide-react';
+import { ArrowRightCircle, ArrowUpRight, CheckCircle2, Users } from 'lucide-react';
 
 const companies = ['Paystack', 'Flutterwave', 'Andela', 'MTN Nigeria', 'Interswitch', 'Nigerian Breweries'];
 
@@ -71,7 +71,7 @@ export default function Home() {
               aria-label="Sign in"
               className="flex items-center justify-center gap-1.5 p-2.5 sm:px-5 sm:py-2.5 rounded-full sm:rounded-[9px] bg-primary-500 dark:bg-primary-400 text-white text-sm font-bold shadow-lg shadow-primary-900/20 hover:brightness-110 transition-all"
             >
-              <KeyRound className="w-[18px] h-[18px] sm:hidden" />
+              <ArrowRightCircle className="w-[18px] h-[18px] sm:hidden" />
               <span className="hidden sm:inline">Sign in</span>
             </Link>
           </div>
@@ -147,16 +147,20 @@ export default function Home() {
       </section>
 
       {/* MARQUEE */}
-      <section className="pt-1 pb-8 overflow-hidden">
-        <div className="text-center font-mono text-[11.5px] font-bold text-muted tracking-widest uppercase mb-5">Verified companies hiring on SIWES Finder</div>
-        <div className="flex w-max animate-marquee">
-          {[0, 1].map((dup) => (
-            <div key={dup} className="flex gap-16 pr-16" aria-hidden={dup === 1}>
-              {companies.map((c) => (
-                <span key={c} className="font-display font-extrabold text-[20px] text-muted whitespace-nowrap">{c}</span>
+      <section className="pt-1 pb-8">
+        <div className="max-w-[1220px] mx-auto px-6 sm:px-10 lg:px-14">
+          <div className="text-center font-mono text-[11.5px] font-bold text-muted tracking-widest uppercase mb-5">Verified companies hiring on SIWES Finder</div>
+          <div className="relative overflow-hidden rounded-2xl bg-surface-1 border border-surface-border py-6">
+            <div className="flex w-max animate-marquee">
+              {[0, 1].map((dup) => (
+                <div key={dup} className="flex gap-16 pr-16" aria-hidden={dup === 1}>
+                  {companies.map((c) => (
+                    <span key={c} className="font-display font-extrabold text-[20px] text-muted whitespace-nowrap">{c}</span>
+                  ))}
+                </div>
               ))}
             </div>
-          ))}
+          </div>
         </div>
       </section>
 
@@ -265,7 +269,7 @@ export default function Home() {
 
       {/* FINAL CTA */}
       <section className="max-w-[1220px] mx-auto px-6 sm:px-10 lg:px-14 py-16 sm:py-20">
-        <div className="rounded-[26px] p-[clamp(28px,5vw,56px)] text-center bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-400 dark:to-[#4B3FD8]">
+        <div className="rounded-[26px] p-[clamp(28px,5vw,56px)] text-center bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-500 dark:via-secondary-600 dark:to-secondary-900">
           <h2 className="font-display font-extrabold text-[30px] text-white mb-4 tracking-[-0.02em]">Your SIWES placement is one search away.</h2>
           <Link href="/signup" className="inline-block bg-white text-primary-600 px-6 py-3 rounded-[9px] text-sm font-bold mt-2 hover:brightness-95 transition-all">Create your free profile</Link>
         </div>
