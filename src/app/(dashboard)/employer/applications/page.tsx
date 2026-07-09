@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import Application from "@/models/Application";
 import EmployerApplicationCard, { type EmployerApplication } from "@/components/EmployerApplicationCard";
+import { redirect } from "next/navigation";
 import { UserCheck } from "lucide-react";
 
 async function getEmployerApplications(employerId: string): Promise<EmployerApplication[]> {
@@ -16,7 +17,9 @@ async function getEmployerApplications(employerId: string): Promise<EmployerAppl
 
 export default async function EmployerApplications() {
   const session = await getServerSession(authOptions);
-  const applications = await getEmployerApplications(session!.user.id);
+  if (!session || session.user.role !== 'employer') redirect('/login');
+
+  const applications = await getEmployerApplications(session.user.id);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-fade-in-up">

@@ -5,6 +5,7 @@ import Job from "@/models/Job";
 import Application from "@/models/Application";
 import User from "@/models/User";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Search, CheckCircle2, UploadCloud, Building2, type LucideIcon } from "lucide-react";
 
 type RecommendedJob = {
@@ -39,9 +40,11 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default async function StudentDashboard() {
   const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== 'student') redirect('/login');
+
   await connectToDatabase();
 
-  const userId = session!.user.id;
+  const userId = session.user.id;
   const [availableJobsCount, applicationsCount, pendingCount, acceptedCount, user, recentApps, recommended] = await Promise.all([
     Job.countDocuments({ isActive: true }),
     Application.countDocuments({ student: userId }),

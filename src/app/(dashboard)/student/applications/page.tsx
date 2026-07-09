@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import Application from "@/models/Application";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Building2 } from "lucide-react";
 
 function initials(name?: string) {
@@ -45,7 +46,9 @@ async function getApplications(studentId: string): Promise<StudentApplication[]>
 
 export default async function StudentApplications() {
   const session = await getServerSession(authOptions);
-  const applications = await getApplications(session!.user.id);
+  if (!session || session.user.role !== 'student') redirect('/login');
+
+  const applications = await getApplications(session.user.id);
 
   const total = applications.length;
   const underReview = applications.filter((a) => a.status === 'Pending').length;
