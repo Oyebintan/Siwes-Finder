@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { LogIn, ArrowRight, ArrowUpRight, CheckCircle2 } from 'lucide-react';
+import { ArrowRightCircle, ArrowUpRight, CheckCircle2, Users } from 'lucide-react';
 
 const companies = ['Paystack', 'Flutterwave', 'Andela', 'MTN Nigeria', 'Interswitch', 'Nigerian Breweries'];
 
@@ -51,7 +51,7 @@ const VerifiedBadge = () => (
 
 export default function Home() {
   return (
-    <div className="relative overflow-x-clip font-sans text-foreground">
+    <div className="relative overflow-x-clip font-sans text-foreground bg-background bg-grid-lines">
       {/* NAV */}
       <header className="sticky top-0 z-50 glass-surface border-b border-surface-border">
         <div className="max-w-[1220px] mx-auto px-6 sm:px-10 lg:px-14 py-4 flex items-center justify-between gap-4 flex-wrap">
@@ -68,38 +68,30 @@ export default function Home() {
             <ThemeToggle />
             <Link
               href="/login"
-              aria-label="Log in"
-              className="flex items-center justify-center p-2.5 sm:px-1 sm:py-2 rounded-full sm:rounded-none text-sm font-semibold hover:bg-surface-2 sm:hover:bg-transparent hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+              aria-label="Sign in"
+              className="flex items-center justify-center gap-1.5 p-2.5 sm:px-5 sm:py-2.5 rounded-full sm:rounded-[9px] bg-primary-500 dark:bg-primary-400 text-white text-sm font-bold shadow-lg shadow-primary-900/20 hover:brightness-110 transition-all"
             >
-              <LogIn className="w-[18px] h-[18px] sm:hidden" />
-              <span className="hidden sm:inline">Log in</span>
-            </Link>
-            <Link
-              href="/signup"
-              aria-label="Get started"
-              className="flex items-center justify-center p-2.5 sm:px-5 sm:py-2.5 rounded-full sm:rounded-[9px] bg-primary-500 dark:bg-primary-400 text-white text-sm font-bold shadow-lg shadow-primary-900/20 hover:brightness-110 transition-all"
-            >
-              <ArrowRight className="w-[18px] h-[18px] sm:hidden" />
-              <span className="hidden sm:inline">Get Started</span>
+              <ArrowRightCircle className="w-[18px] h-[18px] sm:hidden" />
+              <span className="hidden sm:inline">Sign in</span>
             </Link>
           </div>
         </div>
       </header>
 
       {/* HERO */}
-      <section className="relative max-w-[1220px] mx-auto px-6 sm:px-10 lg:px-14 pt-10 sm:pt-14 pb-14 sm:pb-16">
+      <section className="relative max-w-[1220px] mx-auto px-6 sm:px-10 lg:px-14 pt-6 sm:pt-8 pb-6 sm:pb-8">
         <div className="pointer-events-none absolute -top-36 -right-40 w-[520px] h-[520px] rounded-full blur-md animate-blob" style={{ background: 'radial-gradient(circle, var(--color-primary-500), transparent 70%)', opacity: 0.13 }} />
         <div className="pointer-events-none absolute top-20 right-28 w-[340px] h-[340px] rounded-full blur-md animate-blob [animation-direction:reverse]" style={{ background: 'radial-gradient(circle, var(--color-secondary-500), transparent 70%)', opacity: 0.12 }} />
 
-        <div className="relative grid gap-12 items-center [grid-template-columns:repeat(auto-fit,minmax(340px,1fr))]">
+        <div className="relative grid gap-8 items-center [grid-template-columns:repeat(auto-fit,minmax(340px,1fr))]">
           <div className="animate-fade-in-up">
-            <div className="inline-flex items-center gap-2 bg-primary-500/10 dark:bg-primary-400/15 text-primary-500 dark:text-primary-400 px-3.5 py-1.5 rounded-full font-mono text-[11.5px] font-bold tracking-wide mb-7 uppercase">For Nigerian University Students</div>
-            <h1 className="font-display font-extrabold text-[clamp(38px,6vw,60px)] leading-[1.04] tracking-[-0.035em] mb-6">
+            <div className="inline-flex items-center gap-2 bg-primary-500/10 dark:bg-primary-400/15 text-primary-500 dark:text-primary-400 px-3.5 py-1.5 rounded-full font-mono text-[11.5px] font-bold tracking-wide mb-5 uppercase">For Nigerian University Students</div>
+            <h1 className="font-display font-extrabold text-[clamp(34px,5.4vw,54px)] leading-[1.04] tracking-[-0.035em] mb-5">
               Find <span className="italic font-medium">verified</span><br />
               SIWES placements<br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-secondary-500 dark:from-primary-400 dark:to-secondary-300">faster.</span>
             </h1>
-            <p className="text-[18px] leading-[1.65] text-muted mb-9 max-w-[460px]">Skip the WhatsApp groups and cold calls. Browse verified companies, apply in minutes, and track every placement in one place.</p>
+            <p className="text-[16.5px] leading-[1.6] text-muted mb-7 max-w-[460px]">Skip the WhatsApp groups and cold calls. Browse verified companies, apply in minutes, and track every placement in one place.</p>
             <div className="flex gap-3.5 flex-wrap">
               <Link href="/signup" className="bg-foreground text-background px-6 py-3.5 rounded-[9px] text-[15px] font-bold hover:brightness-110 transition-all">Register as a Student</Link>
               <Link href="/signup" className="px-6 py-3.5 rounded-[9px] text-[15px] font-bold border-[1.5px] border-surface-border hover:border-primary-500 transition-colors">Register as a Company</Link>
@@ -107,8 +99,8 @@ export default function Home() {
           </div>
 
           {/* Floating cards */}
-          <div className="relative h-[440px] min-w-[280px] animate-fade-in-up [animation-delay:100ms]">
-            <Link href="/signup" className="floating-card group absolute top-5 right-0 w-[260px] bg-surface-1 border border-surface-border rounded-[18px] p-[22px] animate-float-card transition-transform hover:-translate-y-1">
+          <div className="relative h-[380px] min-w-[280px] animate-fade-in-up [animation-delay:100ms]">
+            <Link href="/signup" className="floating-card group absolute top-0 right-0 w-[260px] bg-surface-1 border border-surface-border rounded-[18px] p-[22px] animate-float-card transition-transform hover:-translate-y-1">
               <div className="flex items-center gap-2.5 mb-4">
                 <div className="w-[38px] h-[38px] rounded-[10px] bg-primary-500/10 dark:bg-primary-400/15 flex items-center justify-center font-display font-extrabold text-primary-500 dark:text-primary-400 text-[13px] shrink-0">PS</div>
                 <div className="flex-1 min-w-0">
@@ -125,7 +117,20 @@ export default function Home() {
               </div>
               <span className="inline-block text-[11px] font-bold px-2.5 py-1 rounded-full bg-success-bg text-success">● Verified company</span>
             </Link>
-            <Link href="/signup" className="floating-card group absolute bottom-5 left-0 w-[240px] bg-surface-1 border border-surface-border rounded-[18px] p-5 transition-transform hover:-translate-y-1">
+
+            <Link href="/signup" className="floating-card group absolute top-[165px] left-1 w-[168px] bg-surface-1 border border-surface-border rounded-[16px] p-4 animate-float-card [animation-delay:-1.5s] transition-transform hover:-translate-y-1">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-secondary-500/10 dark:bg-secondary-300/15 flex items-center justify-center shrink-0">
+                  <Users className="w-4 h-4 text-secondary-500 dark:text-secondary-300" />
+                </div>
+                <div className="min-w-0">
+                  <div className="font-mono font-bold text-[15px] leading-none">2,400+</div>
+                  <div className="text-[10.5px] text-muted mt-1">Students placed</div>
+                </div>
+              </div>
+            </Link>
+
+            <Link href="/signup" className="floating-card group absolute bottom-0 right-2 w-[240px] bg-surface-1 border border-surface-border rounded-[18px] p-5 animate-float-card [animation-delay:-3s] transition-transform hover:-translate-y-1">
               <div className="flex items-center justify-between mb-2.5">
                 <span className="font-mono text-[10.5px] text-muted tracking-wide">APPLICATION STATUS</span>
                 <div className="w-6 h-6 rounded-full bg-success-bg flex items-center justify-center shrink-0">
@@ -142,16 +147,20 @@ export default function Home() {
       </section>
 
       {/* MARQUEE */}
-      <section className="pt-2 pb-14 overflow-hidden">
-        <div className="text-center font-mono text-[11.5px] font-bold text-muted tracking-widest uppercase mb-7">Verified companies hiring on SIWES Finder</div>
-        <div className="flex w-max animate-marquee">
-          {[0, 1].map((dup) => (
-            <div key={dup} className="flex gap-16 pr-16" aria-hidden={dup === 1}>
-              {companies.map((c) => (
-                <span key={c} className="font-display font-extrabold text-[20px] text-muted whitespace-nowrap">{c}</span>
+      <section className="pt-1 pb-6">
+        <div className="max-w-[1220px] mx-auto px-6 sm:px-10 lg:px-14">
+          <div className="text-center font-mono text-[11.5px] font-bold text-muted tracking-widest uppercase mb-3">Verified companies hiring on SIWES Finder</div>
+          <div className="relative overflow-hidden rounded-2xl bg-surface-1 border border-surface-border py-4">
+            <div className="flex w-max animate-marquee">
+              {[0, 1].map((dup) => (
+                <div key={dup} className="flex gap-16 pr-16" aria-hidden={dup === 1}>
+                  {companies.map((c) => (
+                    <span key={c} className="font-display font-extrabold text-[20px] text-muted whitespace-nowrap">{c}</span>
+                  ))}
+                </div>
               ))}
             </div>
-          ))}
+          </div>
         </div>
       </section>
 
@@ -244,9 +253,23 @@ export default function Home() {
         </div>
       </section>
 
+      {/* COMMUNITY */}
+      <section className="border-t border-surface-border bg-surface-1">
+        <div className="max-w-[1220px] mx-auto px-6 sm:px-10 lg:px-14 py-16 sm:py-20 flex flex-col items-center text-center">
+          <div className="w-14 h-14 rounded-2xl bg-primary-500/10 dark:bg-primary-400/15 flex items-center justify-center mb-6">
+            <Users className="w-7 h-7 text-primary-500 dark:text-primary-400" />
+          </div>
+          <h2 className="font-display font-extrabold text-[32px] tracking-[-0.02em] max-w-[560px] mb-4">You don&apos;t get to do SIWES alone.</h2>
+          <p className="text-[15.5px] text-muted max-w-[480px] mb-8">You&apos;ll move with people that are doing the same as you — see who&apos;s placed where, swap notes, and stay connected the whole way through.</p>
+          <Link href="/signup" className="inline-flex items-center gap-2 bg-primary-500 dark:bg-primary-400 text-white px-6 py-3.5 rounded-[9px] text-[15px] font-bold hover:brightness-110 transition-all">
+            <Users className="w-4 h-4" /> Join the community
+          </Link>
+        </div>
+      </section>
+
       {/* FINAL CTA */}
       <section className="max-w-[1220px] mx-auto px-6 sm:px-10 lg:px-14 py-16 sm:py-20">
-        <div className="rounded-[26px] p-[clamp(28px,5vw,56px)] text-center bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-400 dark:to-[#4B3FD8]">
+        <div className="rounded-[26px] p-[clamp(28px,5vw,56px)] text-center bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-500 dark:via-secondary-600 dark:to-secondary-900">
           <h2 className="font-display font-extrabold text-[30px] text-white mb-4 tracking-[-0.02em]">Your SIWES placement is one search away.</h2>
           <Link href="/signup" className="inline-block bg-white text-primary-600 px-6 py-3 rounded-[9px] text-sm font-bold mt-2 hover:brightness-95 transition-all">Create your free profile</Link>
         </div>

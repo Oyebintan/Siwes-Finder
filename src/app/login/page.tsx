@@ -39,12 +39,24 @@ function OAuthErrorBanner() {
   );
 }
 
+function ResetSuccessBanner() {
+  const params = useSearchParams();
+  if (params.get('reset') !== 'success') return null;
+  return (
+    <div className="mb-4 p-3 rounded-xl bg-success-bg border border-success/20 text-success text-[13px] font-medium text-center">
+      Password reset. Log in with your new password.
+    </div>
+  );
+}
+
 export default function Login() {
   const router = useRouter();
 
   const [tab, setTab] = useState<'student' | 'company'>('student');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [emailUnlocked, setEmailUnlocked] = useState(false);
+  const [passwordUnlocked, setPasswordUnlocked] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -79,7 +91,7 @@ export default function Login() {
     <div className="h-screen grid [grid-template-columns:repeat(auto-fit,minmax(360px,1fr))] bg-background text-foreground overflow-hidden">
       {/* LEFT: form */}
       <div className="h-full overflow-y-auto flex flex-col justify-center px-8 sm:px-14 lg:px-16 py-6 max-w-[440px] mx-auto w-full">
-        <div className="flex items-center justify-between mb-5">
+        <div className="sticky top-0 z-10 bg-background flex items-center justify-between pb-5 -mt-6 pt-6">
           <Link href="/" className="flex items-center gap-2">
             <Logo />
             <span className="font-display font-extrabold text-[16px] tracking-tight">SIWES Finder</span>
@@ -109,6 +121,7 @@ export default function Login() {
 
         <Suspense fallback={null}>
           <OAuthErrorBanner />
+          <ResetSuccessBanner />
         </Suspense>
 
         {error && (
@@ -117,28 +130,37 @@ export default function Login() {
           </div>
         )}
 
-        <form onSubmit={handleCredentialsLogin} className="space-y-3.5">
+        <form onSubmit={handleCredentialsLogin} className="space-y-3.5" autoComplete="off">
           <div>
             <label className="block text-[12.5px] font-semibold mb-1">Email address</label>
             <input
               type="email"
               required
+              autoComplete="off"
+              readOnly={!emailUnlocked}
+              onFocus={() => setEmailUnlocked(true)}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={tab === 'student' ? 'you@university.edu.ng' : 'you@company.com'}
-              className="w-full px-3.5 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-foreground text-[14px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
+              className="w-full px-3.5 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-foreground text-[16px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
             />
           </div>
 
           <div>
-            <label className="block text-[12.5px] font-semibold mb-1">Password</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-[12.5px] font-semibold">Password</label>
+              <Link href="/forgot-password" className="text-[12.5px] font-semibold text-primary-500 dark:text-primary-400">Forgot password?</Link>
+            </div>
             <input
               type="password"
               required
+              autoComplete="new-password"
+              readOnly={!passwordUnlocked}
+              onFocus={() => setPasswordUnlocked(true)}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full px-3.5 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-foreground text-[14px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
+              className="w-full px-3.5 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-foreground text-[16px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
             />
           </div>
 
@@ -187,7 +209,7 @@ export default function Login() {
       </div>
 
       {/* RIGHT: animated visual */}
-      <div className="relative overflow-hidden hidden sm:block bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-400 dark:to-[#4B3FD8]">
+      <div className="relative overflow-hidden hidden sm:block bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-500 dark:via-secondary-600 dark:to-secondary-900">
         <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 30% 20%, rgba(255,255,255,0.14), transparent 50%)' }} />
         <div className="pointer-events-none absolute -top-24 -right-16 w-[320px] h-[320px] rounded-full blur-2xl animate-blob" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.22), transparent 70%)' }} />
         <div className="pointer-events-none absolute bottom-0 -left-20 w-[280px] h-[280px] rounded-full blur-2xl animate-blob [animation-direction:reverse]" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.16), transparent 70%)' }} />

@@ -58,23 +58,20 @@ export async function POST(req: Request) {
   }
 }
 
+// Logbooks are a private record for the student -- employers no longer have
+// any visibility into them (students export their own as a PDF instead, to
+// submit to their lecturer/SIWES office directly).
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session || session.user.role !== 'student') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     await connectToDatabase();
 
-    if (session.user.role === 'student') {
-      const logs = await Logbook.find({ studentId: session.user.id }).sort({ weekNumber: -1, date: -1 });
-      return NextResponse.json(logs, { status: 200 });
-    } else {
-      // Employer fetching logs from all their students
-      const logs = await Logbook.find({ employerId: session.user.id })
-        .populate('studentId', 'name email')
-        .sort({ isApproved: 1, date: -1 });
-      return NextResponse.json(logs, { status: 200 });
-    }
+    const logs = await Logbook.find({ studentId: session.user.id }).sort({ weekNumber: -1, date: -1 });
+    return NextResponse.json(logs, { status: 200 });
   } catch (error) {
     console.error("Logbook GET error:", error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });

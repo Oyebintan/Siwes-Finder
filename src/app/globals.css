@@ -63,6 +63,8 @@
   --animate-marquee: marquee 26s linear infinite;
   --animate-float-card: float-card 6s ease-in-out infinite;
   --animate-blob: blob-move 12s ease-in-out infinite;
+  --animate-gradient-flow: gradient-flow 5s ease-in-out infinite;
+  --animate-card-shine: card-shine 6s ease-in-out infinite;
 }
 
 @keyframes fade-in-up {
@@ -76,13 +78,23 @@
 }
 
 @keyframes float-card {
-  0%, 100% { transform: translateY(0) rotate(-1.5deg); }
-  50% { transform: translateY(-12px) rotate(-1.5deg); }
+  0%, 100% { transform: translate(0, 0) rotate(-1.5deg); }
+  50% { transform: translate(5px, -22px) rotate(1deg); }
 }
 
 @keyframes blob-move {
   0%, 100% { transform: translate(0, 0) scale(1); }
   50% { transform: translate(30px, -20px) scale(1.06); }
+}
+
+@keyframes gradient-flow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes card-shine {
+  0%, 100% { transform: translateX(-120%) rotate(8deg); }
+  50% { transform: translateX(120%) rotate(8deg); }
 }
 
 :root {
@@ -107,6 +119,8 @@
   --circuit-opacity: 0.16;
   --circuit-color: var(--color-primary-500);
   --page-glow: radial-gradient(ellipse at top, #eaf0ff 0%, #f6f7fa 55%);
+  --grid-line: rgba(37, 87, 235, 0.035);
+  --dot-color: rgba(37, 87, 235, 0.09);
 }
 
 .dark {
@@ -131,6 +145,8 @@
   --circuit-opacity: 0.42;
   --circuit-color: var(--color-primary-400);
   --page-glow: radial-gradient(ellipse at top, #101d40 0%, #07080d 62%);
+  --grid-line: rgba(140, 173, 255, 0.055);
+  --dot-color: rgba(140, 173, 255, 0.14);
 }
 
 html,
@@ -140,6 +156,54 @@ body {
   font-family: var(--font-geist-sans), sans-serif;
   scroll-behavior: smooth;
   min-height: 100vh;
+}
+
+/* Two distinct, very subtle backdrop patterns so the app doesn't look flat --
+   but each is scoped to one part of the product, never blanket-applied, and
+   never at high enough opacity to compete with content.
+   - `.bg-grid-lines`: boxed-line grid, reserved for the marketing landing
+     page only (its own gradients/blobs already sit on top of this fine).
+   - `.bg-dots`: a dot-matrix pattern for the logged-in dashboard shell --
+     deliberately different from the landing page so each context reads as
+     its own "place", not a repeat of the same texture everywhere. */
+.bg-grid-lines {
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+.bg-dots {
+  background-image: radial-gradient(var(--dot-color) 1.5px, transparent 1.5px);
+  background-size: 24px 24px;
+}
+
+/* A panning gradient so hero/showcase cards read as "alive" rather than a
+   flat static fill -- fast enough (5s cycle) to be noticeable at a glance,
+   not just on close inspection. Pair with a 3-stop gradient + this class. */
+.animate-gradient-flow {
+  background-size: 200% 200%;
+}
+
+/* A faint diagonal light sweep for KPI-style cards -- much subtler than the
+   hero gradient flow so data-dense rows don't get busy. Needs a `relative
+   overflow-hidden` container; the sweep itself is this absolutely
+   positioned pseudo-element-like child. */
+.card-shine {
+  position: absolute;
+  inset: -50% -20%;
+  background: linear-gradient(100deg, transparent 40%, rgba(255, 255, 255, 0.06) 50%, transparent 60%);
+  pointer-events: none;
+}
+.dark .card-shine {
+  background: linear-gradient(100deg, transparent 40%, rgba(255, 255, 255, 0.045) 50%, transparent 60%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-gradient-flow,
+  .card-shine {
+    animation: none !important;
+  }
 }
 
 /* Headings use the display face by default so the type pairing applies

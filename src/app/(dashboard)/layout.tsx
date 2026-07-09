@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Loader2, LogOut, LayoutDashboard, Briefcase, FileText, User, BookOpen,
-  Menu, X, Search, ShieldCheck, Users, Plus, Building2, type LucideIcon,
+  Menu, X, Search, ShieldCheck, Users, Plus, Building2, MessageCircle, type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -18,6 +18,7 @@ const STUDENT_NAV: NavItem[] = [
   { name: 'Browse Opportunities', href: '/student/jobs', icon: Search },
   { name: 'Applications', href: '/student/applications', icon: FileText },
   { name: 'e-Logbook', href: '/student/logbook', icon: BookOpen },
+  { name: 'Community', href: '/student/community', icon: MessageCircle },
   { name: 'Profile', href: '/student/profile', icon: User },
 ];
 
@@ -27,7 +28,6 @@ const EMPLOYER_NAV: NavItem[] = [
   { name: 'Manage opportunities', href: '/employer/dashboard', icon: Briefcase },
   { name: 'Applicants', href: '/employer/applications', icon: Users },
   { name: 'Company profile', href: '/employer/verification', icon: Building2 },
-  { name: 'Logbooks', href: '/employer/logbook', icon: BookOpen },
 ];
 
 const ADMIN_NAV: NavItem[] = [
@@ -153,7 +153,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   );
 
   return (
-    <div className="min-h-screen flex bg-background text-foreground">
+    <div className="min-h-screen flex bg-background bg-dots text-foreground">
       {/* DESKTOP SIDEBAR */}
       <aside className="hidden md:flex w-[240px] shrink-0 border-r border-surface-border sticky top-0 h-screen">
         {SidebarContent}

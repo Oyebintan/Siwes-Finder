@@ -95,6 +95,34 @@ describe('POST /api/jobs', () => {
     expect(res.status).toBe(400);
   });
 
+  it('rejects an invalid application deadline', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (User.findById as any).mockReturnValue({
+      select: vi.fn().mockResolvedValue({ verificationStatus: 'approved' }),
+    });
+
+    const res = await POST(makePostRequest({ ...validJob, applicationDeadline: 'not-a-date' }));
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/deadline/i);
+    expect(Job.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects a non-positive maxApplicants', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (User.findById as any).mockReturnValue({
+      select: vi.fn().mockResolvedValue({ verificationStatus: 'approved' }),
+    });
+
+    const res = await POST(makePostRequest({ ...validJob, maxApplicants: 0 }));
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/positive whole number/i);
+    expect(Job.create).not.toHaveBeenCalled();
+  });
+
   it('creates the job for an approved employer with valid data', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     (User.findById as any).mockReturnValue({
@@ -107,6 +135,21 @@ describe('POST /api/jobs', () => {
     expect(res.status).toBe(201);
     expect(Job.create).toHaveBeenCalledWith(
       expect.objectContaining({ employerId: 'emp1', title: validJob.title, applicationMethod: 'platform' })
+    );
+  });
+
+  it('creates the job with a valid application deadline and max applicants', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (User.findById as any).mockReturnValue({
+      select: vi.fn().mockResolvedValue({ verificationStatus: 'approved' }),
+    });
+    (Job.create as any).mockResolvedValue({ _id: 'job1', ...validJob });
+
+    const res = await POST(makePostRequest({ ...validJob, applicationDeadline: '2099-01-01', maxApplicants: 10 }));
+
+    expect(res.status).toBe(201);
+    expect(Job.create).toHaveBeenCalledWith(
+      expect.objectContaining({ applicationDeadline: new Date('2099-01-01'), maxApplicants: 10 })
     );
   });
 });
@@ -156,8 +199,29 @@ describe('GET /api/jobs', () => {
     expect(filterArg.isActive).toBe(true);
     expect(filterArg.employerId).toEqual({ $in: ['emp1', 'emp2'] });
     expect(filterArg.type).toBe('Remote');
-    expect(filterArg.$or[0].title.source).toContain('c\\+\\+');
+    const searchCondition = filterArg.$and.find((c: any) => c.$or?.[0]?.title);
+    expect(searchCondition.$or[0].title.source).toContain('c\\+\\+');
     expect(data.jobs).toEqual([{ _id: 'job1' }]);
     expect(data.total).toBe(1);
+  });
+
+  it('excludes jobs past their application deadline or at their applicant cap from the public feed', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (User.find as any).mockReturnValue({ distinct: vi.fn().mockResolvedValue(['emp1']) });
+    (Job.countDocuments as any).mockResolvedValue(0);
+
+    const populate = vi.fn().mockReturnThis();
+    const sort = vi.fn().mockReturnThis();
+    const skip = vi.fn().mockReturnThis();
+    const limit = vi.fn().mockResolvedValue([]);
+    (Job.find as any).mockReturnValue({ populate, sort, skip, limit });
+
+    await GET(makeGetRequest());
+
+    const filterArg = (Job.find as any).mock.calls[0][0];
+    const deadlineCondition = filterArg.$and.find((c: any) => c.$or?.[0]?.applicationDeadline !== undefined);
+    const capCondition = filterArg.$and.find((c: any) => c.$expr);
+    expect(deadlineCondition).toBeTruthy();
+    expect(capCondition.$expr.$or[1]).toEqual({ $lt: ['$applicantCount', '$maxApplicants'] });
   });
 });

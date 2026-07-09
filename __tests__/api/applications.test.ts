@@ -65,19 +65,6 @@ describe('POST /api/applications', () => {
     expect(res.status).toBe(404);
   });
 
-  it('hides an inactive job (404, matching the browse feed)', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
-    (User.findById as any)
-      .mockResolvedValueOnce(completeStudent)
-      .mockResolvedValueOnce(approvedEmployer);
-    (Job.findById as any).mockResolvedValue({ ...visibleJob, isActive: false });
-
-    const res = await POST(makePostRequest({ jobId: 'job1' }));
-
-    expect(res.status).toBe(404);
-    expect(Application.create).not.toHaveBeenCalled();
-  });
-
   it("hides an unverified employer's job (404, matching the browse feed)", async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     (User.findById as any)
@@ -111,7 +98,7 @@ describe('POST /api/applications', () => {
     (User.findById as any)
       .mockResolvedValueOnce(completeStudent)
       .mockResolvedValueOnce(approvedEmployer);
-    (Job.findById as any).mockResolvedValue(visibleJob);
+    (Job.findById as any).mockResolvedValue({ ...visibleJob, applicantCount: 0 });
     (Application.findOne as any).mockResolvedValue({ _id: 'existing' });
 
     const res = await POST(makePostRequest({ jobId: 'job1' }));
@@ -126,7 +113,7 @@ describe('POST /api/applications', () => {
     (User.findById as any)
       .mockResolvedValueOnce(completeStudent)
       .mockResolvedValueOnce(approvedEmployer);
-    (Job.findById as any).mockResolvedValue(visibleJob);
+    (Job.findById as any).mockResolvedValue({ ...visibleJob, applicantCount: 0 });
     (Application.findOne as any).mockResolvedValue(null);
     (Application.create as any).mockRejectedValue(Object.assign(new Error('dup'), { code: 11000 }));
 
@@ -137,12 +124,50 @@ describe('POST /api/applications', () => {
     expect(data.error).toMatch(/already applied/i);
   });
 
+  it('rejects applying to a job that is no longer open (inactive)', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (User.findById as any)
+      .mockResolvedValueOnce(completeStudent)
+      .mockResolvedValueOnce(approvedEmployer);
+    (Job.findById as any).mockResolvedValue({ ...visibleJob, isActive: false, applicantCount: 0 });
+
+    const res = await POST(makePostRequest({ jobId: 'job1' }));
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/no longer accepting applications/i);
+    expect(Application.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects applying to a job whose application deadline has passed, and persists the auto-close', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (User.findById as any)
+      .mockResolvedValueOnce(completeStudent)
+      .mockResolvedValueOnce(approvedEmployer);
+    const job: any = {
+      ...visibleJob,
+      applicantCount: 0,
+      applicationDeadline: new Date('2000-01-01'),
+      save: vi.fn().mockResolvedValue(undefined),
+    };
+    (Job.findById as any).mockResolvedValue(job);
+
+    const res = await POST(makePostRequest({ jobId: 'job1' }));
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/no longer accepting applications/i);
+    expect(job.isActive).toBe(false);
+    expect(job.save).toHaveBeenCalled();
+  });
+
   it('creates the application on success', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     (User.findById as any)
       .mockResolvedValueOnce(completeStudent)
       .mockResolvedValueOnce(approvedEmployer);
-    (Job.findById as any).mockResolvedValue(visibleJob);
+    const job: any = { ...visibleJob, applicantCount: 0, save: vi.fn().mockResolvedValue(undefined) };
+    (Job.findById as any).mockResolvedValue(job);
     (Application.findOne as any).mockResolvedValue(null);
     (Application.create as any).mockResolvedValue({ _id: 'app1', status: 'Pending' });
 
@@ -155,6 +180,31 @@ describe('POST /api/applications', () => {
       employer: 'emp1',
       status: 'Pending',
     });
+    expect(job.applicantCount).toBe(1);
+    expect(job.save).toHaveBeenCalled();
+  });
+
+  it('auto-closes the job when this application fills the last available slot', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (User.findById as any)
+      .mockResolvedValueOnce(completeStudent)
+      .mockResolvedValueOnce(approvedEmployer);
+    const job: any = {
+      ...visibleJob,
+      applicantCount: 4,
+      maxApplicants: 5,
+      save: vi.fn().mockResolvedValue(undefined),
+    };
+    (Job.findById as any).mockResolvedValue(job);
+    (Application.findOne as any).mockResolvedValue(null);
+    (Application.create as any).mockResolvedValue({ _id: 'app1', status: 'Pending' });
+
+    const res = await POST(makePostRequest({ jobId: 'job1' }));
+
+    expect(res.status).toBe(201);
+    expect(job.applicantCount).toBe(5);
+    expect(job.isActive).toBe(false);
+    expect(job.save).toHaveBeenCalled();
   });
 });
 

@@ -91,10 +91,19 @@ export default async function EmployerDashboard() {
           <div className="bg-surface-1 rounded-2xl border border-surface-border overflow-hidden">
             {jobsWithCounts.map(({ job, applicantCount }, i) => (
               <div key={job._id.toString()} className={`flex items-center gap-4 px-5 py-4 flex-wrap ${i < jobsWithCounts.length - 1 ? 'border-b border-surface-border' : ''}`}>
-                <div className="flex-1 text-sm font-bold min-w-[160px]">{job.title}</div>
+                <div className="flex-1 min-w-[160px]">
+                  <div className="text-sm font-bold">{job.title}</div>
+                  {(job.applicationDeadline || job.maxApplicants != null) && (
+                    <div className="text-[11.5px] text-muted mt-0.5">
+                      {job.maxApplicants != null && `Cap: ${job.maxApplicants} applicants`}
+                      {job.applicationDeadline && job.maxApplicants != null && ' · '}
+                      {job.applicationDeadline && `Closes ${new Date(job.applicationDeadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`}
+                    </div>
+                  )}
+                </div>
                 <div className="w-[100px] text-[13px] text-muted">{applicantCount} applicant{applicantCount === 1 ? '' : 's'}</div>
                 <span className={`text-[11.5px] font-bold px-3 py-1 rounded-full ${job.isActive ? 'bg-success-bg text-success' : 'bg-surface-2 text-muted'}`}>
-                  {job.isActive ? 'Open' : 'Inactive'}
+                  {job.isActive ? 'Open' : 'Closed'}
                 </span>
               </div>
             ))}

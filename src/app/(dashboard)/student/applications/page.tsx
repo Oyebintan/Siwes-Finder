@@ -46,7 +46,8 @@ async function getApplications(studentId: string): Promise<StudentApplication[]>
 
 export default async function StudentApplications() {
   const session = await getServerSession(authOptions);
-  if (!session) redirect("/login");
+  if (!session || session.user.role !== 'student') redirect('/login');
+
   const applications = await getApplications(session.user.id);
 
   const total = applications.length;

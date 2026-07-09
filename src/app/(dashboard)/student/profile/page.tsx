@@ -148,24 +148,24 @@ export default function StudentProfile() {
         <div className="font-display font-bold text-[15px] mb-[18px]">Personal details</div>
         <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
           <FieldGroup label="Full name">
-            <input value={name} onChange={(e) => setName(e.target.value)} className="w-full px-3.5 py-[11px] rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-sm focus:outline-none focus:border-primary-500" />
+            <input value={name} onChange={(e) => setName(e.target.value)} className="w-full px-3.5 py-[11px] rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-primary-500" />
           </FieldGroup>
           <FieldGroup label="Email">
             <input value={session?.user?.email || ''} disabled className="w-full px-3.5 py-[11px] rounded-lg border-[1.5px] border-surface-border bg-surface-2 text-sm text-muted cursor-not-allowed" />
           </FieldGroup>
           <FieldGroup label="Phone">
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+234 800 000 0000" className="w-full px-3.5 py-[11px] rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-sm focus:outline-none focus:border-primary-500" />
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+234 800 000 0000" className="w-full px-3.5 py-[11px] rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-primary-500" />
           </FieldGroup>
           <FieldGroup label="Preferred state">
-            <select value={preferredState} onChange={(e) => setPreferredState(e.target.value)} className="w-full px-3.5 py-[11px] rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-sm focus:outline-none focus:border-primary-500">
+            <select value={preferredState} onChange={(e) => setPreferredState(e.target.value)} className="w-full px-3.5 py-[11px] rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-primary-500">
               {STATES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </FieldGroup>
           <FieldGroup label="University / Institution">
-            <input value={university} onChange={(e) => setUniversity(e.target.value)} placeholder="University of Lagos" className="w-full px-3.5 py-[11px] rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-sm focus:outline-none focus:border-primary-500" />
+            <input value={university} onChange={(e) => setUniversity(e.target.value)} placeholder="University of Lagos" className="w-full px-3.5 py-[11px] rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-primary-500" />
           </FieldGroup>
           <FieldGroup label="Course of study">
-            <input value={course} onChange={(e) => setCourse(e.target.value)} placeholder="Computer Science" className="w-full px-3.5 py-[11px] rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-sm focus:outline-none focus:border-primary-500" />
+            <input value={course} onChange={(e) => setCourse(e.target.value)} placeholder="Computer Science" className="w-full px-3.5 py-[11px] rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-primary-500" />
           </FieldGroup>
         </div>
       </div>

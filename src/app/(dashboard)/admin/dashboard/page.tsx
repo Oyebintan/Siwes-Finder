@@ -77,7 +77,7 @@ export default async function AdminDashboard() {
               <div key={j._id.toString()} className={`flex items-center gap-3 px-5 py-4 flex-wrap ${i < recentJobs.length - 1 ? 'border-b border-surface-border' : ''}`}>
                 <div className="flex-1 text-sm font-semibold min-w-[160px]">{j.title} <span className="text-muted font-normal">— {j.employerId?.companyName || j.employerId?.name || 'Unknown'}</span></div>
                 <span className={`text-[11.5px] font-bold px-3 py-1 rounded-full flex items-center gap-1 ${j.isActive ? 'bg-success-bg text-success' : 'bg-surface-2 text-muted'}`}>
-                  {j.isActive ? <ShieldCheck className="w-3 h-3" /> : <ShieldX className="w-3 h-3" />} {j.isActive ? 'Live' : 'Inactive'}
+                  {j.isActive ? <ShieldCheck className="w-3 h-3" /> : <ShieldX className="w-3 h-3" />} {j.isActive ? 'Live' : 'Closed'}
                 </span>
               </div>
             ))}

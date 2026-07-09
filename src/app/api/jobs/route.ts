@@ -40,6 +40,8 @@ export async function POST(req: Request) {
       applicationMethod = 'platform',
       applicationEmail,
       applicationUrl,
+      applicationDeadline,
+      maxApplicants,
     } = body;
 
     if (!title || !location || !type || !duration || !description) {
@@ -61,6 +63,22 @@ export async function POST(req: Request) {
       }
     }
 
+    let parsedDeadline: Date | undefined;
+    if (applicationDeadline) {
+      parsedDeadline = new Date(applicationDeadline);
+      if (Number.isNaN(parsedDeadline.getTime())) {
+        return NextResponse.json({ error: 'Invalid application deadline.' }, { status: 400 });
+      }
+    }
+
+    let parsedMaxApplicants: number | undefined;
+    if (maxApplicants !== undefined && maxApplicants !== null && maxApplicants !== '') {
+      parsedMaxApplicants = Number(maxApplicants);
+      if (!Number.isInteger(parsedMaxApplicants) || parsedMaxApplicants < 1) {
+        return NextResponse.json({ error: 'Maximum applicants must be a positive whole number.' }, { status: 400 });
+      }
+    }
+
     const newJob = await Job.create({
       employerId: session.user.id,
       title,
@@ -73,6 +91,8 @@ export async function POST(req: Request) {
       applicationMethod,
       applicationEmail: applicationMethod === 'email' ? applicationEmail : undefined,
       applicationUrl: applicationMethod === 'external' ? applicationUrl : undefined,
+      applicationDeadline: parsedDeadline,
+      maxApplicants: parsedMaxApplicants,
     });
 
     return NextResponse.json({ message: 'Job posted successfully', job: newJob }, { status: 201 });
@@ -112,14 +132,26 @@ export async function GET(req: Request) {
       verificationStatus: 'approved',
     }).distinct('_id');
 
+    // A job whose deadline has passed or applicant cap is filled may still
+    // have a stale isActive:true (that only gets lazily corrected when a
+    // student opens its detail page or tries to apply -- see
+    // src/lib/jobStatus.ts) so the public feed filters both conditions
+    // directly rather than trusting isActive alone.
+    const now = new Date();
+    const conditions: Record<string, unknown>[] = [
+      { $or: [{ applicationDeadline: { $exists: false } }, { applicationDeadline: null }, { applicationDeadline: { $gt: now } }] },
+      { $expr: { $or: [{ $eq: [{ $ifNull: ['$maxApplicants', null] }, null] }, { $lt: ['$applicantCount', '$maxApplicants'] }] } },
+    ];
+    if (q) {
+      const rx = new RegExp(escapeRegex(q), 'i');
+      conditions.push({ $or: [{ title: rx }, { description: rx }] });
+    }
+
     const filter: Record<string, unknown> = {
       isActive: true,
       employerId: { $in: approvedEmployerIds },
+      $and: conditions,
     };
-    if (q) {
-      const rx = new RegExp(escapeRegex(q), 'i');
-      filter.$or = [{ title: rx }, { description: rx }];
-    }
     if (type && ['On-site', 'Remote', 'Hybrid'].includes(type)) {
       filter.type = type;
     }

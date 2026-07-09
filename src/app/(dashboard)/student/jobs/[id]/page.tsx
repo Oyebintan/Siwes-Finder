@@ -5,6 +5,7 @@ import { ShieldCheck } from "lucide-react";
 import { notFound } from "next/navigation";
 import ApplyButton from "@/components/ApplyButton";
 import SaveJobButton from "@/components/SaveJobButton";
+import { isJobOpenForApplications } from "@/lib/jobStatus";
 
 const METHOD_LABEL: Record<string, string> = {
   platform: 'In-app',
@@ -26,7 +27,8 @@ async function getJob(id: string) {
     if (!job) return null;
 
     const employer = job.employerId as unknown as { verificationStatus?: string } | null;
-    if (!job.isActive || employer?.verificationStatus !== 'approved') return null;
+    const openForApplications = await isJobOpenForApplications(job);
+    if (!openForApplications || employer?.verificationStatus !== 'approved') return null;
 
     const related = await Job.find({
       isActive: true,
@@ -123,9 +125,15 @@ export default async function JobDetails({ params }: { params: Promise<{ id: str
               <OverviewRow label="Duration" value={job.duration} />
               <OverviewRow label="Application method" value={METHOD_LABEL[job.applicationMethod] || 'In-app'} />
               {job.stipend && <OverviewRow label="Stipend" value={job.stipend} />}
+              {job.applicationDeadline && (
+                <OverviewRow label="Apply by" value={new Date(job.applicationDeadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} />
+              )}
+              {job.maxApplicants != null && (
+                <OverviewRow label="Spots remaining" value={`${Math.max(0, job.maxApplicants - job.applicantCount)} of ${job.maxApplicants}`} />
+              )}
             </div>
           </div>
-          <div className="bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-400 dark:to-[#4B3FD8] rounded-2xl p-[22px] text-white">
+          <div className="bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-500 dark:via-secondary-600 dark:to-secondary-900 rounded-2xl p-[22px] text-white">
             <ShieldCheck className="w-6 h-6 mb-2" />
             <div className="font-display font-bold text-[15px] mb-1">Verified by our admin team</div>
             <div className="text-[13px] text-white/80">This company submitted CAC registration details and was manually approved before this listing went live.</div>

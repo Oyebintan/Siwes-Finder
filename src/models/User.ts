@@ -20,6 +20,7 @@ export interface IUser extends Document {
   preferredState?: string;
   isProfileComplete?: boolean;
   savedJobs?: mongoose.Types.ObjectId[];
+  communityJoined?: boolean;
   // Employer / Company Specific
   companyName?: string;
   industry?: string;
@@ -31,6 +32,12 @@ export interface IUser extends Document {
   verificationStatus: VerificationStatus;
   verificationRejectionReason?: string;
   verificationReviewedAt?: Date;
+  // Password-reset OTP. The code itself is never stored -- only its bcrypt
+  // hash -- so a database read alone can't be used to reset someone's
+  // password. See src/app/api/auth/forgot-password and reset-password.
+  resetOtpHash?: string;
+  resetOtpExpires?: Date;
+  resetOtpAttempts?: number;
   createdAt: Date;
 }
 
@@ -53,6 +60,9 @@ const UserSchema: Schema = new Schema(
     preferredState: { type: String },
     isProfileComplete: { type: Boolean, default: false },
     savedJobs: { type: [Schema.Types.ObjectId], ref: 'Job', default: [] },
+    // Opt-in flag for the student Community directory/chat -- students must
+    // explicitly join before appearing to peers or being able to post.
+    communityJoined: { type: Boolean, default: false },
 
     // Employer / Company fields
     companyName: { type: String },
@@ -72,6 +82,10 @@ const UserSchema: Schema = new Schema(
     },
     verificationRejectionReason: { type: String },
     verificationReviewedAt: { type: Date },
+
+    resetOtpHash: { type: String },
+    resetOtpExpires: { type: Date },
+    resetOtpAttempts: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

@@ -71,7 +71,7 @@ export default function AdminJobsPage() {
               <div className="space-y-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="font-display font-bold text-base">{j.title}</h3>
-                  {!j.isActive && <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-surface-2 text-muted">Inactive</span>}
+                  {!j.isActive && <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-surface-2 text-muted">Closed</span>}
                   <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-primary-500/10 dark:bg-primary-400/15 text-primary-500 dark:text-primary-400 capitalize">{j.applicationMethod}</span>
                 </div>
                 <p className="text-sm text-muted flex items-center gap-3 flex-wrap">

@@ -173,6 +173,57 @@ describe('PUT /api/jobs/[id]', () => {
     expect(jobDoc.applicationUrl).toBe('https://company.com/apply');
     expect(jobDoc.applicationEmail).toBeUndefined();
   });
+
+  it('rejects an invalid application deadline', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    const jobDoc: any = { set: vi.fn(), save: vi.fn() };
+    (Job.findOne as any).mockResolvedValue(jobDoc);
+
+    const res = await PUT(makePutRequest({ applicationDeadline: 'not-a-date' }), p);
+
+    expect(res.status).toBe(400);
+    expect(jobDoc.save).not.toHaveBeenCalled();
+  });
+
+  it('rejects a non-positive maxApplicants', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    const jobDoc: any = { set: vi.fn(), save: vi.fn() };
+    (Job.findOne as any).mockResolvedValue(jobDoc);
+
+    const res = await PUT(makePutRequest({ maxApplicants: -1 }), p);
+
+    expect(res.status).toBe(400);
+    expect(jobDoc.save).not.toHaveBeenCalled();
+  });
+
+  it('clears the deadline and cap when explicitly set to null', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    const jobDoc: any = {
+      set: vi.fn(),
+      save: vi.fn().mockResolvedValue(undefined),
+      applicationDeadline: new Date(),
+      maxApplicants: 5,
+    };
+    (Job.findOne as any).mockResolvedValue(jobDoc);
+
+    const res = await PUT(makePutRequest({ applicationDeadline: null, maxApplicants: null }), p);
+
+    expect(res.status).toBe(200);
+    expect(jobDoc.applicationDeadline).toBeUndefined();
+    expect(jobDoc.maxApplicants).toBeUndefined();
+  });
+
+  it('updates the deadline and cap with valid values', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    const jobDoc: any = { set: vi.fn(), save: vi.fn().mockResolvedValue(undefined) };
+    (Job.findOne as any).mockResolvedValue(jobDoc);
+
+    const res = await PUT(makePutRequest({ applicationDeadline: '2099-01-01', maxApplicants: 20 }), p);
+
+    expect(res.status).toBe(200);
+    expect(jobDoc.applicationDeadline).toEqual(new Date('2099-01-01'));
+    expect(jobDoc.maxApplicants).toBe(20);
+  });
 });
 
 describe('DELETE /api/jobs/[id]', () => {

@@ -40,7 +40,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default async function StudentDashboard() {
   const session = await getServerSession(authOptions);
-  if (!session) redirect("/login");
+  if (!session || session.user.role !== 'student') redirect('/login');
 
   await connectToDatabase();
 
@@ -75,9 +75,6 @@ export default async function StudentDashboard() {
   const completedSteps = [hasAcademic, hasResume, hasSkills, hasApplied].filter(Boolean).length;
   const progressPct = completedSteps * 25;
 
-  const circumference = 2 * Math.PI * 32;
-  const dashOffset = circumference * (1 - progressPct / 100);
-
   const firstName = session?.user?.name?.split(' ')[0] || 'there';
 
   return (
@@ -88,32 +85,30 @@ export default async function StudentDashboard() {
       </div>
 
       {/* Hero progress banner */}
-      <div className="relative overflow-hidden rounded-[18px] p-7 flex items-center gap-7 flex-wrap bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-400 dark:to-[#4B3FD8]">
+      <div className="relative overflow-hidden rounded-[18px] p-6 sm:p-7 animate-gradient-flow bg-gradient-to-br from-primary-500 via-secondary-500 to-[#17307A] dark:from-primary-500 dark:via-secondary-600 dark:to-secondary-900">
         <div className="pointer-events-none absolute -top-16 -right-10 w-[220px] h-[220px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.14), transparent 70%)' }} />
-        <div className="relative w-[76px] h-[76px] shrink-0">
-          <svg width="76" height="76" viewBox="0 0 76 76">
-            <circle cx="38" cy="38" r="32" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="8" />
-            <circle
-              cx="38" cy="38" r="32" fill="none" stroke="#fff" strokeWidth="8"
-              strokeDasharray={circumference} strokeDashoffset={dashOffset}
-              strokeLinecap="round" transform="rotate(-90 38 38)"
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center font-display font-extrabold text-[15px] text-white">{progressPct}%</div>
-        </div>
-        <div className="flex-1 min-w-[200px] relative">
-          <div className="font-display font-bold text-[16px] text-white mb-1">Placement progress</div>
-          <div className="text-[13.5px] text-white/80">
-            {hasApplied
-              ? `${applicationsCount} application${applicationsCount === 1 ? '' : 's'} submitted. ${!hasResume ? 'Add a resume to boost your match score.' : 'Keep your profile fresh to stay competitive.'}`
-              : 'Complete your profile and submit your first application.'}
+
+        <div className="relative flex items-start justify-between gap-4 flex-wrap mb-4">
+          <div className="min-w-[200px]">
+            <div className="font-display font-bold text-[16px] text-white mb-1">Profile completion</div>
+            <div className="text-[13.5px] text-white/80 max-w-[420px]">
+              {hasApplied
+                ? `${applicationsCount} application${applicationsCount === 1 ? '' : 's'} submitted. ${!hasResume ? 'Add a resume to boost your match score.' : 'Keep your profile fresh to stay competitive.'}`
+                : 'Complete your profile and submit your first application.'}
+            </div>
           </div>
+          <span className="font-display font-extrabold text-[30px] text-white leading-none shrink-0">{progressPct}%</span>
         </div>
-        <div className="relative flex items-center gap-2 shrink-0">
-          <Link href="/student/jobs" aria-label="Find opportunities" className="w-10 h-10 rounded-lg bg-white text-primary-600 flex items-center justify-center shrink-0 hover:brightness-95 transition-all" title="Find opportunities">
-            <Search className="w-[18px] h-[18px]" />
+
+        <div className="relative h-2 rounded-full bg-white/20 overflow-hidden mb-5">
+          <div className="h-full rounded-full bg-white transition-[width] duration-700 ease-out" style={{ width: `${progressPct}%` }} />
+        </div>
+
+        <div className="relative flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          <Link href="/student/jobs" className="text-[13.5px] font-bold text-primary-600 bg-white px-4 py-2.5 rounded-lg whitespace-nowrap hover:brightness-95 transition-all flex items-center justify-center gap-1.5">
+            <Search className="w-4 h-4" /> Find opportunities
           </Link>
-          <Link href="/student/profile" className="text-[13.5px] font-bold text-white bg-white/[0.14] px-4 py-2.5 rounded-lg whitespace-nowrap hover:bg-white/[0.2] transition-colors">
+          <Link href="/student/profile" className="text-[13.5px] font-bold text-white bg-white/[0.14] px-4 py-2.5 rounded-lg whitespace-nowrap hover:bg-white/[0.2] transition-colors flex items-center justify-center">
             Complete profile →
           </Link>
         </div>
@@ -193,9 +188,10 @@ export default async function StudentDashboard() {
 function Kpi({ value, label, tone }: { value: number | string; label: string; tone?: 'warning' | 'success' }) {
   const color = tone === 'warning' ? 'text-warning' : tone === 'success' ? 'text-success' : 'text-foreground';
   return (
-    <div className="glass-card bg-surface-1 rounded-[14px] p-4">
-      <div className={`font-mono font-bold text-[22px] ${color}`}>{value}</div>
-      <div className="text-xs text-muted mt-0.5">{label}</div>
+    <div className="relative overflow-hidden glass-card bg-surface-1 rounded-[14px] p-4">
+      <div className="card-shine animate-card-shine" />
+      <div className={`relative font-mono font-bold text-[22px] ${color}`}>{value}</div>
+      <div className="relative text-xs text-muted mt-0.5">{label}</div>
     </div>
   );
 }

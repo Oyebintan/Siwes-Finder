@@ -17,7 +17,8 @@ async function getEmployerApplications(employerId: string): Promise<EmployerAppl
 
 export default async function EmployerApplications() {
   const session = await getServerSession(authOptions);
-  if (!session) redirect("/login");
+  if (!session || session.user.role !== 'employer') redirect('/login');
+
   const applications = await getEmployerApplications(session.user.id);
 
   return (

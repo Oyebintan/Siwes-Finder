@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { Loader2, Trash2, Users } from 'lucide-react';
+import { Loader2, Trash2, Users, ShieldPlus } from 'lucide-react';
 
 type ManagedUser = {
   _id: string;
@@ -19,12 +19,18 @@ const ROLE_TABS = ['all', 'student', 'employer', 'admin', 'super_admin', 'unassi
 
 export default function AdminUsersPage() {
   const { data: session } = useSession();
+  const isSuperAdmin = session?.user?.role === 'super_admin';
   const [role, setRole] = useState<(typeof ROLE_TABS)[number]>('all');
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const [promoteEmail, setPromoteEmail] = useState('');
+  const [promoteRole, setPromoteRole] = useState<'admin' | 'super_admin'>('admin');
+  const [promoting, setPromoting] = useState(false);
+  const [promoteMessage, setPromoteMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -44,6 +50,29 @@ export default function AdminUsersPage() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
 
+  async function promoteUser(e: React.FormEvent) {
+    e.preventDefault();
+    setPromoting(true);
+    setPromoteMessage(null);
+    try {
+      const res = await fetch('/api/admin/super-admins', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: promoteEmail, role: promoteRole }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPromoteMessage({ type: 'error', text: data.error || 'Could not promote that user.' });
+        return;
+      }
+      setPromoteMessage({ type: 'success', text: data.message });
+      setPromoteEmail('');
+      await load();
+    } finally {
+      setPromoting(false);
+    }
+  }
+
   async function remove(id: string, name: string) {
     if (!window.confirm(`Delete ${name}? This also removes their jobs/applications and cannot be undone.`)) return;
     setDeletingId(id);
@@ -62,6 +91,47 @@ export default function AdminUsersPage() {
         <h1 className="font-display font-extrabold text-[26px] tracking-[-0.02em]">User management</h1>
         <p className="text-sm text-muted mt-1">Browse and remove accounts across the platform.</p>
       </div>
+
+      {isSuperAdmin && (
+        <div className="p-5 rounded-2xl bg-surface-1 border border-surface-border">
+          <div className="flex items-center gap-2 mb-3">
+            <ShieldPlus className="w-5 h-5 text-primary-500 dark:text-primary-400" />
+            <div className="font-display font-bold text-[15px]">Add an admin or super admin</div>
+          </div>
+          <p className="text-[13px] text-muted mb-3">Promote an existing account by email. They need an account already (any role) before you can promote them.</p>
+          <form onSubmit={promoteUser} className="flex flex-wrap gap-2">
+            <input
+              type="email"
+              required
+              value={promoteEmail}
+              onChange={(e) => setPromoteEmail(e.target.value)}
+              placeholder="someone@example.com"
+              className="flex-1 min-w-[220px] px-3.5 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-background text-[16px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
+            />
+            <select
+              value={promoteRole}
+              onChange={(e) => setPromoteRole(e.target.value as 'admin' | 'super_admin')}
+              className="px-3.5 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-background text-[16px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
+            >
+              <option value="admin">Admin</option>
+              <option value="super_admin">Super admin</option>
+            </select>
+            <button
+              type="submit"
+              disabled={promoting}
+              className="px-5 py-2.5 rounded-lg bg-primary-500 dark:bg-primary-400 text-white text-sm font-bold hover:brightness-110 disabled:opacity-50 transition-all flex items-center gap-2"
+            >
+              {promoting && <Loader2 className="w-4 h-4 animate-spin" />}
+              Promote
+            </button>
+          </form>
+          {promoteMessage && (
+            <p className={`text-[13px] mt-2.5 ${promoteMessage.type === 'success' ? 'text-success' : 'text-error'}`}>
+              {promoteMessage.text}
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2">
         {ROLE_TABS.map((t) => (

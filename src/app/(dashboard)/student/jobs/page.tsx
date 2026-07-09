@@ -119,13 +119,13 @@ export default function BrowseOpportunities() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by role, company, or skill…"
-            className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted"
+            className="flex-1 bg-transparent text-[16px] outline-none placeholder:text-muted"
           />
         </div>
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as 'newest' | 'oldest')}
-          className="border-[1.5px] border-surface-border rounded-[10px] px-4 text-[13.5px] font-semibold bg-surface-1 text-foreground"
+          className="border-[1.5px] border-surface-border rounded-[10px] px-4 text-[16px] font-semibold bg-surface-1 text-foreground"
         >
           <option value="newest">Sort: Newest</option>
           <option value="oldest">Sort: Oldest</option>

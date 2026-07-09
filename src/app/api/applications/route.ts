@@ -5,6 +5,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import Application from '@/models/Application';
 import Job from '@/models/Job';
 import User from '@/models/User';
+import { isJobOpenForApplications } from '@/lib/jobStatus';
 
 export async function POST(req: Request) {
   try {
@@ -31,12 +32,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Job not found' }, { status: 404 });
     }
 
-    // Mirror the browse-feed visibility rules: students can only apply to
-    // active jobs from verified employers. Report both as 404 so a direct API
-    // call can't confirm the existence of a hidden listing.
+    // An unverified employer's job was never publicly visible — report it as
+    // 404 so a direct API call can't confirm the listing exists.
     const employer = await User.findById(job.employerId);
-    if (!job.isActive || employer?.verificationStatus !== 'approved') {
+    if (employer?.verificationStatus !== 'approved') {
       return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+    }
+
+    // Inactive, past its deadline, or at its applicant cap.
+    if (!(await isJobOpenForApplications(job))) {
+      return NextResponse.json({ error: 'This opportunity is no longer accepting applications.' }, { status: 400 });
     }
 
     // Email/external jobs are applied to off-platform; an in-app Application
@@ -60,6 +65,14 @@ export async function POST(req: Request) {
       employer: job.employerId,
       status: 'Pending'
     });
+
+    // Keep the denormalized applicant count in sync, and close the job
+    // immediately if this application just filled the last slot.
+    job.applicantCount += 1;
+    if (job.maxApplicants != null && job.applicantCount >= job.maxApplicants) {
+      job.isActive = false;
+    }
+    await job.save();
 
     return NextResponse.json(application, { status: 201 });
   } catch (error) {
