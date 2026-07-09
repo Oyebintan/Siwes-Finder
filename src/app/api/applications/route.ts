@@ -31,6 +31,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Job not found' }, { status: 404 });
     }
 
+    // Mirror the browse-feed visibility rules: students can only apply to
+    // active jobs from verified employers. Report both as 404 so a direct API
+    // call can't confirm the existence of a hidden listing.
+    const employer = await User.findById(job.employerId);
+    if (!job.isActive || employer?.verificationStatus !== 'approved') {
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+    }
+
+    // Email/external jobs are applied to off-platform; an in-app Application
+    // record would never be seen by the employer.
+    if (job.applicationMethod && job.applicationMethod !== 'platform') {
+      return NextResponse.json(
+        { error: 'This placement accepts applications outside the platform. Use the application link on the job page.' },
+        { status: 400 }
+      );
+    }
+
     // Check if already applied
     const existingApp = await Application.findOne({ job: jobId, student: session.user.id });
     if (existingApp) {

@@ -32,6 +32,21 @@ describe('POST /api/logbook', () => {
     expect(res.status).toBe(401);
   });
 
+  it.each([
+    ['missing description', { ...validEntry, activityDescription: '   ' }],
+    ['missing week number', { ...validEntry, weekNumber: undefined }],
+    ['non-numeric hours', { ...validEntry, hoursWorked: 'lots' }],
+    ['zero hours', { ...validEntry, hoursWorked: 0 }],
+    ['hours beyond a day', { ...validEntry, hoursWorked: 30 }],
+  ])('rejects invalid input (%s) with a 400 instead of a 500', async (_label, body) => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+
+    const res = await POST(makePostRequest(body));
+
+    expect(res.status).toBe(400);
+    expect(Logbook.create).not.toHaveBeenCalled();
+  });
+
   it('refuses to log without an accepted placement', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     (Application.findOne as any).mockResolvedValue(null);

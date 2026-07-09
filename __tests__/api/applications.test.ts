@@ -24,6 +24,8 @@ function makePostRequest(body: unknown) {
 }
 
 const completeStudent = { university: 'UNILAG', courseOfStudy: 'CS', resumeUrl: 'http://x/resume.pdf' };
+const approvedEmployer = { verificationStatus: 'approved' };
+const visibleJob = { _id: 'job1', employerId: 'emp1', isActive: true, applicationMethod: 'platform' };
 
 describe('POST /api/applications', () => {
   beforeEach(() => {
@@ -63,10 +65,53 @@ describe('POST /api/applications', () => {
     expect(res.status).toBe(404);
   });
 
+  it('hides an inactive job (404, matching the browse feed)', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (User.findById as any)
+      .mockResolvedValueOnce(completeStudent)
+      .mockResolvedValueOnce(approvedEmployer);
+    (Job.findById as any).mockResolvedValue({ ...visibleJob, isActive: false });
+
+    const res = await POST(makePostRequest({ jobId: 'job1' }));
+
+    expect(res.status).toBe(404);
+    expect(Application.create).not.toHaveBeenCalled();
+  });
+
+  it("hides an unverified employer's job (404, matching the browse feed)", async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (User.findById as any)
+      .mockResolvedValueOnce(completeStudent)
+      .mockResolvedValueOnce({ verificationStatus: 'pending' });
+    (Job.findById as any).mockResolvedValue(visibleJob);
+
+    const res = await POST(makePostRequest({ jobId: 'job1' }));
+
+    expect(res.status).toBe(404);
+    expect(Application.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects in-app applications to email/external jobs', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (User.findById as any)
+      .mockResolvedValueOnce(completeStudent)
+      .mockResolvedValueOnce(approvedEmployer);
+    (Job.findById as any).mockResolvedValue({ ...visibleJob, applicationMethod: 'email' });
+
+    const res = await POST(makePostRequest({ jobId: 'job1' }));
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/outside the platform/i);
+    expect(Application.create).not.toHaveBeenCalled();
+  });
+
   it('rejects a duplicate application (pre-check)', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
-    (User.findById as any).mockResolvedValue(completeStudent);
-    (Job.findById as any).mockResolvedValue({ _id: 'job1', employerId: 'emp1' });
+    (User.findById as any)
+      .mockResolvedValueOnce(completeStudent)
+      .mockResolvedValueOnce(approvedEmployer);
+    (Job.findById as any).mockResolvedValue(visibleJob);
     (Application.findOne as any).mockResolvedValue({ _id: 'existing' });
 
     const res = await POST(makePostRequest({ jobId: 'job1' }));
@@ -78,8 +123,10 @@ describe('POST /api/applications', () => {
 
   it('translates a duplicate-key race (E11000) into the same friendly message', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
-    (User.findById as any).mockResolvedValue(completeStudent);
-    (Job.findById as any).mockResolvedValue({ _id: 'job1', employerId: 'emp1' });
+    (User.findById as any)
+      .mockResolvedValueOnce(completeStudent)
+      .mockResolvedValueOnce(approvedEmployer);
+    (Job.findById as any).mockResolvedValue(visibleJob);
     (Application.findOne as any).mockResolvedValue(null);
     (Application.create as any).mockRejectedValue(Object.assign(new Error('dup'), { code: 11000 }));
 
@@ -92,8 +139,10 @@ describe('POST /api/applications', () => {
 
   it('creates the application on success', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
-    (User.findById as any).mockResolvedValue(completeStudent);
-    (Job.findById as any).mockResolvedValue({ _id: 'job1', employerId: 'emp1' });
+    (User.findById as any)
+      .mockResolvedValueOnce(completeStudent)
+      .mockResolvedValueOnce(approvedEmployer);
+    (Job.findById as any).mockResolvedValue(visibleJob);
     (Application.findOne as any).mockResolvedValue(null);
     (Application.create as any).mockResolvedValue({ _id: 'app1', status: 'Pending' });
 

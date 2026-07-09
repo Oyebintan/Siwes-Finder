@@ -5,6 +5,7 @@ import Job from "@/models/Job";
 import Application from "@/models/Application";
 import User from "@/models/User";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Search, CheckCircle2, UploadCloud, Building2, type LucideIcon } from "lucide-react";
 
 type RecommendedJob = {
@@ -39,11 +40,23 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default async function StudentDashboard() {
   const session = await getServerSession(authOptions);
+  if (!session) redirect("/login");
+
   await connectToDatabase();
 
-  const userId = session!.user.id;
+  const userId = session.user.id;
+
+  // Match the browse feed's visibility rules: only active jobs from verified
+  // employers count as "open" or get recommended, so cards never link to a
+  // listing the details page would hide (404).
+  const approvedEmployerIds = await User.find({
+    role: 'employer',
+    verificationStatus: 'approved',
+  }).distinct('_id');
+  const visibleJobFilter = { isActive: true, employerId: { $in: approvedEmployerIds } };
+
   const [availableJobsCount, applicationsCount, pendingCount, acceptedCount, user, recentApps, recommended] = await Promise.all([
-    Job.countDocuments({ isActive: true }),
+    Job.countDocuments(visibleJobFilter),
     Application.countDocuments({ student: userId }),
     Application.countDocuments({ student: userId, status: 'Pending' }),
     Application.countDocuments({ student: userId, status: 'Accepted' }),
@@ -52,7 +65,7 @@ export default async function StudentDashboard() {
       .populate({ path: 'job', select: 'title employerId', populate: { path: 'employerId', select: 'companyName name' } })
       .sort({ createdAt: -1 })
       .limit(3),
-    Job.find({ isActive: true }).populate('employerId', 'companyName name').sort({ createdAt: -1 }).limit(2),
+    Job.find(visibleJobFilter).populate('employerId', 'companyName name').sort({ createdAt: -1 }).limit(2),
   ]);
 
   const hasAcademic = Boolean(user?.university && user?.courseOfStudy);
