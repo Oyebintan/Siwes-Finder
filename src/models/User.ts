@@ -31,6 +31,12 @@ export interface IUser extends Document {
   verificationStatus: VerificationStatus;
   verificationRejectionReason?: string;
   verificationReviewedAt?: Date;
+  // Password-reset OTP. The code itself is never stored -- only its bcrypt
+  // hash -- so a database read alone can't be used to reset someone's
+  // password. See src/app/api/auth/forgot-password and reset-password.
+  resetOtpHash?: string;
+  resetOtpExpires?: Date;
+  resetOtpAttempts?: number;
   createdAt: Date;
 }
 
@@ -74,6 +80,10 @@ const UserSchema: Schema = new Schema(
     },
     verificationRejectionReason: { type: String },
     verificationReviewedAt: { type: Date },
+
+    resetOtpHash: { type: String },
+    resetOtpExpires: { type: Date },
+    resetOtpAttempts: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

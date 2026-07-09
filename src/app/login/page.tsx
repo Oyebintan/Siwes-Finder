@@ -39,6 +39,16 @@ function OAuthErrorBanner() {
   );
 }
 
+function ResetSuccessBanner() {
+  const params = useSearchParams();
+  if (params.get('reset') !== 'success') return null;
+  return (
+    <div className="mb-4 p-3 rounded-xl bg-success-bg border border-success/20 text-success text-[13px] font-medium text-center">
+      Password reset. Log in with your new password.
+    </div>
+  );
+}
+
 export default function Login() {
   const router = useRouter();
 
@@ -111,6 +121,7 @@ export default function Login() {
 
         <Suspense fallback={null}>
           <OAuthErrorBanner />
+          <ResetSuccessBanner />
         </Suspense>
 
         {error && (
@@ -138,7 +149,7 @@ export default function Login() {
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="block text-[12.5px] font-semibold">Password</label>
-              <a href="#" className="text-[12.5px] font-semibold text-primary-500 dark:text-primary-400">Forgot password?</a>
+              <Link href="/forgot-password" className="text-[12.5px] font-semibold text-primary-500 dark:text-primary-400">Forgot password?</Link>
             </div>
             <input
               type="password"
