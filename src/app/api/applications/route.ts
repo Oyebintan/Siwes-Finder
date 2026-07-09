@@ -5,6 +5,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import Application from '@/models/Application';
 import Job from '@/models/Job';
 import User from '@/models/User';
+import { isJobOpenForApplications } from '@/lib/jobStatus';
 
 export async function POST(req: Request) {
   try {
@@ -31,6 +32,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Job not found' }, { status: 404 });
     }
 
+    if (!(await isJobOpenForApplications(job))) {
+      return NextResponse.json({ error: 'This opportunity is no longer accepting applications.' }, { status: 400 });
+    }
+
     // Check if already applied
     const existingApp = await Application.findOne({ job: jobId, student: session.user.id });
     if (existingApp) {
@@ -43,6 +48,14 @@ export async function POST(req: Request) {
       employer: job.employerId,
       status: 'Pending'
     });
+
+    // Keep the denormalized applicant count in sync, and close the job
+    // immediately if this application just filled the last slot.
+    job.applicantCount += 1;
+    if (job.maxApplicants != null && job.applicantCount >= job.maxApplicants) {
+      job.isActive = false;
+    }
+    await job.save();
 
     return NextResponse.json(application, { status: 201 });
   } catch (error) {

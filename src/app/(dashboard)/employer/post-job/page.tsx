@@ -29,6 +29,8 @@ export default function EmployerPostJob() {
   const [applicationMethod, setApplicationMethod] = useState<'platform' | 'email' | 'external'>('platform');
   const [applicationEmail, setApplicationEmail] = useState('');
   const [applicationUrl, setApplicationUrl] = useState('');
+  const [applicationDeadline, setApplicationDeadline] = useState('');
+  const [maxApplicants, setMaxApplicants] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -67,6 +69,8 @@ export default function EmployerPostJob() {
           description,
           requirements: skills,
           applicationMethod, applicationEmail, applicationUrl,
+          applicationDeadline: applicationDeadline || undefined,
+          maxApplicants: maxApplicants || undefined,
         }),
       });
 
@@ -183,6 +187,16 @@ export default function EmployerPostJob() {
                   <input type="url" value={applicationUrl} onChange={(e) => setApplicationUrl(e.target.value)} placeholder="https://company.com/careers/apply" className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-accent-500 transition-all" />
                 </Field>
               )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Application deadline (optional)">
+                  <input type="date" value={applicationDeadline} onChange={(e) => setApplicationDeadline(e.target.value)} className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-accent-500 transition-all" />
+                </Field>
+                <Field label="Max applicants (optional)">
+                  <input type="number" min="1" value={maxApplicants} onChange={(e) => setMaxApplicants(e.target.value)} placeholder="e.g. 20" className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-accent-500 transition-all" />
+                </Field>
+              </div>
+              <p className="text-[12.5px] text-muted -mt-2.5">Leave either blank for no limit. Once the deadline passes or the applicant cap is reached, the listing closes automatically.</p>
 
               <div className="bg-background rounded-xl p-4 space-y-1.5 text-[13px]">
                 <div className="font-bold text-sm mb-1">{title || 'Untitled opportunity'}</div>

@@ -12,6 +12,12 @@ export interface IJob extends Document {
   description: string;
   stipend?: string;
   isActive: boolean;
+  // Optional application window controls. When either limit is reached the
+  // job is automatically closed (isActive is flipped to false) -- see
+  // src/lib/jobStatus.ts.
+  applicationDeadline?: Date;
+  maxApplicants?: number;
+  applicantCount: number;
   // How students apply to this placement:
   //  - platform: apply in-app (creates an Application)
   //  - email:    students are directed to applicationEmail
@@ -33,6 +39,9 @@ const JobSchema: Schema = new Schema(
     description: { type: String, required: true },
     stipend: { type: String },
     isActive: { type: Boolean, default: true },
+    applicationDeadline: { type: Date },
+    maxApplicants: { type: Number },
+    applicantCount: { type: Number, default: 0 },
 
     applicationMethod: {
       type: String,
