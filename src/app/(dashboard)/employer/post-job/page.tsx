@@ -107,14 +107,14 @@ export default function EmployerPostJob() {
           {step === 1 && (
             <div className="space-y-5">
               <Field label="Opportunity title">
-                <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Frontend Engineering Intern" className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[14.5px] focus:outline-none focus:border-accent-500 transition-all" />
+                <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Frontend Engineering Intern" className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-accent-500 transition-all" />
               </Field>
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Location">
-                  <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Lagos, Nigeria" className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[14.5px] focus:outline-none focus:border-accent-500 transition-all" />
+                  <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Lagos, Nigeria" className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-accent-500 transition-all" />
                 </Field>
                 <Field label="Work type">
-                  <select value={type} onChange={(e) => setType(e.target.value as 'On-site' | 'Remote' | 'Hybrid')} className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[14.5px] focus:outline-none focus:border-accent-500 transition-all">
+                  <select value={type} onChange={(e) => setType(e.target.value as 'On-site' | 'Remote' | 'Hybrid')} className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-accent-500 transition-all">
                     <option value="On-site">On-site</option>
                     <option value="Remote">Remote</option>
                     <option value="Hybrid">Hybrid</option>
@@ -123,12 +123,12 @@ export default function EmployerPostJob() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Duration">
-                  <select value={duration} onChange={(e) => setDuration(e.target.value)} className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[14.5px] focus:outline-none focus:border-accent-500 transition-all">
+                  <select value={duration} onChange={(e) => setDuration(e.target.value)} className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-accent-500 transition-all">
                     {DURATIONS.map((d) => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </Field>
                 <Field label="Stipend (optional)">
-                  <input value={stipend} onChange={(e) => setStipend(e.target.value)} placeholder="₦50,000" className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[14.5px] focus:outline-none focus:border-accent-500 transition-all" />
+                  <input value={stipend} onChange={(e) => setStipend(e.target.value)} placeholder="₦50,000" className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-accent-500 transition-all" />
                 </Field>
               </div>
             </div>
@@ -137,7 +137,7 @@ export default function EmployerPostJob() {
           {step === 2 && (
             <div className="space-y-5">
               <Field label="Description">
-                <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} placeholder="What will the intern work on?" className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[14.5px] focus:outline-none focus:border-accent-500 transition-all resize-none" />
+                <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} placeholder="What will the intern work on?" className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-accent-500 transition-all resize-none" />
               </Field>
               <div>
                 <label className="block text-[13px] font-semibold mb-1.5">Required skills</label>
@@ -153,7 +153,7 @@ export default function EmployerPostJob() {
                       onChange={(e) => setSkillInput(e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSkill(); } }}
                       placeholder="e.g. React"
-                      className="px-3 py-1.5 rounded-full text-[13px] border-[1.5px] border-dashed border-surface-border bg-surface-1 w-[110px] focus:outline-none focus:border-accent-500"
+                      className="px-3 py-1.5 rounded-full text-[16px] border-[1.5px] border-dashed border-surface-border bg-surface-1 w-[130px] focus:outline-none focus:border-accent-500"
                     />
                     <button type="button" onClick={addSkill} className="w-7 h-7 rounded-full border-[1.5px] border-dashed border-surface-border flex items-center justify-center text-muted">
                       <Plus className="w-3.5 h-3.5" />
@@ -167,7 +167,7 @@ export default function EmployerPostJob() {
           {step === 3 && (
             <div className="space-y-5">
               <Field label="How should students apply?">
-                <select value={applicationMethod} onChange={(e) => setApplicationMethod(e.target.value as 'platform' | 'email' | 'external')} className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[14.5px] focus:outline-none focus:border-accent-500 transition-all">
+                <select value={applicationMethod} onChange={(e) => setApplicationMethod(e.target.value as 'platform' | 'email' | 'external')} className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-accent-500 transition-all">
                   <option value="platform">On this platform (students apply here)</option>
                   <option value="email">By email (students email you)</option>
                   <option value="external">External link (redirect to your site)</option>
@@ -175,12 +175,12 @@ export default function EmployerPostJob() {
               </Field>
               {applicationMethod === 'email' && (
                 <Field label="Application email">
-                  <input type="email" value={applicationEmail} onChange={(e) => setApplicationEmail(e.target.value)} placeholder="careers@company.com" className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[14.5px] focus:outline-none focus:border-accent-500 transition-all" />
+                  <input type="email" value={applicationEmail} onChange={(e) => setApplicationEmail(e.target.value)} placeholder="careers@company.com" className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-accent-500 transition-all" />
                 </Field>
               )}
               {applicationMethod === 'external' && (
                 <Field label="External application URL">
-                  <input type="url" value={applicationUrl} onChange={(e) => setApplicationUrl(e.target.value)} placeholder="https://company.com/careers/apply" className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[14.5px] focus:outline-none focus:border-accent-500 transition-all" />
+                  <input type="url" value={applicationUrl} onChange={(e) => setApplicationUrl(e.target.value)} placeholder="https://company.com/careers/apply" className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-accent-500 transition-all" />
                 </Field>
               )}
 

@@ -136,13 +136,13 @@ export default function ProfileSetup() {
           {step === 1 && (
             <div className="space-y-5">
               <Field label="School">
-                <input value={university} onChange={(e) => setUniversity(e.target.value)} placeholder="University of Lagos" className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[14.5px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all" />
+                <input value={university} onChange={(e) => setUniversity(e.target.value)} placeholder="University of Lagos" className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all" />
               </Field>
               <Field label="Course of study">
-                <input value={course} onChange={(e) => setCourse(e.target.value)} placeholder="Computer Science" className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[14.5px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all" />
+                <input value={course} onChange={(e) => setCourse(e.target.value)} placeholder="Computer Science" className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all" />
               </Field>
               <Field label="Level">
-                <select value={level} onChange={(e) => setLevel(e.target.value)} className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[14.5px] focus:outline-none focus:border-primary-500 transition-all">
+                <select value={level} onChange={(e) => setLevel(e.target.value)} className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-primary-500 transition-all">
                   {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
                 </select>
               </Field>
@@ -152,10 +152,10 @@ export default function ProfileSetup() {
           {step === 2 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Start date">
-                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[14.5px] focus:outline-none focus:border-primary-500 transition-all" />
+                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-primary-500 transition-all" />
               </Field>
               <Field label="Duration">
-                <select value={duration} onChange={(e) => setDuration(e.target.value)} className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[14.5px] focus:outline-none focus:border-primary-500 transition-all">
+                <select value={duration} onChange={(e) => setDuration(e.target.value)} className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-primary-500 transition-all">
                   {DURATIONS.map((d) => <option key={d} value={d}>{d}</option>)}
                 </select>
               </Field>
@@ -187,7 +187,7 @@ export default function ProfileSetup() {
           {step === 4 && (
             <div>
               <Field label="Preferred state">
-                <select value={preferredState} onChange={(e) => setPreferredState(e.target.value)} className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[14.5px] focus:outline-none focus:border-primary-500 transition-all mb-5">
+                <select value={preferredState} onChange={(e) => setPreferredState(e.target.value)} className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-primary-500 transition-all mb-5">
                   {STATES.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
               </Field>

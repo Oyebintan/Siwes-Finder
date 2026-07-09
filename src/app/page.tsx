@@ -147,10 +147,10 @@ export default function Home() {
       </section>
 
       {/* MARQUEE */}
-      <section className="pt-1 pb-8">
+      <section className="pt-1 pb-6">
         <div className="max-w-[1220px] mx-auto px-6 sm:px-10 lg:px-14">
-          <div className="text-center font-mono text-[11.5px] font-bold text-muted tracking-widest uppercase mb-5">Verified companies hiring on SIWES Finder</div>
-          <div className="relative overflow-hidden rounded-2xl bg-surface-1 border border-surface-border py-6">
+          <div className="text-center font-mono text-[11.5px] font-bold text-muted tracking-widest uppercase mb-3">Verified companies hiring on SIWES Finder</div>
+          <div className="relative overflow-hidden rounded-2xl bg-surface-1 border border-surface-border py-4">
             <div className="flex w-max animate-marquee">
               {[0, 1].map((dup) => (
                 <div key={dup} className="flex gap-16 pr-16" aria-hidden={dup === 1}>

@@ -106,12 +106,12 @@ export default function AdminUsersPage() {
               value={promoteEmail}
               onChange={(e) => setPromoteEmail(e.target.value)}
               placeholder="someone@example.com"
-              className="flex-1 min-w-[220px] px-3.5 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-background text-[14px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
+              className="flex-1 min-w-[220px] px-3.5 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-background text-[16px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
             />
             <select
               value={promoteRole}
               onChange={(e) => setPromoteRole(e.target.value as 'admin' | 'super_admin')}
-              className="px-3.5 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-background text-[14px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
+              className="px-3.5 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-background text-[16px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
             >
               <option value="admin">Admin</option>
               <option value="super_admin">Super admin</option>

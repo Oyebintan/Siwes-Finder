@@ -173,7 +173,7 @@ export default function StudentLogbook() {
                     required
                     value={week}
                     onChange={(e) => setWeek(Number(e.target.value))}
-                    className="w-full px-3 py-2 rounded-lg bg-background border border-surface-border focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 outline-none text-sm"
+                    className="w-full px-3 py-2 rounded-lg bg-background border border-surface-border focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 outline-none text-[16px]"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -185,7 +185,7 @@ export default function StudentLogbook() {
                     required
                     value={hours}
                     onChange={(e) => setHours(Number(e.target.value))}
-                    className="w-full px-3 py-2 rounded-lg bg-background border border-surface-border focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 outline-none text-sm"
+                    className="w-full px-3 py-2 rounded-lg bg-background border border-surface-border focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 outline-none text-[16px]"
                   />
                 </div>
               </div>
@@ -195,7 +195,7 @@ export default function StudentLogbook() {
                 <select
                   value={day}
                   onChange={(e) => setDay(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-background border border-surface-border focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 outline-none text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-background border border-surface-border focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 outline-none text-[16px]"
                 >
                   <option value="Monday">Monday</option>
                   <option value="Tuesday">Tuesday</option>
@@ -212,7 +212,7 @@ export default function StudentLogbook() {
                   rows={4}
                   value={desc}
                   onChange={(e) => setDesc(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-background border border-surface-border focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 outline-none resize-none text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-background border border-surface-border focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 outline-none resize-none text-[16px]"
                   placeholder="What did you do today?"
                 />
               </div>

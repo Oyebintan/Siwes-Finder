@@ -63,7 +63,7 @@
   --animate-marquee: marquee 26s linear infinite;
   --animate-float-card: float-card 6s ease-in-out infinite;
   --animate-blob: blob-move 12s ease-in-out infinite;
-  --animate-gradient-flow: gradient-flow 10s ease-in-out infinite;
+  --animate-gradient-flow: gradient-flow 5s ease-in-out infinite;
   --animate-card-shine: card-shine 6s ease-in-out infinite;
 }
 
@@ -120,7 +120,7 @@
   --circuit-color: var(--color-primary-500);
   --page-glow: radial-gradient(ellipse at top, #eaf0ff 0%, #f6f7fa 55%);
   --grid-line: rgba(37, 87, 235, 0.035);
-  --dot-color: rgba(37, 87, 235, 0.16);
+  --dot-color: rgba(37, 87, 235, 0.09);
 }
 
 .dark {
@@ -146,7 +146,7 @@
   --circuit-color: var(--color-primary-400);
   --page-glow: radial-gradient(ellipse at top, #101d40 0%, #07080d 62%);
   --grid-line: rgba(140, 173, 255, 0.055);
-  --dot-color: rgba(140, 173, 255, 0.24);
+  --dot-color: rgba(140, 173, 255, 0.14);
 }
 
 html,
@@ -178,8 +178,9 @@ body {
   background-size: 24px 24px;
 }
 
-/* A slowly panning gradient so hero/showcase cards read as "alive" rather
-   than a flat static fill. Pair with a 3-stop gradient + this class. */
+/* A panning gradient so hero/showcase cards read as "alive" rather than a
+   flat static fill -- fast enough (5s cycle) to be noticeable at a glance,
+   not just on close inspection. Pair with a 3-stop gradient + this class. */
 .animate-gradient-flow {
   background-size: 200% 200%;
 }
