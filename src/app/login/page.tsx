@@ -45,6 +45,8 @@ export default function Login() {
   const [tab, setTab] = useState<'student' | 'company'>('student');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [emailUnlocked, setEmailUnlocked] = useState(false);
+  const [passwordUnlocked, setPasswordUnlocked] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -117,12 +119,15 @@ export default function Login() {
           </div>
         )}
 
-        <form onSubmit={handleCredentialsLogin} className="space-y-3.5">
+        <form onSubmit={handleCredentialsLogin} className="space-y-3.5" autoComplete="off">
           <div>
             <label className="block text-[12.5px] font-semibold mb-1">Email address</label>
             <input
               type="email"
               required
+              autoComplete="off"
+              readOnly={!emailUnlocked}
+              onFocus={() => setEmailUnlocked(true)}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={tab === 'student' ? 'you@university.edu.ng' : 'you@company.com'}
@@ -138,6 +143,9 @@ export default function Login() {
             <input
               type="password"
               required
+              autoComplete="new-password"
+              readOnly={!passwordUnlocked}
+              onFocus={() => setPasswordUnlocked(true)}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
