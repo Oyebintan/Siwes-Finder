@@ -153,7 +153,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   );
 
   return (
-    <div className="min-h-screen flex bg-background bg-grid text-foreground">
+    <div className="min-h-screen flex bg-background bg-dots text-foreground">
       {/* DESKTOP SIDEBAR */}
       <aside className="hidden md:flex w-[240px] shrink-0 border-r border-surface-border sticky top-0 h-screen">
         {SidebarContent}

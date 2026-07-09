@@ -51,7 +51,7 @@ const VerifiedBadge = () => (
 
 export default function Home() {
   return (
-    <div className="relative overflow-x-clip font-sans text-foreground">
+    <div className="relative overflow-x-clip font-sans text-foreground bg-background bg-grid-lines">
       {/* NAV */}
       <header className="sticky top-0 z-50 glass-surface border-b border-surface-border">
         <div className="max-w-[1220px] mx-auto px-6 sm:px-10 lg:px-14 py-4 flex items-center justify-between gap-4 flex-wrap">
