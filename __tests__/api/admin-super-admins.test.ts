@@ -69,4 +69,25 @@ describe('POST /api/admin/super-admins', () => {
     expect(save).toHaveBeenCalledTimes(1);
     expect(data.user.role).toBe('super_admin');
   });
+
+  it('promotes an existing user to plain admin when role: "admin" is given', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'sa1', role: 'super_admin' } });
+    const save = vi.fn().mockResolvedValue(undefined);
+    const target = { _id: 'u3', email: 'newadmin@example.com', role: 'student', save };
+    (User.findOne as any).mockResolvedValue(target);
+
+    const res = await POST(makeRequest({ email: 'newadmin@example.com', role: 'admin' }));
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(target.role).toBe('admin');
+    expect(data.user.role).toBe('admin');
+  });
+
+  it('rejects promoting someone who is already an admin when role: "admin" is given', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'sa1', role: 'super_admin' } });
+    (User.findOne as any).mockResolvedValue({ email: 'already@example.com', role: 'admin', save: vi.fn() });
+    const res = await POST(makeRequest({ email: 'already@example.com', role: 'admin' }));
+    expect(res.status).toBe(400);
+  });
 });

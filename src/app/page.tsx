@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { LogIn, ArrowUpRight, CheckCircle2, Users } from 'lucide-react';
+import { KeyRound, ArrowUpRight, CheckCircle2, Users } from 'lucide-react';
 
 const companies = ['Paystack', 'Flutterwave', 'Andela', 'MTN Nigeria', 'Interswitch', 'Nigerian Breweries'];
 
@@ -71,7 +71,7 @@ export default function Home() {
               aria-label="Sign in"
               className="flex items-center justify-center gap-1.5 p-2.5 sm:px-5 sm:py-2.5 rounded-full sm:rounded-[9px] bg-primary-500 dark:bg-primary-400 text-white text-sm font-bold shadow-lg shadow-primary-900/20 hover:brightness-110 transition-all"
             >
-              <LogIn className="w-[18px] h-[18px] sm:hidden" />
+              <KeyRound className="w-[18px] h-[18px] sm:hidden" />
               <span className="hidden sm:inline">Sign in</span>
             </Link>
           </div>

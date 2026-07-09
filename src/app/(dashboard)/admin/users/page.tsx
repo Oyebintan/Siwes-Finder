@@ -28,6 +28,7 @@ export default function AdminUsersPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [promoteEmail, setPromoteEmail] = useState('');
+  const [promoteRole, setPromoteRole] = useState<'admin' | 'super_admin'>('admin');
   const [promoting, setPromoting] = useState(false);
   const [promoteMessage, setPromoteMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -49,7 +50,7 @@ export default function AdminUsersPage() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
 
-  async function promoteToSuperAdmin(e: React.FormEvent) {
+  async function promoteUser(e: React.FormEvent) {
     e.preventDefault();
     setPromoting(true);
     setPromoteMessage(null);
@@ -57,7 +58,7 @@ export default function AdminUsersPage() {
       const res = await fetch('/api/admin/super-admins', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: promoteEmail }),
+        body: JSON.stringify({ email: promoteEmail, role: promoteRole }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -95,10 +96,10 @@ export default function AdminUsersPage() {
         <div className="p-5 rounded-2xl bg-surface-1 border border-surface-border">
           <div className="flex items-center gap-2 mb-3">
             <ShieldPlus className="w-5 h-5 text-primary-500 dark:text-primary-400" />
-            <div className="font-display font-bold text-[15px]">Add a super admin</div>
+            <div className="font-display font-bold text-[15px]">Add an admin or super admin</div>
           </div>
-          <p className="text-[13px] text-muted mb-3">Promote an existing account to super admin by email. They need an account already (any role) before you can promote them.</p>
-          <form onSubmit={promoteToSuperAdmin} className="flex flex-wrap gap-2">
+          <p className="text-[13px] text-muted mb-3">Promote an existing account by email. They need an account already (any role) before you can promote them.</p>
+          <form onSubmit={promoteUser} className="flex flex-wrap gap-2">
             <input
               type="email"
               required
@@ -107,13 +108,21 @@ export default function AdminUsersPage() {
               placeholder="someone@example.com"
               className="flex-1 min-w-[220px] px-3.5 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-background text-[14px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
             />
+            <select
+              value={promoteRole}
+              onChange={(e) => setPromoteRole(e.target.value as 'admin' | 'super_admin')}
+              className="px-3.5 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-background text-[14px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
+            >
+              <option value="admin">Admin</option>
+              <option value="super_admin">Super admin</option>
+            </select>
             <button
               type="submit"
               disabled={promoting}
               className="px-5 py-2.5 rounded-lg bg-primary-500 dark:bg-primary-400 text-white text-sm font-bold hover:brightness-110 disabled:opacity-50 transition-all flex items-center gap-2"
             >
               {promoting && <Loader2 className="w-4 h-4 animate-spin" />}
-              Promote to super admin
+              Promote
             </button>
           </form>
           {promoteMessage && (
