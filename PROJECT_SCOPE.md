@@ -8,7 +8,9 @@ SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
 seeking SIWES (Students Industrial Work Experience Scheme) placements with
 verified employers, and gives their schools visibility into the process.
 
-**Last synced with:** `e7df4e2` (main, 2026-07-10) — PR #6 merged.
+**Last synced with:** `d6f3b45` (main, 2026-07-10) — PR #8 merged, plus the
+changes in this same PR (school logbooks/profile pages, mobile login fix);
+bump this to the actual merge commit once it lands.
 
 ## Roles
 
@@ -68,13 +70,19 @@ verification submission (CAC number + document + company logo), approve
 student logbook entries.
 
 **Schools** — `/school/dashboard` (KPI overview: registered/placed/applying
-students, department count, logbook volume) and `/school/students`
-(directory grouped by faculty → department, search, per-student placement +
-logbook status) → `/school/students/[id]` (full record: profile, every
-application, complete logbook with employer approval state). A student
-belongs to a school when their profile's `university` matches the school
-account's institution name (case-insensitive). Locked behind admin
-verification — same queue as employers, badged "School".
+students, department count, logbook volume, plus a by-department breakdown
+table with placement rate), `/school/students` (directory grouped by
+faculty → department, search, per-student placement + logbook status) →
+`/school/students/[id]` (full record: profile, every application, complete
+logbook with employer approval state), `/school/logbooks` (every logbook
+entry across every student and company in one filterable feed — read-only,
+approval is still the employer's call), and `/school/profile` (institution
+details + accreditation document submission for admin review — same
+`/api/companies/verification` endpoint employers use, shared fields/labels
+adapted per role). A student belongs to a school when their profile's
+`university` matches the school account's institution name
+(case-insensitive). Locked behind admin verification — same queue as
+employers, badged "School".
 
 **Admin** — dashboard KPIs, company+school verification queue
 (`/admin/companies`), user management with delete (hierarchy-protected —
@@ -134,6 +142,19 @@ connected — don't set by hand), `RESEND_API_KEY` (forgot-password emails).
 - **`AGENTS.md`** carries an auto-managed Next.js version-drift warning block
   (don't edit between the `BEGIN`/`END` markers) — this file is a separate,
   hand-maintained companion.
+- **Never gate a real `<input>` behind `readOnly` to fight browser autofill.**
+  It silently breaks the on-screen keyboard on mobile (readonly inputs never
+  trigger it, and flipping `readOnly` off in a React `onFocus` handler fires
+  too late for iOS/Android to notice). The login page hit exactly this bug
+  and now uses hidden honeypot decoy fields instead — copy that pattern if
+  another form needs to stop stale-account autofill.
+- **`connectToDatabase()` (`src/lib/mongodb.ts`) imports every Mongoose model
+  as a side effect.** Next.js bundles each route/page into its own
+  serverless function, so a file that only imports `Job` but does
+  `.populate('employerId', ...)` (a `User` ref) can hit `MissingSchemaError`
+  on a cold start where nothing else in that function's bundle registered
+  `User` first. Don't "fix" this by importing models piecemeal per file —
+  keep relying on the central import list, and add any new model there too.
 - Tests live in `__tests__/`, mirroring `src/` structure; run with `npm
   test`. Every API route change should come with route-level test coverage
   (see any file under `__tests__/api/` for the pattern: mock
