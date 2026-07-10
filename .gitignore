@@ -40,6 +40,12 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local-disk upload fallback (src/app/api/upload/route.ts writes here only
+# when BLOB_READ_WRITE_TOKEN isn't set, i.e. local dev) -- never commit
+# uploaded resumes/verification docs/avatars.
+/public/uploads/*
+!/public/uploads/.gitkeep
+
 # git worktrees created under .claude are local dev checkouts on their own
 # branch state -- never track them or let tools recurse into them.
 /.claude/worktrees/
