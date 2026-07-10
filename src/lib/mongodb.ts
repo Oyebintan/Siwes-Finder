@@ -1,5 +1,20 @@
 import mongoose from 'mongoose';
 
+// Side-effect imports: register every schema with Mongoose as soon as a
+// connection is requested, regardless of which models the calling file
+// imports directly. Next.js bundles each route/page into its own
+// serverless function, so a page that only imports Job but does
+// `.populate('employerId', ...)` (a User ref) will throw
+// MissingSchemaError on a cold start where nothing else in that function's
+// bundle happened to import User first. That error was being swallowed by
+// broad try/catch blocks and surfacing as a wrong 404 -- see the git log
+// for the incident. Importing all models here, once, closes the whole
+// class of bug instead of chasing individual populate() call sites.
+import '@/models/User';
+import '@/models/Job';
+import '@/models/Application';
+import '@/models/Logbook';
+
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {

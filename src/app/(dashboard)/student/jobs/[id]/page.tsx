@@ -40,7 +40,11 @@ async function getJob(id: string) {
     const relatedVisible = related.filter((r) => r.employerId).slice(0, 2);
 
     return { job: JSON.parse(JSON.stringify(job)), related: JSON.parse(JSON.stringify(relatedVisible)) };
-  } catch {
+  } catch (error) {
+    // A malformed :id also lands here (Mongoose CastError) and is a
+    // legitimate 404, but log so a real server error (e.g. a DB issue)
+    // doesn't silently masquerade as "not found" with no trace.
+    console.error('Job details lookup error:', error);
     return null;
   }
 }
