@@ -55,8 +55,6 @@ export default function Login() {
   const [tab, setTab] = useState<'student' | 'company'>('student');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [emailUnlocked, setEmailUnlocked] = useState(false);
-  const [passwordUnlocked, setPasswordUnlocked] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -131,14 +129,26 @@ export default function Login() {
         )}
 
         <form onSubmit={handleCredentialsLogin} className="space-y-3.5" autoComplete="off">
+          {/* Honeypot fields: Chrome/Edge autofill targets the first email/password-typed
+              inputs it finds in the DOM. These decoys sit before the real fields so autofill
+              latches onto them instead of silently repopulating the visible form with a
+              previously saved account's credentials. They're invisible and excluded from tab
+              order/screen readers, but still real, visible-to-the-browser <input> elements --
+              unlike a readOnly-until-focus trick, which also works for this but breaks the
+              on-screen keyboard on mobile (readonly inputs never trigger it, and flipping
+              readOnly off in a React onFocus handler fires too late for iOS/Android to notice). */}
+          <div className="absolute w-px h-px overflow-hidden opacity-0 -z-10" aria-hidden="true">
+            <input type="email" name="email" autoComplete="username" tabIndex={-1} />
+            <input type="password" name="password" autoComplete="current-password" tabIndex={-1} />
+          </div>
+
           <div>
             <label className="block text-[12.5px] font-semibold mb-1">Email address</label>
             <input
               type="email"
               required
+              name="login-email"
               autoComplete="off"
-              readOnly={!emailUnlocked}
-              onFocus={() => setEmailUnlocked(true)}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={tab === 'student' ? 'you@university.edu.ng' : 'you@company.com'}
@@ -154,9 +164,8 @@ export default function Login() {
             <input
               type="password"
               required
+              name="login-password"
               autoComplete="new-password"
-              readOnly={!passwordUnlocked}
-              onFocus={() => setPasswordUnlocked(true)}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"

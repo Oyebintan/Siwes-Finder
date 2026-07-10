@@ -40,6 +40,8 @@ const ADMIN_NAV: NavItem[] = [
 const SCHOOL_NAV: NavItem[] = [
   { name: 'Overview', href: '/school/dashboard', icon: LayoutDashboard },
   { name: 'Students', href: '/school/students', icon: Users },
+  { name: 'Logbooks', href: '/school/logbooks', icon: BookOpen },
+  { name: 'Institution profile', href: '/school/profile', icon: Building2 },
 ];
 
 function initials(name?: string | null) {

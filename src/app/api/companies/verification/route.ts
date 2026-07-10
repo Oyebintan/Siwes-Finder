@@ -4,11 +4,16 @@ import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
 
-// GET: the current employer's verification state (for the dashboard banner).
+// Shared by employers (company/CAC verification) and schools (institution/
+// accreditation verification) -- same fields, different labels in each
+// role's UI. Both go through the same admin queue (/api/admin/companies).
+const ELIGIBLE_ROLES = ['employer', 'school'];
+
+// GET: the current employer/school's verification state (for the dashboard banner).
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== 'employer') {
+    if (!session || !ELIGIBLE_ROLES.includes(session.user.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -27,11 +32,12 @@ export async function GET() {
   }
 }
 
-// POST: employer submits company details + CAC document for admin review.
+// POST: employer submits company details + CAC document, or a school submits
+// institution details + accreditation document, for admin review.
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== 'employer') {
+    if (!session || !ELIGIBLE_ROLES.includes(session.user.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -45,14 +51,14 @@ export async function POST(req: Request) {
 
     if (!companyName || !cacNumber || !officialEmail || !verificationDocumentUrl) {
       return NextResponse.json(
-        { error: 'Company name, CAC number, official email and verification document are all required.' },
+        { error: 'Name, registration/accreditation number, official email and verification document are all required.' },
         { status: 400 }
       );
     }
 
-    // Basic email shape check for the official company email.
+    // Basic email shape check for the official email.
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(officialEmail)) {
-      return NextResponse.json({ error: 'Please provide a valid official company email.' }, { status: 400 });
+      return NextResponse.json({ error: 'Please provide a valid official email address.' }, { status: 400 });
     }
 
     await connectToDatabase();
@@ -64,7 +70,7 @@ export async function POST(req: Request) {
 
     // Cannot re-submit while already approved.
     if (user.verificationStatus === 'approved') {
-      return NextResponse.json({ error: 'Your company is already verified.' }, { status: 400 });
+      return NextResponse.json({ error: 'You are already verified.' }, { status: 400 });
     }
 
     user.companyName = companyName;
@@ -79,7 +85,7 @@ export async function POST(req: Request) {
     await user.save();
 
     return NextResponse.json(
-      { message: 'Verification submitted. An admin will review your company shortly.', status: 'pending' },
+      { message: 'Verification submitted. An admin will review it shortly.', status: 'pending' },
       { status: 200 }
     );
   } catch (error) {
