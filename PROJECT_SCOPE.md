@@ -1,0 +1,158 @@
+<!-- AUTO-MAINTAINED: see "Keeping this file in sync" at the bottom.
+     Every Claude Code session working on this repo should update this file
+     when it changes user-facing behavior, roles, data models, or routes. -->
+
+# SIWES Finder — Project Scope
+
+SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
+seeking SIWES (Students Industrial Work Experience Scheme) placements with
+verified employers, and gives their schools visibility into the process.
+
+**Last synced with:** `e7df4e2` (main, 2026-07-10) — PR #6 merged.
+
+## Roles
+
+| Role | Who | Access |
+|---|---|---|
+| `student` | Students seeking a placement | Browse/apply to jobs, profile, resume, saved jobs, logbook, opt-in community |
+| `employer` | Companies posting placements | Post/manage jobs, review applicants, must be admin-approved (CAC verification) before listings go public |
+| `school` | Institutions tracking their students | Read-only view of their own students (matched by university name) — profiles, applications, logbooks; must be admin-approved before student data unlocks |
+| `admin` | Platform staff | Approve/reject companies & schools, moderate job listings, manage users |
+| `super_admin` | Elevated admin | Everything `admin` can do, plus promote other users to admin/super_admin and is the only role that can delete another super_admin's account |
+| `unassigned` | Just signed up via Google, hasn't picked a role yet | Routed to `/onboarding` |
+
+Admin/super_admin are **never** self-assignable at signup — only granted via
+the `ADMIN_EMAILS` / `SUPER_ADMIN_EMAILS` env-var allowlists (promoted on
+sign-in) or by an existing super_admin via `POST /api/admin/super-admins`.
+`src/lib/roles.ts` (`isAdminRole`) treats admin and super_admin as
+equivalent everywhere except that one deletion-hierarchy check.
+
+## Data models (`src/models/`)
+
+- **User** — one schema for all roles (see `role` enum above). Notable fields:
+  `avatarUrl` (profile picture / company logo / school crest, shared field),
+  `savedJobs` (student bookmarks), `communityJoined` (opt-in flag),
+  `verificationStatus` (`unsubmitted → pending → approved/rejected`, used by
+  both employers and schools), `resetOtpHash`/`resetOtpExpires` (password
+  reset, hash-only — the OTP itself is never stored).
+- **Job** — posted by employers. `applicationMethod` is `platform | email |
+  external`. Optional `applicationDeadline` and `maxApplicants` +
+  `applicantCount`; a job auto-closes (`isActive: false`) once either limit
+  is hit, checked lazily by `src/lib/jobStatus.ts` (no cron — evaluated on
+  read/apply).
+- **Application** — links a student, job, and employer. Unique index on
+  `(job, student)` prevents duplicate applications. Status:
+  `Pending | Accepted | Rejected`.
+- **Logbook** — daily/weekly entries a student writes against their accepted
+  placement; the employer approves each entry (`isApproved`).
+
+## Feature surface
+
+**Auth** — credentials (bcrypt) + Google OAuth via NextAuth. Signup
+(`/api/auth/register`) only accepts `student | employer | school` — never a
+privileged role. OTP-based forgot-password flow (`/api/auth/forgot-password`,
+`/api/auth/reset-password`) via Resend, 10-minute expiry, generic response to
+avoid email enumeration.
+
+**Students** — browse/search jobs (`/student/jobs`, filters: keyword, type,
+location, sort; search matches title, description, **required
+skills/requirements**, location, and company name/industry), job details
+with Apply (in-app / email / external depending on the listing), save jobs
+for later, e-Logbook, profile (academic details + faculty + skills + resume
+PDF + avatar), opt-in Community directory (peers who also joined, grouped
+implicitly by shared placement visibility).
+
+**Employers** — post/edit/deactivate jobs (multi-step wizard with
+deadline/cap controls), manage applicants (accept/reject), company
+verification submission (CAC number + document + company logo), approve
+student logbook entries.
+
+**Schools** — `/school/dashboard` (KPI overview: registered/placed/applying
+students, department count, logbook volume) and `/school/students`
+(directory grouped by faculty → department, search, per-student placement +
+logbook status) → `/school/students/[id]` (full record: profile, every
+application, complete logbook with employer approval state). A student
+belongs to a school when their profile's `university` matches the school
+account's institution name (case-insensitive). Locked behind admin
+verification — same queue as employers, badged "School".
+
+**Admin** — dashboard KPIs, company+school verification queue
+(`/admin/companies`), user management with delete (hierarchy-protected —
+plain admin can't delete a super_admin), job moderation/takedown, super-admin
+promotion (`/admin/super-admins` — currently API-only, see gaps below).
+
+**Uploads** (`/api/upload`) — one endpoint, three kinds: `resume` (student,
+PDF), `verification` (employer, PDF), `avatar` (any role, PNG/JPEG). All
+magic-byte verified server-side (never trust client MIME/extension), capped
+at 5MB (documents) / 2MB (images), filenames server-generated. Vercel Blob in
+production when `BLOB_READ_WRITE_TOKEN` is set, else local disk in dev.
+
+**Access control layers** — `src/proxy.ts` (Next.js middleware, optimistic
+role-gate on `/admin`, `/employer`, `/student`, `/school`) is first-line
+only; every API route independently re-checks `session.user.role`, which is
+the actual authorization boundary.
+
+## Demo/seed data
+
+`scripts/seed-companies.mjs` — idempotent script that creates 5 pre-verified
+demo companies (Paystack, Andela, MTN Nigeria, Dangote Group, Zenith Bank)
+with SVG logos (`public/logos/`) and 5 listings each (25 total) spanning
+software, design, engineering, finance, telecoms, and marketing. Run with
+`MONGODB_URI=... node scripts/seed-companies.mjs [password]`.
+
+`scripts/create-super-admin.mjs` — one-off script to create/promote a
+`super_admin` account directly in MongoDB with a chosen email/password.
+
+## Known gaps / not yet built
+
+- **No UI for `/api/admin/super-admins`** — promoting a user to admin or
+  super_admin is currently an API-only call; there's no button in
+  `/admin/users` yet.
+- **No saved-jobs UI on the school/employer side** — bookmarking is
+  student-only (matches the feature's purpose).
+- **No email notifications** for application status changes, job approval,
+  or school/company verification decisions — Resend is only wired for
+  password reset.
+- **No automated tests for the E2E Playwright suite in CI** — `test:e2e`
+  exists (`e2e/`) but only the Vitest unit/integration suite
+  (`npm test`) runs in `.github/workflows/ci.yml`.
+- **Community feature** is a directory + implied connection, not a full chat
+  — see `021b140`/`55fa53c` history for what actually shipped vs. what was
+  scoped early on.
+
+## Environment variables
+
+See `.env.example` and `DEPLOY.md` for the full list. The ones with
+non-obvious behavior: `ADMIN_EMAILS` / `SUPER_ADMIN_EMAILS` (comma-separated
+allowlists, promote on sign-in), `MONGODB_URI` (must include a database name
+in the path or Mongoose silently falls back to a `test` database),
+`BLOB_READ_WRITE_TOKEN` (auto-injected by Vercel once a Blob store is
+connected — don't set by hand), `RESEND_API_KEY` (forgot-password emails).
+
+## Repo conventions worth knowing
+
+- **`AGENTS.md`** carries an auto-managed Next.js version-drift warning block
+  (don't edit between the `BEGIN`/`END` markers) — this file is a separate,
+  hand-maintained companion.
+- Tests live in `__tests__/`, mirroring `src/` structure; run with `npm
+  test`. Every API route change should come with route-level test coverage
+  (see any file under `__tests__/api/` for the pattern: mock
+  `next-auth/next` + the Mongoose model, assert status codes and the
+  DB-query shape).
+- `npm run lint`, `npx tsc --noEmit`, and `npm test` all must pass before a
+  PR is considered done — CI (`.github/workflows/ci.yml`) enforces this.
+
+## Keeping this file in sync
+
+This file has no magic auto-update — it stays accurate two ways:
+
+1. **Every Claude Code session** working on this repo should update the
+   relevant section here (and bump "Last synced with" to the merge/HEAD
+   commit) as part of finishing work that changes roles, data models, API
+   routes, or major features — the same way tests are expected to accompany
+   route changes.
+2. **A scheduled Routine** re-checks `origin/main` periodically, diffs
+   against the commit recorded above, and updates this file directly if a
+   session skipped step 1 (e.g., a change landed without going through a
+   Claude Code PR). See the repo owner's Claude Code session history for the
+   routine, or recreate it with `create_trigger` if missing.
