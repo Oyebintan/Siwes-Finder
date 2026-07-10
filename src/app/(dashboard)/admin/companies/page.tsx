@@ -7,6 +7,7 @@ type Company = {
   _id: string;
   name: string;
   email: string;
+  role?: string;
   companyName?: string;
   industry?: string;
   companyDescription?: string;
@@ -91,6 +92,9 @@ export default function AdminCompaniesPage() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <Building2 className="w-5 h-5 text-primary-500 dark:text-primary-400" />
                     <h3 className="font-display font-bold text-base">{c.companyName || c.name}</h3>
+                    {c.role === 'school' && (
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary-500/10 dark:bg-primary-400/15 text-primary-500 dark:text-primary-400">School</span>
+                    )}
                     <StatusBadge status={c.verificationStatus} />
                   </div>
                   <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1 text-sm">

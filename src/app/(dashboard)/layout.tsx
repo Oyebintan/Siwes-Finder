@@ -37,6 +37,11 @@ const ADMIN_NAV: NavItem[] = [
   { name: 'Opportunity moderation', href: '/admin/jobs', icon: Briefcase },
 ];
 
+const SCHOOL_NAV: NavItem[] = [
+  { name: 'Overview', href: '/school/dashboard', icon: LayoutDashboard },
+  { name: 'Students', href: '/school/students', icon: Users },
+];
+
 function initials(name?: string | null) {
   if (!name) return '?';
   return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('');
@@ -48,6 +53,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [subline, setSubline] = useState<string>('');
+  const [avatarUrl, setAvatarUrl] = useState<string>('');
 
   const role = session?.user?.role;
 
@@ -63,11 +69,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [pathname]);
 
   useEffect(() => {
-    if (role === 'student') {
-      fetch('/api/profile').then((r) => (r.ok ? r.json() : null)).then((d) => {
-        if (d?.university) setSubline(d.university);
-      }).catch(() => {});
-    } else if (role === 'employer') {
+    // /api/profile serves every role; it's where the avatar/logo lives.
+    fetch('/api/profile').then((r) => (r.ok ? r.json() : null)).then((d) => {
+      if (d?.avatarUrl) setAvatarUrl(d.avatarUrl);
+      if (role === 'student' && d?.university) setSubline(d.university);
+    }).catch(() => {});
+    if (role === 'employer') {
       fetch('/api/companies/verification').then((r) => (r.ok ? r.json() : null)).then((d) => {
         if (d?.verification?.companyName) setSubline(d.verification.companyName);
       }).catch(() => {});
@@ -81,7 +88,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const isAdmin = isAdminRole(role);
   const isEmployer = role === 'employer';
-  const navItems = isAdmin ? ADMIN_NAV : isEmployer ? EMPLOYER_NAV : STUDENT_NAV;
+  const isSchool = role === 'school';
+  const navItems = isAdmin ? ADMIN_NAV : isEmployer ? EMPLOYER_NAV : isSchool ? SCHOOL_NAV : STUDENT_NAV;
   const accentActive = isEmployer ? 'text-accent-500' : isAdmin ? 'text-white' : 'text-primary-500 dark:text-primary-400';
   const accentActiveBg = isEmployer ? 'bg-accent-500/10' : isAdmin ? 'bg-primary-500' : 'bg-primary-500/10 dark:bg-primary-400/15';
 
@@ -124,18 +132,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </nav>
 
       <div className={`mt-auto flex items-center gap-2.5 p-3 rounded-[10px] ${isAdmin ? 'bg-white/[0.05]' : 'bg-background'}`}>
-        <div className={`w-[34px] h-[34px] rounded-full flex items-center justify-center font-display font-bold text-[13px] shrink-0 ${
-          isEmployer ? 'bg-accent-500 text-[#032E1A] rounded-[9px]' : 'bg-primary-500 dark:bg-primary-400 text-white'
-        }`}>
-          {initials(session.user?.name)}
-        </div>
+        {avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={avatarUrl}
+            alt=""
+            className={`w-[34px] h-[34px] object-cover shrink-0 ${isEmployer ? 'rounded-[9px]' : 'rounded-full'}`}
+          />
+        ) : (
+          <div className={`w-[34px] h-[34px] rounded-full flex items-center justify-center font-display font-bold text-[13px] shrink-0 ${
+            isEmployer ? 'bg-accent-500 text-[#032E1A] rounded-[9px]' : 'bg-primary-500 dark:bg-primary-400 text-white'
+          }`}>
+            {initials(session.user?.name)}
+          </div>
+        )}
         <div className="min-w-0">
           <div className={`text-[13px] font-bold truncate ${isAdmin ? 'text-white' : 'text-foreground'}`}>{session.user?.name}</div>
           {isEmployer ? (
             <div className="text-[11.5px] font-semibold text-success truncate">{subline ? `● ${subline}` : '● Verified'}</div>
           ) : (
             <div className={`text-[11.5px] truncate ${isAdmin ? 'text-[#8B93A3]' : 'text-muted'}`}>
-              {isAdmin ? (role === 'super_admin' ? 'Super admin' : 'Admin') : subline || ' '}
+              {isAdmin ? (role === 'super_admin' ? 'Super admin' : 'Admin') : isSchool ? 'Institution' : subline || ' '}
             </div>
           )}
         </div>

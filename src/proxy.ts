@@ -11,6 +11,7 @@ const ROLE_HOME: Record<string, string> = {
   super_admin: '/admin/dashboard',
   employer: '/employer/dashboard',
   student: '/student/dashboard',
+  school: '/school/dashboard',
 };
 
 export async function proxy(request: NextRequest) {
@@ -33,7 +34,9 @@ export async function proxy(request: NextRequest) {
       ? 'employer'
       : pathname.startsWith('/student')
         ? 'student'
-        : null;
+        : pathname.startsWith('/school')
+          ? 'school'
+          : null;
 
   // Wrong role for this area → bounce to the user's own home (or onboarding if
   // they haven't picked a role yet). Admin and super_admin share /admin.
@@ -47,5 +50,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/employer/:path*', '/student/:path*'],
+  matcher: ['/admin/:path*', '/employer/:path*', '/student/:path*', '/school/:path*'],
 };

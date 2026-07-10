@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export type UserRole = 'student' | 'employer' | 'admin' | 'super_admin' | 'unassigned';
+export type UserRole = 'student' | 'employer' | 'school' | 'admin' | 'super_admin' | 'unassigned';
 export type VerificationStatus = 'unsubmitted' | 'pending' | 'approved' | 'rejected';
 
 export interface IUser extends Document {
@@ -8,8 +8,12 @@ export interface IUser extends Document {
   email: string;
   password?: string; // Optional because Google users won't have one
   role: UserRole;
+  // Profile picture (students), company logo (employers) or school crest
+  // (schools) — one field, same meaning: the image shown for this account.
+  avatarUrl?: string;
   // Student Specific
   university?: string;
+  faculty?: string;
   courseOfStudy?: string;
   level?: string;
   skills?: string[];
@@ -46,10 +50,12 @@ const UserSchema: Schema = new Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String },
-    role: { type: String, enum: ['student', 'employer', 'admin', 'super_admin', 'unassigned'], default: 'unassigned' },
+    role: { type: String, enum: ['student', 'employer', 'school', 'admin', 'super_admin', 'unassigned'], default: 'unassigned' },
+    avatarUrl: { type: String },
 
     // Student fields
     university: { type: String },
+    faculty: { type: String },
     courseOfStudy: { type: String },
     level: { type: String },
     skills: { type: [String], default: [] },

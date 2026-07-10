@@ -13,7 +13,7 @@ type RecommendedJob = {
   title: string;
   location: string;
   duration: string;
-  employerId?: { name?: string; companyName?: string };
+  employerId?: { name?: string; companyName?: string; avatarUrl?: string };
 };
 
 type RecentApp = {
@@ -65,7 +65,7 @@ export default async function StudentDashboard() {
       .populate({ path: 'job', select: 'title employerId', populate: { path: 'employerId', select: 'companyName name' } })
       .sort({ createdAt: -1 })
       .limit(3),
-    Job.find(visibleJobFilter).populate('employerId', 'companyName name').sort({ createdAt: -1 }).limit(2),
+    Job.find(visibleJobFilter).populate('employerId', 'companyName name avatarUrl').sort({ createdAt: -1 }).limit(2),
   ]);
 
   const hasAcademic = Boolean(user?.university && user?.courseOfStudy);
@@ -142,9 +142,14 @@ export default async function StudentDashboard() {
             {recommended.map((job: RecommendedJob) => (
               <Link key={job._id.toString()} href={`/student/jobs/${job._id}`} className="bg-surface-1 rounded-[14px] p-5 border border-surface-border hover:border-primary-500 transition-colors">
                 <div className="flex items-center gap-2.5 mb-3.5">
-                  <div className="w-9 h-9 rounded-[9px] bg-primary-500/10 dark:bg-primary-400/15 flex items-center justify-center font-display font-extrabold text-primary-500 dark:text-primary-400 text-[12px]">
-                    {initials(job.employerId?.companyName || job.employerId?.name)}
-                  </div>
+                  {job.employerId?.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={job.employerId.avatarUrl} alt="" className="w-9 h-9 rounded-[9px] object-cover bg-surface-2" />
+                  ) : (
+                    <div className="w-9 h-9 rounded-[9px] bg-primary-500/10 dark:bg-primary-400/15 flex items-center justify-center font-display font-extrabold text-primary-500 dark:text-primary-400 text-[12px]">
+                      {initials(job.employerId?.companyName || job.employerId?.name)}
+                    </div>
+                  )}
                   <span className="ml-auto text-[11px] font-bold px-2.5 py-1 rounded-full bg-success-bg text-success">● Verified</span>
                 </div>
                 <div className="font-display font-bold text-[15px] mb-1">{job.title}</div>

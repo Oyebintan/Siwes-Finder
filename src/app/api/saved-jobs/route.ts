@@ -39,7 +39,7 @@ export async function GET(req: Request) {
       isActive: true,
       employerId: { $in: approvedEmployerIds },
     })
-      .populate('employerId', 'name companyName industry')
+      .populate('employerId', 'name companyName industry avatarUrl')
       .sort({ createdAt: -1 });
 
     return NextResponse.json({ jobs, ids }, { status: 200 });

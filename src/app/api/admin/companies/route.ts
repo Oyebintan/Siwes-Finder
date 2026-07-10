@@ -19,14 +19,16 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const status = (searchParams.get('status') || 'pending').trim();
 
-    const filter: Record<string, unknown> = { role: 'employer' };
+    // Schools go through the same admin verification queue as employers —
+    // they see student records, so they also need manual approval.
+    const filter: Record<string, unknown> = { role: { $in: ['employer', 'school'] } };
     if (status !== 'all') {
       filter.verificationStatus = status;
     }
 
     const companies = await User.find(filter)
       .select(
-        'name email companyName industry companyDescription cacNumber officialEmail verificationDocumentUrl verificationStatus verificationRejectionReason verificationReviewedAt createdAt'
+        'name email role companyName industry companyDescription cacNumber officialEmail verificationDocumentUrl verificationStatus verificationRejectionReason verificationReviewedAt createdAt'
       )
       .sort({ createdAt: -1 });
 

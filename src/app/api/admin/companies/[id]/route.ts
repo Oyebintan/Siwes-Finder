@@ -22,7 +22,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     await connectToDatabase();
     const { id } = await params;
 
-    const company = await User.findOne({ _id: id, role: 'employer' });
+    const company = await User.findOne({ _id: id, role: { $in: ['employer', 'school'] } });
     if (!company) {
       return NextResponse.json({ error: 'Company not found' }, { status: 404 });
     }

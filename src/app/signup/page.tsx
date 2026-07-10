@@ -34,12 +34,20 @@ const COPY = {
     statValue: '184',
     statCaption: 'verified companies hiring now',
   },
+  school: {
+    subtitle: "Track your students' SIWES placements and logbooks in one place.",
+    heroQuote: "We finally see every student's placement and logbook at a glance.",
+    heroAttribution: 'Dr. Adebayo K. — SIWES Coordinator',
+    statLabel: 'Platform-wide',
+    statValue: '92',
+    statCaption: 'institutions tracking placements',
+  },
 } as const;
 
 export default function Signup() {
   const router = useRouter();
 
-  const [role, setRole] = useState<'student' | 'employer'>('student');
+  const [role, setRole] = useState<'student' | 'employer' | 'school'>('student');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -104,20 +112,16 @@ export default function Signup() {
         <p className="text-[13.5px] text-muted mb-4">{copy.subtitle}</p>
 
         <div className="flex gap-2 bg-background border border-surface-border rounded-[10px] p-1 mb-4">
-          <button
-            type="button"
-            onClick={() => setRole('student')}
-            className={`flex-1 text-center py-2 rounded-lg text-[13px] transition-colors ${isStudent ? 'bg-surface-1 font-bold shadow-sm' : 'font-semibold text-muted'}`}
-          >
-            Student
-          </button>
-          <button
-            type="button"
-            onClick={() => setRole('employer')}
-            className={`flex-1 text-center py-2 rounded-lg text-[13px] transition-colors ${!isStudent ? 'bg-surface-1 font-bold shadow-sm' : 'font-semibold text-muted'}`}
-          >
-            Company
-          </button>
+          {([['student', 'Student'], ['employer', 'Company'], ['school', 'School']] as const).map(([r, label]) => (
+            <button
+              key={r}
+              type="button"
+              onClick={() => setRole(r)}
+              className={`flex-1 text-center py-2 rounded-lg text-[13px] transition-colors ${role === r ? 'bg-surface-1 font-bold shadow-sm' : 'font-semibold text-muted'}`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
         {error && (
@@ -128,25 +132,25 @@ export default function Signup() {
 
         <form onSubmit={handleCredentialsSignup} className="space-y-3">
           <div>
-            <label className="block text-[12.5px] font-semibold mb-1">{isStudent ? 'Full name' : 'Company name'}</label>
+            <label className="block text-[12.5px] font-semibold mb-1">{isStudent ? 'Full name' : role === 'school' ? 'Institution name' : 'Company name'}</label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={isStudent ? 'Amara Okafor' : 'Paystack'}
+              placeholder={isStudent ? 'Amara Okafor' : role === 'school' ? 'University of Lagos' : 'Paystack'}
               className="w-full px-3.5 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-foreground text-[16px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
             />
           </div>
 
           <div>
-            <label className="block text-[12.5px] font-semibold mb-1">{isStudent ? 'School email' : 'Work email'}</label>
+            <label className="block text-[12.5px] font-semibold mb-1">{isStudent ? 'School email' : role === 'school' ? 'Official institution email' : 'Work email'}</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder={isStudent ? 'you@university.edu.ng' : 'hr@company.com'}
+              placeholder={isStudent ? 'you@university.edu.ng' : role === 'school' ? 'siwes@unilag.edu.ng' : 'hr@company.com'}
               className="w-full px-3.5 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-foreground text-[16px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
             />
           </div>
@@ -173,7 +177,7 @@ export default function Signup() {
                 : 'bg-accent-500 text-[#032E1A] shadow-accent-900/20 hover:brightness-105'
             }`}
           >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : isStudent ? 'Create student account' : 'Create company account'}
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : isStudent ? 'Create student account' : role === 'school' ? 'Create school account' : 'Create company account'}
           </button>
         </form>
 

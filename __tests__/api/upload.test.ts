@@ -140,6 +140,63 @@ describe('POST /api/upload', () => {
     expect(data.url).toMatch(/^\/uploads\/verification-\d+-\d+\.pdf$/);
   });
 
+  it.each([
+    ['student', 'stu1'],
+    ['employer', 'emp1'],
+    ['school', 'sch1'],
+  ])('accepts a PNG avatar upload from a %s', async (role, id) => {
+    (getServerSession as any).mockResolvedValue({ user: { id, role } });
+    const png = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.from('fake png data')]);
+    const form = new FormData();
+    form.set('file', pdfFile(png, 'me.png', 'image/png'));
+    form.set('type', 'avatar');
+
+    const res = await POST(makeRequest(form));
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.url).toMatch(/^\/uploads\/avatar-\d+-\d+\.png$/);
+  });
+
+  it('accepts a JPEG avatar and forces a .jpg server-side name', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    const jpeg = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff]), Buffer.from('fake jpeg data')]);
+    const form = new FormData();
+    form.set('file', pdfFile(jpeg, 'photo.jpeg', 'image/jpeg'));
+    form.set('type', 'avatar');
+
+    const res = await POST(makeRequest(form));
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.url).toMatch(/^\/uploads\/avatar-\d+-\d+\.jpg$/);
+  });
+
+  it('rejects an avatar whose content is not actually an image (spoofed extension)', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    const form = new FormData();
+    form.set('file', pdfFile(NOT_PDF_BYTES, 'sneaky.png', 'image/png'));
+    form.set('type', 'avatar');
+
+    const res = await POST(makeRequest(form));
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/png or jpeg/i);
+    expect(writeFile).not.toHaveBeenCalled();
+  });
+
+  it('rejects a PDF sent as an avatar', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    const form = new FormData();
+    form.set('file', pdfFile(PDF_BYTES, 'resume.pdf', 'application/pdf'));
+    form.set('type', 'avatar');
+
+    const res = await POST(makeRequest(form));
+    expect(res.status).toBe(400);
+    expect(writeFile).not.toHaveBeenCalled();
+  });
+
   describe('when a Vercel Blob store is connected (BLOB_READ_WRITE_TOKEN set)', () => {
     beforeEach(() => {
       process.env.BLOB_READ_WRITE_TOKEN = 'vercel_blob_rw_test_token';

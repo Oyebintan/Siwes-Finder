@@ -11,7 +11,7 @@ type Job = {
   type: string;
   duration: string;
   requirements?: string[];
-  employerId?: { name?: string; companyName?: string; industry?: string };
+  employerId?: { name?: string; companyName?: string; industry?: string; avatarUrl?: string };
 };
 
 const TYPE_CHIPS = ['All', 'On-site', 'Remote', 'Hybrid'] as const;
@@ -171,9 +171,14 @@ export default function BrowseOpportunities() {
               className="bg-surface-1 rounded-[14px] p-5 border border-surface-border hover:border-primary-500 transition-colors"
             >
               <div className="flex items-center gap-2.5 mb-3.5">
-                <div className={`w-[38px] h-[38px] rounded-[9px] flex items-center justify-center font-display font-extrabold text-[12.5px] shrink-0 ${TINTS[i % TINTS.length]}`}>
-                  {initials(job.employerId?.companyName || job.employerId?.name)}
-                </div>
+                {job.employerId?.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={job.employerId.avatarUrl} alt="" className="w-[38px] h-[38px] rounded-[9px] object-cover shrink-0 bg-surface-2" />
+                ) : (
+                  <div className={`w-[38px] h-[38px] rounded-[9px] flex items-center justify-center font-display font-extrabold text-[12.5px] shrink-0 ${TINTS[i % TINTS.length]}`}>
+                    {initials(job.employerId?.companyName || job.employerId?.name)}
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="font-display font-bold text-[15px] truncate">{job.title}</div>
                   <div className="text-xs text-muted truncate">{job.employerId?.companyName || job.employerId?.name} · {job.location}</div>

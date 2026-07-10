@@ -144,7 +144,22 @@ export async function GET(req: Request) {
     ];
     if (q) {
       const rx = new RegExp(escapeRegex(q), 'i');
-      conditions.push({ $or: [{ title: rx }, { description: rx }] });
+      // Search across everything a student would reasonably type: the role
+      // itself, required skills ("Adobe Photoshop"), where it is, and who is
+      // hiring (company name/industry, matched via the employer records).
+      const matchingEmployerIds = await User.find({
+        _id: { $in: approvedEmployerIds },
+        $or: [{ companyName: rx }, { industry: rx }, { name: rx }],
+      }).distinct('_id');
+      conditions.push({
+        $or: [
+          { title: rx },
+          { description: rx },
+          { requirements: rx },
+          { location: rx },
+          { employerId: { $in: matchingEmployerIds } },
+        ],
+      });
     }
 
     const filter: Record<string, unknown> = {
@@ -161,7 +176,7 @@ export async function GET(req: Request) {
 
     const total = await Job.countDocuments(filter);
     const jobs = await Job.find(filter)
-      .populate('employerId', 'name companyName industry')
+      .populate('employerId', 'name companyName industry avatarUrl')
       .sort({ createdAt: sort === 'oldest' ? 1 : -1 })
       .skip((page - 1) * limit)
       .limit(limit);
