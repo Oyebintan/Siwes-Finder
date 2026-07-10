@@ -46,6 +46,15 @@ describe('GET /api/companies/verification', () => {
     expect(res.status).toBe(200);
     expect(data.verification.verificationStatus).toBe('pending');
   });
+
+  it('also serves a school session (shared verification queue)', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'sch1', role: 'school' } });
+    const select = vi.fn().mockResolvedValue({ verificationStatus: 'pending' });
+    (User.findById as any).mockReturnValue({ select });
+
+    const res = await GET();
+    expect(res.status).toBe(200);
+  });
 });
 
 describe('POST /api/companies/verification', () => {
@@ -94,6 +103,20 @@ describe('POST /api/companies/verification', () => {
     expect(data.status).toBe('pending');
     expect(user.verificationStatus).toBe('pending');
     expect(user.companyName).toBe('Paystack');
+    expect(user.save).toHaveBeenCalled();
+  });
+
+  it('accepts a submission from a school session', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'sch1', role: 'school' } });
+    const user: any = { verificationStatus: 'pending', save: vi.fn().mockResolvedValue(undefined) };
+    (User.findById as any).mockResolvedValue(user);
+
+    const res = await POST(
+      makePostRequest({ ...validSubmission, companyName: 'University of Lagos', cacNumber: 'NUC-ACCR-001' })
+    );
+
+    expect(res.status).toBe(200);
+    expect(user.companyName).toBe('University of Lagos');
     expect(user.save).toHaveBeenCalled();
   });
 });

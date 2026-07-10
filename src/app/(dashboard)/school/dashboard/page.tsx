@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { Loader2, Users, Briefcase, BookOpen, ShieldAlert, GraduationCap } from 'lucide-react';
+import { Loader2, Users, BookOpen, ShieldAlert, GraduationCap, Building2 } from 'lucide-react';
 import AvatarUpload from '@/components/AvatarUpload';
 
 type SchoolStudent = {
@@ -72,7 +72,19 @@ export default function SchoolDashboard() {
   const placed = students.filter((s) => s.placedAt).length;
   const applying = students.filter((s) => !s.placedAt && s.applicationCount > 0).length;
   const totalLogs = students.reduce((sum, s) => sum + s.logbookEntries, 0);
-  const departments = new Set(students.map((s) => s.department)).size;
+  const departmentNames = [...new Set(students.map((s) => s.department))].sort();
+
+  const departmentBreakdown = departmentNames.map((dept) => {
+    const inDept = students.filter((s) => s.department === dept);
+    const deptPlaced = inDept.filter((s) => s.placedAt).length;
+    return {
+      department: dept,
+      total: inDept.length,
+      placed: deptPlaced,
+      placementRate: inDept.length ? Math.round((deptPlaced / inDept.length) * 100) : 0,
+      logbookEntries: inDept.reduce((sum, s) => sum + s.logbookEntries, 0),
+    };
+  }).sort((a, b) => b.total - a.total);
 
   return (
     <div className="space-y-6 animate-fade-in-up">
@@ -96,7 +108,7 @@ export default function SchoolDashboard() {
         <Kpi value={students.length} label="Registered students" />
         <Kpi value={placed} label="Placed" tone="success" />
         <Kpi value={applying} label="Actively applying" tone="warning" />
-        <Kpi value={departments} label="Departments" />
+        <Kpi value={departmentNames.length} label="Departments" />
         <Kpi value={totalLogs} label="Logbook entries" />
       </div>
 
@@ -108,18 +120,54 @@ export default function SchoolDashboard() {
           body="Browse every student grouped by department, with placement status."
         />
         <QuickCard
-          href="/school/students"
+          href="/school/logbooks"
           icon={BookOpen}
           title="Logbook oversight"
-          body="Open any student to read their weekly logbook and approval state."
+          body="Every entry across every student and company, filterable by department."
         />
         <QuickCard
-          href="/school/students"
-          icon={Briefcase}
-          title="Placement tracking"
-          body="See which companies accepted your students this SIWES cycle."
+          href="/school/profile"
+          icon={Building2}
+          title="Institution profile"
+          body="Edit your institution's details and accreditation for admin review."
         />
       </div>
+
+      {departmentNames.length > 0 && (
+        <div>
+          <div className="font-display font-bold text-[17px] mb-4">By department</div>
+          <div className="bg-surface-1 rounded-2xl border border-surface-border overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-surface-border text-left text-muted">
+                    <th className="px-5 py-3 font-bold">Department</th>
+                    <th className="px-5 py-3 font-bold">Students</th>
+                    <th className="px-5 py-3 font-bold">Placed</th>
+                    <th className="px-5 py-3 font-bold">Placement rate</th>
+                    <th className="px-5 py-3 font-bold">Logbook entries</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {departmentBreakdown.map((d, i) => (
+                    <tr key={d.department} className={i < departmentBreakdown.length - 1 ? 'border-b border-surface-border/60' : ''}>
+                      <td className="px-5 py-3 font-semibold whitespace-nowrap">{d.department}</td>
+                      <td className="px-5 py-3 text-muted">{d.total}</td>
+                      <td className="px-5 py-3 text-muted">{d.placed}</td>
+                      <td className="px-5 py-3">
+                        <span className={`text-[11.5px] font-bold px-2.5 py-1 rounded-full ${d.placementRate >= 50 ? 'bg-success-bg text-success' : d.placementRate > 0 ? 'bg-warning-bg text-warning' : 'bg-surface-2 text-muted'}`}>
+                          {d.placementRate}%
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-muted">{d.logbookEntries}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div>
         <div className="flex items-center justify-between mb-4">
