@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2, ShieldCheck, Clock, ShieldX, UploadCloud, FileText, type LucideIcon } from 'lucide-react';
+import AvatarUpload from '@/components/AvatarUpload';
 
 type Verification = {
   companyName?: string;
+  avatarUrl?: string;
   industry?: string;
   companyDescription?: string;
   cacNumber?: string;
@@ -86,9 +88,12 @@ export default function EmployerVerificationPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-8 animate-fade-in-up">
-      <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">Company Verification</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">Verified companies can post opportunities that students see. Submit your CAC details for admin review.</p>
+      <div className="flex items-center gap-5 flex-wrap">
+        <AvatarUpload name={form.companyName || 'Co'} avatarUrl={data?.avatarUrl} shape="square" size={72} />
+        <div className="flex-1 min-w-[240px]">
+          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">Company Verification</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Verified companies can post opportunities that students see. Submit your CAC details for admin review. Click the tile to upload your company logo.</p>
+        </div>
       </div>
 
       {status === 'approved' && (

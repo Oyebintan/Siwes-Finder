@@ -23,7 +23,7 @@ type RelatedJob = { _id: string; title: string; location: string; employerId?: {
 async function getJob(id: string) {
   try {
     await connectToDatabase();
-    const job = await Job.findById(id).populate('employerId', 'name companyName industry verificationStatus');
+    const job = await Job.findById(id).populate('employerId', 'name companyName industry verificationStatus avatarUrl');
     if (!job) return null;
 
     const employer = job.employerId as unknown as { verificationStatus?: string } | null;
@@ -60,9 +60,14 @@ export default async function JobDetails({ params }: { params: Promise<{ id: str
 
       <div className="bg-surface-1 rounded-[20px] border border-surface-border p-8">
         <div className="flex items-center gap-4 mb-5 flex-wrap">
-          <div className="w-14 h-14 rounded-2xl bg-primary-500/10 dark:bg-primary-400/15 flex items-center justify-center font-display font-extrabold text-primary-500 dark:text-primary-400 text-base shrink-0">
-            {initials(companyName)}
-          </div>
+          {job.employerId?.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={job.employerId.avatarUrl} alt={`${companyName} logo`} className="w-14 h-14 rounded-2xl object-cover shrink-0 bg-surface-2" />
+          ) : (
+            <div className="w-14 h-14 rounded-2xl bg-primary-500/10 dark:bg-primary-400/15 flex items-center justify-center font-display font-extrabold text-primary-500 dark:text-primary-400 text-base shrink-0">
+              {initials(companyName)}
+            </div>
+          )}
           <div className="flex-1 min-w-[200px]">
             <div className="font-display font-extrabold text-[22px] tracking-[-0.02em]">{job.title}</div>
             <div className="text-sm text-muted mt-1">{companyName} · {job.location} · {job.duration}</div>

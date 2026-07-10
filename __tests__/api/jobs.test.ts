@@ -205,6 +205,31 @@ describe('GET /api/jobs', () => {
     expect(data.total).toBe(1);
   });
 
+  it('matches search terms against skills, location and company, not just title/description', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    // First User.find: approved employer ids; second: employers whose
+    // company name/industry matches the query.
+    (User.find as any).mockReturnValue({ distinct: vi.fn().mockResolvedValue(['emp1']) });
+    (Job.countDocuments as any).mockResolvedValue(0);
+
+    const populate = vi.fn().mockReturnThis();
+    const sort = vi.fn().mockReturnThis();
+    const skip = vi.fn().mockReturnThis();
+    const limit = vi.fn().mockResolvedValue([]);
+    (Job.find as any).mockReturnValue({ populate, sort, skip, limit });
+
+    await GET(makeGetRequest('?q=Adobe%20Photoshop'));
+
+    const filterArg = (Job.find as any).mock.calls[0][0];
+    const searchCondition = filterArg.$and.find((c: any) => c.$or?.[0]?.title);
+    const orKeys = searchCondition.$or.map((c: any) => Object.keys(c)[0]);
+    expect(orKeys).toEqual(['title', 'description', 'requirements', 'location', 'employerId']);
+    expect(searchCondition.$or[2].requirements.source).toContain('Adobe Photoshop');
+    // The company-name arm scopes to employers matched by the second User.find call.
+    expect((User.find as any).mock.calls.length).toBe(2);
+    expect((User.find as any).mock.calls[1][0].$or).toBeTruthy();
+  });
+
   it('excludes jobs past their application deadline or at their applicant cap from the public feed', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     (User.find as any).mockReturnValue({ distinct: vi.fn().mockResolvedValue(['emp1']) });

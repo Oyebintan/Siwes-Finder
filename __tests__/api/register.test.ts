@@ -45,6 +45,25 @@ describe('POST /api/auth/register', () => {
     }
   );
 
+  it('creates a school account queued for admin verification (pending)', async () => {
+    (User.findOne as any).mockResolvedValue(null);
+    (bcrypt.hash as any).mockResolvedValue('hashed-password');
+    (User.create as any).mockResolvedValue({ _id: 's1' });
+
+    const res = await POST(
+      makeRequest({ name: 'University of Lagos', email: 'siwes@unilag.edu.ng', password: 'secret123', role: 'school' })
+    );
+
+    expect(res.status).toBe(201);
+    expect(User.create).toHaveBeenCalledWith({
+      name: 'University of Lagos',
+      email: 'siwes@unilag.edu.ng',
+      password: 'hashed-password',
+      role: 'school',
+      verificationStatus: 'pending',
+    });
+  });
+
   it('rejects a malformed email address', async () => {
     const res = await POST(
       makeRequest({ name: 'Ada', email: 'not-an-email', password: 'secret123', role: 'student' })

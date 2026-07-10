@@ -23,6 +23,11 @@ describe('User model', () => {
     await expect(user.validate()).resolves.toBeUndefined();
   });
 
+  it('accepts the school role', async () => {
+    const user = new User({ name: 'University of Lagos', email: 'siwes@unilag.edu.ng', role: 'school' });
+    await expect(user.validate()).resolves.toBeUndefined();
+  });
+
   it('rejects an invalid role', async () => {
     const user = new User({ name: 'Ada', email: 'ada@example.com', role: 'superadmin' });
     await expect(user.validate()).rejects.toMatchObject({

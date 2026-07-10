@@ -12,7 +12,7 @@ export async function GET() {
 
   await connectToDatabase();
   const user = await User.findById(session.user.id).select(
-    'name email phone university courseOfStudy level skills resumeUrl siwesStartDate siwesDuration preferredState isProfileComplete'
+    'name email phone avatarUrl university faculty courseOfStudy level skills resumeUrl siwesStartDate siwesDuration preferredState isProfileComplete'
   );
 
   if (!user) {
@@ -31,7 +31,7 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json();
-    const { university, course, resumeLink, level, skills, siwesStartDate, siwesDuration, preferredState, name, phone } = body;
+    const { university, faculty, course, resumeLink, level, skills, siwesStartDate, siwesDuration, preferredState, name, phone, avatarUrl } = body;
 
     await connectToDatabase();
 
@@ -44,6 +44,8 @@ export async function PUT(req: Request) {
     // progress step-by-step without clobbering fields from other steps.
     const update: Record<string, unknown> = {};
     if (university !== undefined) update.university = university;
+    if (faculty !== undefined) update.faculty = faculty;
+    if (avatarUrl !== undefined) update.avatarUrl = avatarUrl;
     if (course !== undefined) update.courseOfStudy = course;
     if (resumeLink !== undefined) update.resumeUrl = resumeLink;
     if (level !== undefined) update.level = level;

@@ -3,21 +3,19 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { Loader2, FileText, UploadCloud, X, Plus } from 'lucide-react';
+import AvatarUpload from '@/components/AvatarUpload';
 
 const SKILL_OPTIONS = ['React', 'Python', 'SQL', 'Figma', 'Excel', 'Node.js', 'Data Analysis', 'Networking'];
 const STATES = ['Lagos', 'Abuja (FCT)', 'Rivers', 'Oyo', 'Kano', 'Any state'];
-
-function initials(name?: string) {
-  if (!name) return '??';
-  return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('');
-}
 
 export default function StudentProfile() {
   const { data: session } = useSession();
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [university, setUniversity] = useState('');
+  const [faculty, setFaculty] = useState('');
   const [course, setCourse] = useState('');
   const [level, setLevel] = useState('');
   const [preferredState, setPreferredState] = useState(STATES[0]);
@@ -40,7 +38,9 @@ export default function StudentProfile() {
           const data = await res.json();
           setName(data.name || session?.user?.name || '');
           setPhone(data.phone || '');
+          setAvatarUrl(data.avatarUrl || '');
           setUniversity(data.university || '');
+          setFaculty(data.faculty || '');
           setCourse(data.courseOfStudy || '');
           setLevel(data.level || '');
           setPreferredState(data.preferredState || STATES[0]);
@@ -93,7 +93,7 @@ export default function StudentProfile() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name, phone, university, course: course, level, preferredState, skills, resumeLink: finalResumeUrl,
+          name, phone, university, faculty, course: course, level, preferredState, skills, resumeLink: finalResumeUrl,
         }),
       });
       if (!res.ok) throw new Error('Failed to update profile');
@@ -128,9 +128,8 @@ export default function StudentProfile() {
 
       {/* Summary card */}
       <div className="bg-surface-1 rounded-2xl border border-surface-border p-7 flex items-center gap-5 flex-wrap">
-        <div className="w-16 h-16 rounded-full bg-primary-500 dark:bg-primary-400 text-white flex items-center justify-center font-display font-extrabold text-xl shrink-0">
-          {initials(name)}
-        </div>
+        <AvatarUpload name={name} avatarUrl={avatarUrl} onUploaded={setAvatarUrl} />
+
         <div className="flex-1 min-w-[180px]">
           <div className="font-display font-bold text-lg">{name || 'Your name'}</div>
           <div className="text-[13.5px] text-muted mt-0.5">
@@ -163,6 +162,9 @@ export default function StudentProfile() {
           </FieldGroup>
           <FieldGroup label="University / Institution">
             <input value={university} onChange={(e) => setUniversity(e.target.value)} placeholder="University of Lagos" className="w-full px-3.5 py-[11px] rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-primary-500" />
+          </FieldGroup>
+          <FieldGroup label="Faculty">
+            <input value={faculty} onChange={(e) => setFaculty(e.target.value)} placeholder="Faculty of Science" className="w-full px-3.5 py-[11px] rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-primary-500" />
           </FieldGroup>
           <FieldGroup label="Course of study">
             <input value={course} onChange={(e) => setCourse(e.target.value)} placeholder="Computer Science" className="w-full px-3.5 py-[11px] rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-primary-500" />

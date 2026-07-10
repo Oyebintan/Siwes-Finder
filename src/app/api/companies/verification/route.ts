@@ -14,7 +14,7 @@ export async function GET() {
 
     await connectToDatabase();
     const user = await User.findById(session.user.id).select(
-      'companyName industry companyDescription cacNumber officialEmail verificationDocumentUrl verificationStatus verificationRejectionReason verificationReviewedAt'
+      'companyName industry companyDescription cacNumber officialEmail avatarUrl verificationDocumentUrl verificationStatus verificationRejectionReason verificationReviewedAt'
     );
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });

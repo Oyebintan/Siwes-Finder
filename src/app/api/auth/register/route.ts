@@ -11,10 +11,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
     }
 
-    // Public signup can only create student/employer accounts. Admin and
-    // super_admin are granted exclusively via the ADMIN_EMAILS /
+    // Public signup can only create student/employer/school accounts. Admin
+    // and super_admin are granted exclusively via the ADMIN_EMAILS /
     // SUPER_ADMIN_EMAILS allowlists at sign-in — never from a request body.
-    if (!['student', 'employer'].includes(role)) {
+    if (!['student', 'employer', 'school'].includes(role)) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
     }
 
@@ -39,7 +39,12 @@ export async function POST(req: Request) {
       name,
       email,
       password: hashedPassword,
-      role
+      role,
+      // Schools see student records (logbooks, applications), so they queue
+      // for admin verification immediately instead of the default
+      // 'unsubmitted' — an unapproved school account can sign in but its
+      // student-data endpoints stay locked until an admin approves it.
+      ...(role === 'school' ? { verificationStatus: 'pending' } : {}),
     });
 
     return NextResponse.json({ message: 'User created successfully' }, { status: 201 });

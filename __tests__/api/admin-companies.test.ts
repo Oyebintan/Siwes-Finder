@@ -51,7 +51,7 @@ describe('GET /api/admin/companies', () => {
 
     await GET(makeGetRequest());
 
-    expect(User.find).toHaveBeenCalledWith({ role: 'employer', verificationStatus: 'pending' });
+    expect(User.find).toHaveBeenCalledWith({ role: { $in: ['employer', 'school'] }, verificationStatus: 'pending' });
   });
 
   it('omits the verificationStatus filter for ?status=all', async () => {
@@ -62,7 +62,7 @@ describe('GET /api/admin/companies', () => {
 
     await GET(makeGetRequest('?status=all'));
 
-    expect(User.find).toHaveBeenCalledWith({ role: 'employer' });
+    expect(User.find).toHaveBeenCalledWith({ role: { $in: ['employer', 'school'] } });
   });
 });
 

@@ -10,6 +10,7 @@ const ROLE_HOME: Record<string, string> = {
   super_admin: '/admin/dashboard',
   employer: '/employer/dashboard',
   student: '/student/dashboard',
+  school: '/school/dashboard',
 };
 
 export default function Onboarding() {
