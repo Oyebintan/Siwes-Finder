@@ -110,8 +110,23 @@ describe('GET /api/logbook', () => {
     expect(data).toEqual([{ _id: 'log1' }]);
   });
 
-  it('rejects employers -- logbooks are a private student record now', async () => {
+  it("returns every entry tied to the employer's placements, unapproved-first", async () => {
     (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    const sort = vi.fn().mockResolvedValue([{ _id: 'log1', isApproved: false }]);
+    const populate = vi.fn().mockReturnValue({ sort });
+    (Logbook.find as any).mockReturnValue({ populate });
+
+    const res = await GET(makeGetRequest());
+    const data = await res.json();
+
+    expect(Logbook.find).toHaveBeenCalledWith({ employerId: 'emp1' });
+    expect(populate).toHaveBeenCalledWith('studentId', 'name email');
+    expect(sort).toHaveBeenCalledWith({ isApproved: 1, date: -1 });
+    expect(data).toEqual([{ _id: 'log1', isApproved: false }]);
+  });
+
+  it('rejects roles that are neither student nor employer', async () => {
+    (requireSession as any).mockResolvedValue({ user: { id: 'sch1', role: 'school' } });
     const res = await GET(makeGetRequest());
     expect(res.status).toBe(401);
     expect(Logbook.find).not.toHaveBeenCalled();
