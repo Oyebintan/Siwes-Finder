@@ -7,6 +7,7 @@
 
 | Date | Commit | What landed |
 |---|---|---|
+| 2026-07-11 | `0036804` | Merge pull request #14 from Oyebintan/claude/mobile-phase-1 |
 | 2026-07-11 | `ceec9b2` | Merge pull request #13 from Oyebintan/claude/mobile-phase-0 |
 | 2026-07-11 | `9608269` | Merge pull request #12 from Oyebintan/claude/mobile-app-plan |
 | 2026-07-11 | `0e52be1` | PR #11 — 2-hour idle session expiry, Vercel build fix (runtime env checks), /api/version deploy fingerprint |
