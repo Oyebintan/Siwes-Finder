@@ -162,11 +162,44 @@ built and typechecked/linted in a sandboxed environment with no
 Android/iOS runtime available.
 
 ### Phase 2 — Logbook + push notifications
-- [ ] e-Logbook: write daily entries, week history, approval status
-- [ ] Offline drafts (queue locally, sync on reconnect)
-- [ ] `expoPushToken` field on User + register-device endpoint
-- [ ] Server sends pushes on: application decision, logbook approval
-      (hook into the existing routes that flip those states)
+- [x] e-Logbook: write daily entries, week history —
+      `mobile/src/app/(tabs)/logbook.tsx`, entries grouped by `weekNumber`
+      (the schema's own natural grouping key — the web renders entries
+      flat, so this is a fresh convention, not a ported one).
+- [x] Offline drafts (queue locally, sync on reconnect) —
+      `mobile/src/api/logbookDrafts.ts` queues a failed submit in
+      AsyncStorage (only on a genuine network failure, not a server
+      rejection like "no accepted placement yet"), and flushes on screen
+      focus and on a `@react-native-community/netinfo` reconnect event.
+- [x] `expoPushToken` field on User + register-device endpoint —
+      `POST /api/mobile/register-push-token`; the client
+      (`mobile/src/api/pushNotifications.ts`) registers on login and on
+      session restore, no-oping quietly on a simulator/emulator, a denied
+      permission, or **no EAS project linked yet** (see the setup table
+      below — `getExpoPushTokenAsync` needs a real `projectId` to mint a
+      token, which this sandboxed session can't produce without the
+      owner's Expo account).
+- [x] Server sends pushes on application decision — `PUT
+      /api/applications/[id]` sends a best-effort push (`src/lib/push.ts`,
+      wrapping `expo-server-sdk`) when an employer accepts/rejects; a
+      delivery failure is logged and swallowed, never fails the status
+      update itself.
+- [ ] ~~Server sends push on logbook approval~~ — **dropped from this
+      phase.** The employer logbook-approval route was deliberately removed
+      in an earlier commit ("logbooks are now a private student record —
+      employers no longer have any visibility into them"); `isApproved`
+      never becomes `true` today, so there is no event to hook a push into.
+      Re-introducing employer approval is a product decision, not a mobile
+      one — flagged to the repo owner rather than silently reversed. If
+      approval comes back (e.g. as part of Phase 3's employer work), the
+      push send is a small addition at that point, following the same
+      pattern as the application-decision one above.
+
+**Not yet verified on an actual device/emulator, and push notifications
+specifically cannot be end-to-end tested until the app has a linked EAS
+project** (see "One-time account setup" below) — the registration code
+path is written and no-ops safely without one, but no real device token
+can be minted in this sandboxed environment.
 
 ### Phase 3 — Employer & School
 - [ ] Employer: applicant list, accept/reject, logbook approvals
@@ -182,12 +215,12 @@ Android/iOS runtime available.
 
 ## One-time account setup (owner to-dos)
 
-| What | Where | Cost |
-|---|---|---|
-| Expo account (EAS builds) | expo.dev | Free tier is enough to start |
-| Google Play Console | play.google.com/console | $25 one-time |
-| Signing keystore | Managed automatically by EAS | — |
-| (Later, iOS) Apple Developer | developer.apple.com | $99/year |
+| What | Where | Cost | Needed by |
+|---|---|---|---|
+| Expo account + `eas init` to link a project (writes `extra.eas.projectId` into `app.json`) | expo.dev | Free tier is enough to start | **Phase 2** — push notifications won't register without it (the code no-ops safely, it just never gets a token) |
+| Google Play Console | play.google.com/console | $25 one-time | Phase 4 |
+| Signing keystore | Managed automatically by EAS | — | Phase 4 |
+| (Later, iOS) Apple Developer | developer.apple.com | $99/year | Phase 4+ |
 
 ## Conventions for sessions working on mobile
 

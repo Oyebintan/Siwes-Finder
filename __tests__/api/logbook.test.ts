@@ -1,13 +1,13 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('next-auth/next', () => ({ getServerSession: vi.fn() }));
+vi.mock('@/lib/mobileAuth', () => ({ requireSession: vi.fn() }));
 vi.mock('@/lib/mongodb', () => ({ connectToDatabase: vi.fn() }));
 vi.mock('@/models/Logbook', () => ({ default: { create: vi.fn(), find: vi.fn() } }));
 vi.mock('@/models/Application', () => ({ default: { findOne: vi.fn() } }));
 
 import { GET, POST } from '@/app/api/logbook/route';
-import { getServerSession } from 'next-auth/next';
+import { requireSession } from '@/lib/mobileAuth';
 import Logbook from '@/models/Logbook';
 import Application from '@/models/Application';
 
@@ -19,6 +19,10 @@ function makePostRequest(body: unknown) {
   });
 }
 
+function makeGetRequest() {
+  return new Request('http://localhost/api/logbook');
+}
+
 const validEntry = { weekNumber: 1, dayOfWeek: 'Monday', activityDescription: 'Set up dev env', hoursWorked: 8 };
 
 describe('POST /api/logbook', () => {
@@ -27,9 +31,11 @@ describe('POST /api/logbook', () => {
   });
 
   it('rejects non-student sessions', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
-    const res = await POST(makePostRequest(validEntry));
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    const req = makePostRequest(validEntry);
+    const res = await POST(req);
     expect(res.status).toBe(401);
+    expect(requireSession).toHaveBeenCalledWith(req);
   });
 
   it.each([
@@ -39,7 +45,7 @@ describe('POST /api/logbook', () => {
     ['zero hours', { ...validEntry, hoursWorked: 0 }],
     ['hours beyond a day', { ...validEntry, hoursWorked: 30 }],
   ])('rejects invalid input (%s) with a 400 instead of a 500', async (_label, body) => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
 
     const res = await POST(makePostRequest(body));
 
@@ -48,7 +54,7 @@ describe('POST /api/logbook', () => {
   });
 
   it('refuses to log without an accepted placement', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     (Application.findOne as any).mockResolvedValue(null);
 
     const res = await POST(makePostRequest(validEntry));
@@ -60,7 +66,7 @@ describe('POST /api/logbook', () => {
   });
 
   it('creates the entry against the employer from the accepted application', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     (Application.findOne as any).mockResolvedValue({ employer: 'emp1' });
     (Logbook.create as any).mockResolvedValue({ _id: 'log1', ...validEntry });
 
@@ -85,17 +91,19 @@ describe('GET /api/logbook', () => {
   });
 
   it('rejects unauthenticated requests', async () => {
-    (getServerSession as any).mockResolvedValue(null);
-    const res = await GET();
+    (requireSession as any).mockResolvedValue(null);
+    const req = makeGetRequest();
+    const res = await GET(req);
     expect(res.status).toBe(401);
+    expect(requireSession).toHaveBeenCalledWith(req);
   });
 
   it("returns the student's own entries", async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     const sort = vi.fn().mockResolvedValue([{ _id: 'log1' }]);
     (Logbook.find as any).mockReturnValue({ sort });
 
-    const res = await GET();
+    const res = await GET(makeGetRequest());
     const data = await res.json();
 
     expect(Logbook.find).toHaveBeenCalledWith({ studentId: 'stu1' });
@@ -103,8 +111,8 @@ describe('GET /api/logbook', () => {
   });
 
   it('rejects employers -- logbooks are a private student record now', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
-    const res = await GET();
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    const res = await GET(makeGetRequest());
     expect(res.status).toBe(401);
     expect(Logbook.find).not.toHaveBeenCalled();
   });
