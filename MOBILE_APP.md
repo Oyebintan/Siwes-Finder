@@ -229,12 +229,39 @@ can be minted in this sandboxed environment.
 prior phase.
 
 ### Phase 4 — Release (Android)
-- [ ] App icon + splash from the existing logomark (`public/logos` blue
-      two-circle mark; see `src/app/icon.svg`)
-- [ ] EAS build profile (`eas.json`), production Android build (AAB)
-- [ ] Play Console: internal testing track → closed → production
-- [ ] Store listing: screenshots, description, feature graphic
-- [ ] Privacy policy page on the website (Play Store requirement)
+- [x] App icon + splash from the existing logomark (`src/app/icon.svg`'s
+      two-circle mark) — regenerated every Android icon asset
+      (`mobile/assets/images/icon.png`, `android-icon-{foreground,
+      background,monochrome}.png`, `splash-icon.png`) from the brand SVG
+      via `sharp`, white mark on the brand blue (`#2557eb`), respecting
+      Android's adaptive-icon safe zone. `favicon.png` uses the original
+      blue-on-transparent mark, matching the website's own favicon.
+      **iOS's `assets/expo.icon/` (Apple's newer layered "Icon Composer"
+      bundle format) was deliberately left untouched** — this phase is
+      titled Release (Android), iOS icon work needs Apple's own tooling to
+      verify visually and isn't scoped here.
+- [x] Privacy policy page on the website (Play Store requirement) —
+      `src/app/privacy/page.tsx`, linked from the homepage footer. Plain
+      language, describes what's actually collected per role (including
+      the mobile app's push token) and the third-party processors used
+      (MongoDB Atlas, Vercel/Vercel Blob, Resend, Google, Expo) — not a
+      lawyer-reviewed document, written in good faith for an MVP-stage
+      platform; revisit if the platform scales significantly.
+- [ ] EAS build profile (`eas.json`), production Android build (AAB) —
+      **on hold pending a distribution-path decision.** The user doesn't
+      currently want to pay the one-time $25 Google Play Console
+      registration fee. A signed build via EAS itself is free (the fee is
+      specifically for *publishing to the Play Store*, not for building)
+      — options on the table: direct APK download from the website (free,
+      no store, no auto-update), an alternate free app store (Amazon
+      Appstore / Huawei AppGallery), or saving up for Play Console later.
+      Revisit once the user decides.
+- [ ] Play Console: internal testing track → closed → production — blocked
+      on the same decision above; skip entirely if going the free-APK
+      route.
+- [ ] Store listing: screenshots, description, feature graphic — only
+      needed for a Play Console (or alternate store) listing; moot for
+      direct APK distribution.
 
 ## One-time account setup (owner to-dos)
 

@@ -8,11 +8,12 @@ SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
 seeking SIWES (Students Industrial Work Experience Scheme) placements with
 verified employers, and gives their schools visibility into the process.
 
-**Last synced with:** `bf38039` (main, 2026-07-11) — PR #15 merged (Mobile
-Phase 2: e-Logbook, offline drafts, push notifications), plus this PR's
-Mobile Phase 3 (employer applicant review + logbook approval, school
-read-only dashboards) — which restores employer logbook approval,
-correcting the "logbooks are private" description from the previous sync.
+**Last synced with:** `7652b0e` (main, 2026-07-11) — PR #16 merged (Mobile
+Phase 3: employer applicant/logbook review, school read-only dashboards),
+plus this PR's start of Mobile Phase 4 (Android app icon/splash, a new
+`/privacy` page for the Play Store requirement — the store publishing steps
+themselves are on hold pending a distribution-path decision, see
+`MOBILE_APP.md` Phase 4).
 Recent-change log: see `PROGRESS.md` (auto-appended on every push to main).
 
 ## Roles
@@ -123,8 +124,13 @@ profile), e-Logbook with offline drafts and push notifications, and
 employer (applicant review, logbook approval) + school (read-only
 dashboards) screens. Push notifications won't actually deliver until the
 app has a linked EAS project (`User.expoPushToken` stays unset otherwise —
-see `MOBILE_APP.md`'s setup table). Remaining: Phase 4 (Android release).
-**Read `MOBILE_APP.md` before doing any mobile work** — it carries the full
+see `MOBILE_APP.md`'s setup table). Phase 4 (Android release) has its icon
+assets and a `/privacy` policy page (a Play Store requirement) done, but
+the actual store publishing is on hold — the user doesn't want to pay
+Google Play Console's $25 one-time fee, so a distribution-path decision
+(direct APK download, an alternate free app store, or paying later) is
+still open. **Read `MOBILE_APP.md` before doing any mobile work** — it
+carries the full
 architecture, the phase-by-phase checklist (kept current in each PR), and
 the release/store setup steps.
 

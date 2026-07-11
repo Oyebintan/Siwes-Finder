@@ -282,7 +282,10 @@ export default function Home() {
             <Logo size={22} />
             <span className="font-display font-extrabold text-[15px]">SIWES Finder</span>
           </div>
-          <div className="text-[13px] text-muted">© 2026 SIWES Finder. Built for Nigerian students.</div>
+          <div className="flex items-center gap-5 text-[13px] text-muted">
+            <span>© 2026 SIWES Finder. Built for Nigerian students.</span>
+            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+          </div>
         </div>
       </footer>
     </div>
