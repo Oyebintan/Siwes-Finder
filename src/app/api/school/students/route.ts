@@ -7,9 +7,9 @@ import { requireApprovedSchool, studentsOfSchoolFilter } from '@/lib/schoolAuth'
 // GET: every student registered under this school's institution name, with
 // their placement status and logbook counts — the data a SIWES coordinator
 // tracks. The client groups by department (courseOfStudy) / faculty.
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const auth = await requireApprovedSchool();
+    const auth = await requireApprovedSchool(req);
     if ('error' in auth) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }

@@ -1,13 +1,13 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('next-auth/next', () => ({ getServerSession: vi.fn() }));
+vi.mock('@/lib/mobileAuth', () => ({ requireSession: vi.fn() }));
 vi.mock('@/lib/mongodb', () => ({ connectToDatabase: vi.fn() }));
 vi.mock('@/models/User', () => ({ default: { findById: vi.fn(), find: vi.fn() } }));
 vi.mock('@/models/Logbook', () => ({ default: { find: vi.fn() } }));
 
 import { GET } from '@/app/api/school/logbooks/route';
-import { getServerSession } from 'next-auth/next';
+import { requireSession } from '@/lib/mobileAuth';
 import User from '@/models/User';
 import Logbook from '@/models/Logbook';
 
@@ -27,13 +27,13 @@ describe('GET /api/school/logbooks', () => {
   });
 
   it('rejects non-school sessions', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     const res = await GET(makeRequest());
     expect(res.status).toBe(401);
   });
 
   it('locks behind admin verification', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'sch1', role: 'school' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'sch1', role: 'school' } });
     mockSchoolAccount('pending');
 
     const res = await GET(makeRequest());
@@ -42,7 +42,7 @@ describe('GET /api/school/logbooks', () => {
   });
 
   it('enriches entries with student name/department and lists distinct departments', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'sch1', role: 'school' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'sch1', role: 'school' } });
     mockSchoolAccount('approved');
 
     (User.find as any).mockReturnValue({
@@ -68,7 +68,7 @@ describe('GET /api/school/logbooks', () => {
   });
 
   it('filters by department after enrichment', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'sch1', role: 'school' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'sch1', role: 'school' } });
     mockSchoolAccount('approved');
 
     (User.find as any).mockReturnValue({
@@ -92,7 +92,7 @@ describe('GET /api/school/logbooks', () => {
   });
 
   it('filters by approval status via the Logbook query', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'sch1', role: 'school' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'sch1', role: 'school' } });
     mockSchoolAccount('approved');
     (User.find as any).mockReturnValue({ select: vi.fn().mockResolvedValue([]) });
     (Logbook.find as any).mockReturnValue({ sort: vi.fn().mockResolvedValue([]) });

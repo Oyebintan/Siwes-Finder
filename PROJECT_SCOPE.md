@@ -8,10 +8,11 @@ SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
 seeking SIWES (Students Industrial Work Experience Scheme) placements with
 verified employers, and gives their schools visibility into the process.
 
-**Last synced with:** `b0681ee` (main, 2026-07-11) — PR #14 merged (Mobile
-Phase 1: student MVP screens + backend route retrofits), plus this PR's
-Mobile Phase 2 (e-Logbook, offline drafts, push notifications) and a
-correction to the stale employer-logbook-approval description below.
+**Last synced with:** `bf38039` (main, 2026-07-11) — PR #15 merged (Mobile
+Phase 2: e-Logbook, offline drafts, push notifications), plus this PR's
+Mobile Phase 3 (employer applicant review + logbook approval, school
+read-only dashboards) — which restores employer logbook approval,
+correcting the "logbooks are private" description from the previous sync.
 Recent-change log: see `PROGRESS.md` (auto-appended on every push to main).
 
 ## Roles
@@ -68,21 +69,23 @@ implicitly by shared placement visibility).
 
 **Employers** — post/edit/deactivate jobs (multi-step wizard with
 deadline/cap controls), manage applicants (accept/reject), company
-verification submission (CAC number + document + company logo). Employers
-no longer have any visibility into student logbooks — that access (and the
-`PUT /api/logbook/[id]` approval route) was removed; logbooks are a private
-student record (`isApproved` still exists on the schema but nothing sets it
-`true` today).
+verification submission (CAC number + document + company logo), approve
+student logbook entries (`PUT /api/logbook/[id]`, scoped to entries tied to
+their own placements). This approval access was removed in an earlier
+commit ("logbooks are now a private student record") and restored during
+mobile Phase 3, at the user's explicit confirmation — see `MOBILE_APP.md`
+Phase 3. **The route and the mobile app's `employer-logbook` screen exist;
+the web employer UI for it (`/employer/logbook`) was not restored** and
+remains web-inaccessible unless a future session rebuilds that page too.
 
 **Schools** — `/school/dashboard` (KPI overview: registered/placed/applying
 students, department count, logbook volume, plus a by-department breakdown
 table with placement rate), `/school/students` (directory grouped by
 faculty → department, search, per-student placement + logbook status) →
 `/school/students/[id]` (full record: profile, every application, complete
-logbook), `/school/logbooks` (every logbook entry across every student and
-company in one filterable feed — read-only; the `isApproved` field it
-displays is currently always `false`, since no route sets it, see Employers
-above), and `/school/profile` (institution
+logbook with approval state), `/school/logbooks` (every logbook entry
+across every student and company in one filterable feed — read-only,
+approval is the employer's call), and `/school/profile` (institution
 details + accreditation document submission for admin review — same
 `/api/companies/verification` endpoint employers use, shared fields/labels
 adapted per role). A student belongs to a school when their profile's
@@ -106,22 +109,24 @@ role-gate on `/admin`, `/employer`, `/student`, `/school`) is first-line
 only; every API route independently re-checks `session.user.role`, which is
 the actual authorization boundary.
 
-## Mobile app (in progress — Expo / React Native)
+## Mobile app (Expo / React Native)
 
 A native Android-first app is being built in `mobile/` in this repo, as a
 client of the existing `/api/*` routes (no second backend). Auth uses bearer
 JWTs signed with the same `NEXTAUTH_SECRET`, issued by `POST
 /api/mobile/login`, alongside the existing cookie sessions —
-`requireSession()` (`src/lib/mobileAuth.ts`) accepts either on every
-student-facing route. Phase 0 (foundations), Phase 1 (student MVP: auth,
-browse/search/apply, saved jobs, applications tracker, profile with
-avatar/resume upload), and Phase 2 (e-Logbook with offline drafts, push
-notifications on application decisions via `expo-server-sdk`) are done.
-Push notifications won't actually deliver until the app has a linked EAS
-project (`User.expoPushToken` stays unset otherwise — see `MOBILE_APP.md`'s
-setup table). **Read `MOBILE_APP.md` before doing any mobile work** — it
-carries the full architecture, the phase-by-phase checklist (kept current
-in each PR), and the release/store setup steps.
+`requireSession()` (`src/lib/mobileAuth.ts`) accepts either on every route
+that needs it, including (as of Phase 3) the school-only routes via a
+retrofitted `requireApprovedSchool()`. Phases 0-3 are done: foundations,
+student MVP (auth, browse/search/apply, saved jobs, applications tracker,
+profile), e-Logbook with offline drafts and push notifications, and
+employer (applicant review, logbook approval) + school (read-only
+dashboards) screens. Push notifications won't actually deliver until the
+app has a linked EAS project (`User.expoPushToken` stays unset otherwise —
+see `MOBILE_APP.md`'s setup table). Remaining: Phase 4 (Android release).
+**Read `MOBILE_APP.md` before doing any mobile work** — it carries the full
+architecture, the phase-by-phase checklist (kept current in each PR), and
+the release/store setup steps.
 
 ## Demo/seed data
 
@@ -150,11 +155,11 @@ software, design, engineering, finance, telecoms, and marketing. Run with
 - **Community feature** is a directory + implied connection, not a full chat
   — see `021b140`/`55fa53c` history for what actually shipped vs. what was
   scoped early on.
-- **No logbook approval mechanism** — `Logbook.isApproved` exists on the
-  schema and is displayed read-only in the school dashboard, but no route
-  anywhere sets it to `true` (the employer approval route was intentionally
-  removed — see Employers above). Re-introducing it is an open product
-  question, not scheduled in any current phase.
+- **Employer logbook approval has no web UI** — the route (`PUT
+  /api/logbook/[id]`) and the mobile app's `employer-logbook` screen both
+  work; the equivalent web page (`/employer/logbook`) was deleted in an
+  earlier commit and hasn't been rebuilt. An employer without the mobile
+  app currently has no way to approve entries.
 
 ## Environment variables
 

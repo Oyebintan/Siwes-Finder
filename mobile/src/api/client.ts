@@ -214,6 +214,118 @@ export async function registerPushToken(token: string): Promise<{ message: strin
   return apiFetch('/api/mobile/register-push-token', { method: 'POST', body: JSON.stringify({ token }) });
 }
 
+// -- Employer --------------------------------------------------------------
+// GET /api/applications branches by role server-side; for an employer
+// caller it returns this shape (job title only, populated applicant
+// details) rather than the student shape `Application` above.
+export type EmployerApplication = {
+  _id: string;
+  job: { _id: string; title: string } | null;
+  student: {
+    _id: string;
+    name: string;
+    email: string;
+    university?: string;
+    courseOfStudy?: string;
+    resumeUrl?: string;
+  } | null;
+  status: 'Pending' | 'Accepted' | 'Rejected';
+  createdAt: string;
+  updatedAt: string;
+};
+
+export async function listEmployerApplications(): Promise<EmployerApplication[]> {
+  return apiFetch('/api/applications');
+}
+
+export async function updateApplicationStatus(
+  id: string,
+  status: 'Accepted' | 'Rejected'
+): Promise<EmployerApplication> {
+  return apiFetch(`/api/applications/${id}`, { method: 'PUT', body: JSON.stringify({ status }) });
+}
+
+// GET /api/logbook's employer branch, similarly a different shape from the
+// student one above -- studentId comes back populated, not a bare id.
+export type EmployerLogbookEntry = {
+  _id: string;
+  studentId: { _id: string; name: string; email: string };
+  weekNumber: number;
+  dayOfWeek: string;
+  activityDescription: string;
+  hoursWorked: number;
+  isApproved: boolean;
+  date: string;
+};
+
+export async function listEmployerLogbookEntries(): Promise<EmployerLogbookEntry[]> {
+  return apiFetch('/api/logbook');
+}
+
+export async function approveLogbookEntry(id: string): Promise<EmployerLogbookEntry> {
+  return apiFetch(`/api/logbook/${id}`, { method: 'PUT' });
+}
+
+// -- School (read-only) -----------------------------------------------------
+export type SchoolStudent = {
+  _id: string;
+  name: string;
+  email: string;
+  avatarUrl?: string;
+  faculty?: string;
+  department: string;
+  level?: string;
+  isProfileComplete?: boolean;
+  placedAt: string | null;
+  applicationCount: number;
+  logbookEntries: number;
+  logbookApproved: number;
+};
+
+export async function getSchoolStudents(): Promise<{ students: SchoolStudent[]; school: string }> {
+  return apiFetch('/api/school/students');
+}
+
+export type SchoolStudentDetail = {
+  student: Profile;
+  applications: {
+    _id: string;
+    status: 'Pending' | 'Accepted' | 'Rejected';
+    createdAt: string;
+    job: { title: string; location: string } | null;
+    employer: { companyName?: string; name?: string } | null;
+  }[];
+  logbook: LogbookEntry[];
+};
+
+export async function getSchoolStudentDetail(id: string): Promise<SchoolStudentDetail> {
+  return apiFetch(`/api/school/students/${id}`);
+}
+
+export type SchoolLogbookEntry = {
+  _id: string;
+  weekNumber: number;
+  dayOfWeek: string;
+  activityDescription: string;
+  hoursWorked: number;
+  isApproved: boolean;
+  date: string;
+  studentId: string;
+  studentName: string;
+  department: string;
+  faculty?: string;
+};
+
+export async function getSchoolLogbooks(
+  params: { department?: string; status?: 'approved' | 'pending' } = {}
+): Promise<{ entries: SchoolLogbookEntry[]; departments: string[] }> {
+  const qs = new URLSearchParams();
+  if (params.department) qs.set('department', params.department);
+  if (params.status) qs.set('status', params.status);
+  const query = qs.toString();
+  return apiFetch(`/api/school/logbooks${query ? `?${query}` : ''}`);
+}
+
 // Bypasses apiFetch: multipart bodies need the browser/RN runtime to set its
 // own Content-Type (with the boundary), so the JSON header apiFetch always
 // sets would break the upload.

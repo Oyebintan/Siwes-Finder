@@ -10,7 +10,7 @@ import { requireApprovedSchool, studentsOfSchoolFilter } from '@/lib/schoolAuth'
 // student from another institution.
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const auth = await requireApprovedSchool();
+    const auth = await requireApprovedSchool(req);
     if ('error' in auth) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }

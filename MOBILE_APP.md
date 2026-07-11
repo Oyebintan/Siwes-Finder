@@ -184,16 +184,13 @@ Android/iOS runtime available.
       wrapping `expo-server-sdk`) when an employer accepts/rejects; a
       delivery failure is logged and swallowed, never fails the status
       update itself.
-- [ ] ~~Server sends push on logbook approval~~ — **dropped from this
-      phase.** The employer logbook-approval route was deliberately removed
-      in an earlier commit ("logbooks are now a private student record —
-      employers no longer have any visibility into them"); `isApproved`
-      never becomes `true` today, so there is no event to hook a push into.
-      Re-introducing employer approval is a product decision, not a mobile
-      one — flagged to the repo owner rather than silently reversed. If
-      approval comes back (e.g. as part of Phase 3's employer work), the
-      push send is a small addition at that point, following the same
-      pattern as the application-decision one above.
+- [x] ~~Server sends push on logbook approval~~ — **resolved in Phase 3.**
+      This was originally dropped because the employer logbook-approval
+      route had been deliberately removed in an earlier commit; flagged to
+      the repo owner rather than silently reversed. Confirmed in Phase 3
+      that it should come back (Phase 3's own scope needs employer approval
+      anyway) — `PUT /api/logbook/[id]` is recreated there and the push
+      send landed alongside it.
 
 **Not yet verified on an actual device/emulator, and push notifications
 specifically cannot be end-to-end tested until the app has a linked EAS
@@ -202,8 +199,34 @@ path is written and no-ops safely without one, but no real device token
 can be minted in this sandboxed environment.
 
 ### Phase 3 — Employer & School
-- [ ] Employer: applicant list, accept/reject, logbook approvals
-- [ ] School: overview stats, student directory, logbook feed (read-only)
+- [x] Employer: applicant list, accept/reject —
+      `(tabs)/employer-applicants.tsx`, consuming `GET /api/applications`'s
+      employer branch and `PUT /api/applications/[id]`, both already
+      bearer-ready from Phase 1/2.
+- [x] Employer: logbook approvals — `(tabs)/employer-logbook.tsx`. Required
+      restoring `PUT /api/logbook/[id]` (deleted in an earlier commit) and
+      the employer branch of `GET /api/logbook`, plus retrofitting
+      `src/lib/schoolAuth.ts`'s `requireApprovedSchool()` — the one
+      remaining auth helper untouched since Phase 0 — to accept bearer
+      tokens. **This reverses a prior "logbooks are private" decision;
+      done only after explicit user confirmation** (flagged in the Phase 2
+      PR, confirmed before implementing here) — see `PROJECT_SCOPE.md`'s
+      Employers section for the corrected, current behavior.
+- [x] School: overview stats, student directory, logbook feed (read-only) —
+      `(tabs)/school-overview.tsx`, `school-students.tsx` (grouped by
+      faculty → department, tapping a student pushes
+      `school/students/[id].tsx`), `school-logbooks.tsx` (status/department
+      filters). No new stats endpoint — same as the web, KPIs are computed
+      client-side from `GET /api/school/students`. All three
+      `/api/school/**` routes now accept bearer tokens via the
+      `requireApprovedSchool()` retrofit above.
+- [x] Shared minimal `(tabs)/account.tsx` (name/email/role + sign out) for
+      employer and school — full profile editing (company verification,
+      institution accreditation, etc.) stays web-only; not in this phase's
+      scope.
+
+**Not yet verified on an actual device/emulator** — same caveat as every
+prior phase.
 
 ### Phase 4 — Release (Android)
 - [ ] App icon + splash from the existing logomark (`public/logos` blue
