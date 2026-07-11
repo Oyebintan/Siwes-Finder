@@ -181,6 +181,39 @@ export async function toggleSavedJob(jobId: string): Promise<{ saved: boolean }>
   return apiFetch('/api/saved-jobs', { method: 'POST', body: JSON.stringify({ jobId }) });
 }
 
+export type LogbookEntry = {
+  _id: string;
+  studentId: string;
+  employerId: string;
+  weekNumber: number;
+  dayOfWeek: string;
+  activityDescription: string;
+  hoursWorked: number;
+  isApproved: boolean;
+  date: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type LogbookEntryDraft = {
+  weekNumber: number;
+  dayOfWeek: string;
+  activityDescription: string;
+  hoursWorked: number;
+};
+
+export async function createLogbookEntry(entry: LogbookEntryDraft): Promise<LogbookEntry> {
+  return apiFetch('/api/logbook', { method: 'POST', body: JSON.stringify(entry) });
+}
+
+export async function listLogbookEntries(): Promise<LogbookEntry[]> {
+  return apiFetch('/api/logbook');
+}
+
+export async function registerPushToken(token: string): Promise<{ message: string }> {
+  return apiFetch('/api/mobile/register-push-token', { method: 'POST', body: JSON.stringify({ token }) });
+}
+
 // Bypasses apiFetch: multipart bodies need the browser/RN runtime to set its
 // own Content-Type (with the boundary), so the JSON header apiFetch always
 // sets would break the upload.

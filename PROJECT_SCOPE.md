@@ -8,9 +8,10 @@ SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
 seeking SIWES (Students Industrial Work Experience Scheme) placements with
 verified employers, and gives their schools visibility into the process.
 
-**Last synced with:** `74b5054` (main, 2026-07-11) — PR #13 merged (Mobile
-Phase 0: Expo scaffold, bearer-token auth, login → hello screen), plus this
-PR's Mobile Phase 1 (student MVP screens + backend route retrofits).
+**Last synced with:** `b0681ee` (main, 2026-07-11) — PR #14 merged (Mobile
+Phase 1: student MVP screens + backend route retrofits), plus this PR's
+Mobile Phase 2 (e-Logbook, offline drafts, push notifications) and a
+correction to the stale employer-logbook-approval description below.
 Recent-change log: see `PROGRESS.md` (auto-appended on every push to main).
 
 ## Roles
@@ -67,17 +68,21 @@ implicitly by shared placement visibility).
 
 **Employers** — post/edit/deactivate jobs (multi-step wizard with
 deadline/cap controls), manage applicants (accept/reject), company
-verification submission (CAC number + document + company logo), approve
-student logbook entries.
+verification submission (CAC number + document + company logo). Employers
+no longer have any visibility into student logbooks — that access (and the
+`PUT /api/logbook/[id]` approval route) was removed; logbooks are a private
+student record (`isApproved` still exists on the schema but nothing sets it
+`true` today).
 
 **Schools** — `/school/dashboard` (KPI overview: registered/placed/applying
 students, department count, logbook volume, plus a by-department breakdown
 table with placement rate), `/school/students` (directory grouped by
 faculty → department, search, per-student placement + logbook status) →
 `/school/students/[id]` (full record: profile, every application, complete
-logbook with employer approval state), `/school/logbooks` (every logbook
-entry across every student and company in one filterable feed — read-only,
-approval is still the employer's call), and `/school/profile` (institution
+logbook), `/school/logbooks` (every logbook entry across every student and
+company in one filterable feed — read-only; the `isApproved` field it
+displays is currently always `false`, since no route sets it, see Employers
+above), and `/school/profile` (institution
 details + accreditation document submission for admin review — same
 `/api/companies/verification` endpoint employers use, shared fields/labels
 adapted per role). A student belongs to a school when their profile's
@@ -108,11 +113,15 @@ client of the existing `/api/*` routes (no second backend). Auth uses bearer
 JWTs signed with the same `NEXTAUTH_SECRET`, issued by `POST
 /api/mobile/login`, alongside the existing cookie sessions —
 `requireSession()` (`src/lib/mobileAuth.ts`) accepts either on every
-student-facing route. Phase 0 (foundations) and Phase 1 (student MVP: auth,
+student-facing route. Phase 0 (foundations), Phase 1 (student MVP: auth,
 browse/search/apply, saved jobs, applications tracker, profile with
-avatar/resume upload) are done. **Read `MOBILE_APP.md` before doing any
-mobile work** — it carries the full architecture, the phase-by-phase
-checklist (kept current in each PR), and the release/store setup steps.
+avatar/resume upload), and Phase 2 (e-Logbook with offline drafts, push
+notifications on application decisions via `expo-server-sdk`) are done.
+Push notifications won't actually deliver until the app has a linked EAS
+project (`User.expoPushToken` stays unset otherwise — see `MOBILE_APP.md`'s
+setup table). **Read `MOBILE_APP.md` before doing any mobile work** — it
+carries the full architecture, the phase-by-phase checklist (kept current
+in each PR), and the release/store setup steps.
 
 ## Demo/seed data
 
@@ -141,6 +150,11 @@ software, design, engineering, finance, telecoms, and marketing. Run with
 - **Community feature** is a directory + implied connection, not a full chat
   — see `021b140`/`55fa53c` history for what actually shipped vs. what was
   scoped early on.
+- **No logbook approval mechanism** — `Logbook.isApproved` exists on the
+  schema and is displayed read-only in the school dashboard, but no route
+  anywhere sets it to `true` (the employer approval route was intentionally
+  removed — see Employers above). Re-introducing it is an open product
+  question, not scheduled in any current phase.
 
 ## Environment variables
 

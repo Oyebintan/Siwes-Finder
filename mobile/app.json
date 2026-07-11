@@ -38,6 +38,12 @@
         {
           "photosPermission": "SIWES Finder needs access to your photos to set your profile picture."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#2557eb"
+        }
       ]
     ],
     "experiments": {

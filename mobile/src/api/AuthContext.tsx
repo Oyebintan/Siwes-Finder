@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import * as authStorage from './authStorage';
 import * as api from './client';
 import type { SessionUser } from './client';
+import { registerForPushNotifications } from './pushNotifications';
 
 type AuthState = {
   user: SessionUser | null;
@@ -29,6 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const profile = await api.getProfile();
         setUser({ id: profile._id, role: profile.role, name: profile.name, email: profile.email });
+        registerForPushNotifications().catch(() => {});
       } catch {
         // Token expired or invalid -- clear it so the login screen shows.
         await authStorage.clearToken();
@@ -46,6 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { token, user: sessionUser } = await api.login(email, password);
         await authStorage.setToken(token);
         setUser(sessionUser);
+        registerForPushNotifications().catch(() => {});
       },
       logout: async () => {
         await authStorage.clearToken();
