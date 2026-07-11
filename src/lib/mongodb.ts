@@ -15,14 +15,12 @@ import '@/models/Job';
 import '@/models/Application';
 import '@/models/Logbook';
 
-const MONGODB_URI = process.env.MONGODB_URI;
-
-if (!MONGODB_URI) {
-  throw new Error(
-    'Please define the MONGODB_URI environment variable inside .env.local'
-  );
-}
-
+// Read lazily and validate at call time, NOT at module scope. `next build`
+// imports every route module while collecting page data, so a module-scope
+// throw here fails the entire build on any machine without the env var --
+// which is exactly what broke Vercel deploys (previews build without the
+// Production env vars). Missing config should break the DB call at runtime
+// with a clear error, never the build.
 type MongooseCache = { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null };
 
 declare global {
@@ -34,6 +32,13 @@ declare global {
 const cached: MongooseCache = global.mongoose ?? (global.mongoose = { conn: null, promise: null });
 
 async function connectToDatabase() {
+  const MONGODB_URI = process.env.MONGODB_URI;
+  if (!MONGODB_URI) {
+    throw new Error(
+      'Please define the MONGODB_URI environment variable (e.g. in .env.local, or the Vercel project settings for this environment).'
+    );
+  }
+
   if (cached.conn) {
     return cached.conn;
   }
@@ -44,7 +49,7 @@ async function connectToDatabase() {
       serverSelectionTimeoutMS: 5000, // Fail after 5 seconds instead of hanging
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
       return mongoose;
     }).catch(err => {
       cached.promise = null;

@@ -5,14 +5,13 @@ import { connectToDatabase } from "@/lib/mongodb";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 
-// Fail fast: never fall back to a hardcoded signing secret. A missing secret
-// means anyone could forge session tokens, so refuse to start without one.
+// No hardcoded fallback secret — but also no module-scope throw when it's
+// missing: `next build` imports every route module while collecting page
+// data, so throwing here fails the whole build on machines without the env
+// var (e.g. Vercel preview builds). NextAuth itself refuses to serve auth
+// requests without a secret in production (NO_SECRET), which preserves the
+// "never run with a forgeable session" guarantee at runtime.
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
-if (!NEXTAUTH_SECRET) {
-  throw new Error(
-    "NEXTAUTH_SECRET is not set. Generate one with `openssl rand -base64 32` and add it to your environment before starting the app."
-  );
-}
 
 // Admins are provisioned by email allowlist (there is no public admin signup).
 // Set ADMIN_EMAILS="a@x.com,b@y.com" in the environment. Matching users are
@@ -134,7 +133,12 @@ export const authOptions: AuthOptions = {
       return session;
     }
   },
-  session: { strategy: "jwt" },
+  // Sessions expire after 2 hours of inactivity instead of NextAuth's
+  // 30-day default. JWT sessions are rolling: the cookie is re-issued on
+  // activity, so someone actively using the app stays signed in, while a
+  // browser left idle past the window comes back logged out.
+  session: { strategy: "jwt", maxAge: 60 * 60 * 2 },
+  jwt: { maxAge: 60 * 60 * 2 },
   pages: {
     signIn: '/login',
   },
