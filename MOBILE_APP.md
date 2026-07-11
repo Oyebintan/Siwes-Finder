@@ -109,16 +109,57 @@ sandboxed environment with no Android/iOS runtime available; first real
 device run is on the user.
 
 ### Phase 1 — Student MVP
-- [ ] Login / signup (credentials; role tabs like the web)
-- [ ] Browse + search jobs (reuses `/api/jobs` incl. skill/company search)
-- [ ] Job details + apply (platform/email/external methods)
-- [ ] Saved jobs (bookmark toggle, saved list)
-- [ ] Applications tracker with status
-- [ ] Profile: academic details, faculty, skills, avatar + resume upload
-      (`/api/upload` accepts multipart already)
+- [x] Login / signup (credentials; role tabs like the web) —
+      `mobile/src/app/signup.tsx` mirrors the web's student/company/school
+      tabs and auto-logs in after `POST /api/auth/register`, same as the
+      site. Non-student roles land on a "coming soon" holding screen (see
+      below) rather than a broken Jobs feed, since Phase 1 only builds
+      student screens.
+- [x] Browse + search jobs (reuses `/api/jobs` incl. skill/company search) —
+      `mobile/src/app/(tabs)/index.tsx`, with type filter chips and a
+      debounced search box.
+- [x] Job details + apply (platform/email/external methods) —
+      `mobile/src/app/jobs/[id].tsx`, branching on `applicationMethod`
+      exactly like the web's `ApplyButton`: email opens a `mailto:` link,
+      external opens the company's URL, platform calls `POST
+      /api/applications`.
+- [x] Saved jobs (bookmark toggle, saved list) — a ★ toggle on job cards and
+      the detail screen, plus a "Saved" filter chip on the Jobs screen
+      (mirrors the web's `savedOnly` toggle rather than a separate nav item).
+- [x] Applications tracker with status — `mobile/src/app/(tabs)/applications.tsx`.
+- [x] Profile: academic details, faculty, skills, avatar + resume upload
+      (`/api/upload` accepts multipart already) — `mobile/src/app/(tabs)/profile.tsx`,
+      using `expo-image-picker` (avatar) and `expo-document-picker` (resume
+      PDF), each uploading immediately and persisting the URL via `PUT
+      /api/profile`, same two-step flow as the web's `AvatarUpload`.
+- [x] Backend: retrofitted every remaining student-facing route to
+      `requireSession` (bearer-or-cookie) — `GET /api/jobs`, `GET
+      /api/jobs/[id]`, `POST`+`GET /api/applications`, `GET`+`POST
+      /api/saved-jobs`, `PUT /api/profile`, `POST /api/upload`. Each got a
+      route test asserting `requireSession` (not the cookie-only
+      `getServerSession`) is called with the raw request, on top of the
+      existing route-logic test coverage.
+- [x] Navigation: `(tabs)` group (Jobs / Applications / Profile) behind an
+      auth + role gate in `mobile/src/app/(tabs)/_layout.tsx`; `login`,
+      `signup`, and `jobs/[id]` are full-screen stack routes outside the tab
+      bar.
 
 **Done when:** a student can go from install → signed in → applied → sees
 the application in their tracker, entirely in the app.
+
+**Two real bugs this surfaced and fixed, unrelated to mobile screens
+directly but found while wiring them up:**
+- `PUT /api/profile` was returning the full Mongoose user document,
+  including the hashed password field, to the client. Both GET and PUT now
+  `.select()` the same explicit safe-field list.
+- `GET /api/profile`'s field-select never actually included `role`, so the
+  Phase 0 `AuthContext` — which reads `profile.role` to restore the session
+  on app boot — was silently always getting `undefined`. Fixed by adding
+  `role` to the safe-field list (it isn't sensitive, unlike password).
+
+**Not yet verified on an actual device/emulator** — same caveat as Phase 0:
+built and typechecked/linted in a sandboxed environment with no
+Android/iOS runtime available.
 
 ### Phase 2 — Logbook + push notifications
 - [ ] e-Logbook: write daily entries, week history, approval status

@@ -8,8 +8,9 @@ SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
 seeking SIWES (Students Industrial Work Experience Scheme) placements with
 verified employers, and gives their schools visibility into the process.
 
-**Last synced with:** `0e52be1` (main, 2026-07-11) — PR #11 merged (session
-expiry, Vercel build fix, /api/version), plus this PR's mobile-app plan docs.
+**Last synced with:** `74b5054` (main, 2026-07-11) — PR #13 merged (Mobile
+Phase 0: Expo scaffold, bearer-token auth, login → hello screen), plus this
+PR's Mobile Phase 1 (student MVP screens + backend route retrofits).
 Recent-change log: see `PROGRESS.md` (auto-appended on every push to main).
 
 ## Roles
@@ -100,15 +101,18 @@ role-gate on `/admin`, `/employer`, `/student`, `/school`) is first-line
 only; every API route independently re-checks `session.user.role`, which is
 the actual authorization boundary.
 
-## Mobile app (planned — Expo / React Native)
+## Mobile app (in progress — Expo / React Native)
 
 A native Android-first app is being built in `mobile/` in this repo, as a
-client of the existing `/api/*` routes (no second backend). Auth will use
-bearer JWTs signed with the same `NEXTAUTH_SECRET`, issued by a
-`POST /api/mobile/login` route, alongside the existing cookie sessions.
-**Read `MOBILE_APP.md` before doing any mobile work** — it carries the full
-architecture, the phase-by-phase checklist (kept current in each PR), and
-the release/store setup steps.
+client of the existing `/api/*` routes (no second backend). Auth uses bearer
+JWTs signed with the same `NEXTAUTH_SECRET`, issued by `POST
+/api/mobile/login`, alongside the existing cookie sessions —
+`requireSession()` (`src/lib/mobileAuth.ts`) accepts either on every
+student-facing route. Phase 0 (foundations) and Phase 1 (student MVP: auth,
+browse/search/apply, saved jobs, applications tracker, profile with
+avatar/resume upload) are done. **Read `MOBILE_APP.md` before doing any
+mobile work** — it carries the full architecture, the phase-by-phase
+checklist (kept current in each PR), and the release/store setup steps.
 
 ## Demo/seed data
 

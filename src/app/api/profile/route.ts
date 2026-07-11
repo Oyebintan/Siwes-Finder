@@ -4,9 +4,11 @@ import User from '@/models/User';
 import { requireSession } from '@/lib/mobileAuth';
 
 // Fields safe to return to the client -- excludes password (hash) and other
-// internal-only fields (resetOtpHash/resetOtpExpires).
+// internal-only fields (resetOtpHash/resetOtpExpires). `role` is included so
+// the mobile app's AuthContext (which restores its session from this
+// response on boot) can gate features by role without a second request.
 const SAFE_PROFILE_FIELDS =
-  'name email phone avatarUrl university faculty courseOfStudy level skills resumeUrl siwesStartDate siwesDuration preferredState isProfileComplete';
+  'name email phone avatarUrl university faculty courseOfStudy level skills resumeUrl siwesStartDate siwesDuration preferredState isProfileComplete role';
 
 // GET accepts both the web's cookie session and the mobile app's bearer
 // token (requireSession checks cookie first, falls back to

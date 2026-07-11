@@ -41,7 +41,7 @@ describe('GET /api/profile', () => {
     expect(res.status).toBe(404);
   });
 
-  it("returns the caller's own profile from a cookie session", async () => {
+  it("returns the caller's own profile from a cookie session, including role", async () => {
     (requireSession as any).mockResolvedValue({ user: { id: 'u1', role: 'student' } });
     const select = vi.fn().mockResolvedValue({ name: 'Ada' });
     (User.findById as any).mockReturnValue({ select });
@@ -51,6 +51,10 @@ describe('GET /api/profile', () => {
 
     expect(res.status).toBe(200);
     expect(data.name).toBe('Ada');
+    // The mobile app restores its session from this response on boot and
+    // needs the role to gate features -- regression guard for a bug where
+    // the select list omitted it entirely.
+    expect(select).toHaveBeenCalledWith(expect.stringContaining('role'));
   });
 
   it("also serves a mobile bearer-token caller (requireSession is the single entry point for both)", async () => {

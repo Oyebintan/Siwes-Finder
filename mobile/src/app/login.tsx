@@ -75,6 +75,12 @@ export default function LoginScreen() {
       >
         {loading ? <ActivityIndicator color="#fff" /> : <ThemedText style={styles.buttonText}>Log in</ThemedText>}
       </Pressable>
+
+      <Pressable onPress={() => router.replace('/signup')} style={styles.linkRow}>
+        <ThemedText type="small" themeColor="textSecondary">
+          New here? <ThemedText type="smallBold" themeColor="primary">Create an account</ThemedText>
+        </ThemedText>
+      </Pressable>
     </ThemedView>
   );
 }
@@ -114,5 +120,9 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#ffffff',
     fontWeight: '700',
+  },
+  linkRow: {
+    alignItems: 'center',
+    marginTop: Spacing.two,
   },
 });

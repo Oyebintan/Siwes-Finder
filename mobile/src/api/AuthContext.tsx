@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       try {
         const profile = await api.getProfile();
-        setUser({ id: String(profile._id ?? ''), role: profile.role as SessionUser['role'], name: profile.name, email: profile.email });
+        setUser({ id: profile._id, role: profile.role, name: profile.name, email: profile.email });
       } catch {
         // Token expired or invalid -- clear it so the login screen shows.
         await authStorage.clearToken();
