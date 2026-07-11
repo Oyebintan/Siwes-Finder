@@ -247,29 +247,45 @@ prior phase.
       (MongoDB Atlas, Vercel/Vercel Blob, Resend, Google, Expo) — not a
       lawyer-reviewed document, written in good faith for an MVP-stage
       platform; revisit if the platform scales significantly.
-- [ ] EAS build profile (`eas.json`), production Android build (AAB) —
-      **on hold pending a distribution-path decision.** The user doesn't
-      currently want to pay the one-time $25 Google Play Console
-      registration fee. A signed build via EAS itself is free (the fee is
-      specifically for *publishing to the Play Store*, not for building)
-      — options on the table: direct APK download from the website (free,
-      no store, no auto-update), an alternate free app store (Amazon
-      Appstore / Huawei AppGallery), or saving up for Play Console later.
-      Revisit once the user decides.
-- [ ] Play Console: internal testing track → closed → production — blocked
-      on the same decision above; skip entirely if going the free-APK
-      route.
-- [ ] Store listing: screenshots, description, feature graphic — only
-      needed for a Play Console (or alternate store) listing; moot for
-      direct APK distribution.
+- [x] EAS build profile — `mobile/eas.json`, `production` (and `preview`)
+      profiles both set `android.buildType: "apk"` (EAS's default for
+      `production` is an AAB, Play-Store-only). An APK is what both chosen
+      distribution paths below need. **Decision (owner, 2026-07-11): skip
+      Google Play — no $25 registration fee.** Do both of the following
+      instead, from the same build:
+      1. **Direct download** — host the built `.apk` on the website; the
+         owner adds the download link themselves once a build exists.
+      2. **Free alternate app store** — Amazon Appstore and/or Huawei
+         AppGallery, both free to register, both accept a plain APK. Either
+         store's app can be installed on **any** Android device (not
+         limited to Amazon/Huawei hardware) — same APK serves both this
+         and the direct download above.
+      **Still needs the owner to actually run a build** — this environment
+      has no Expo account/EAS project linked (the same gap flagged for
+      push notifications since Phase 2), so the build itself can't be
+      triggered here. Once `eas init` links a project (see the setup table
+      below), the command is:
+      ```
+      cd mobile && eas build --platform android --profile production
+      ```
+      which uploads the resulting APK to expo.dev, downloadable from
+      there or via the CLI's own link.
+- [ ] Play Console submission — **explicitly out of scope**, per the
+      decision above.
+- [ ] Store listing (screenshots, description, feature graphic) — needed
+      for the Amazon/Huawei submissions above; not started. Screenshots
+      need a real build running on a device/emulator, which (like every
+      prior phase) this sandboxed environment can't produce.
 
 ## One-time account setup (owner to-dos)
 
 | What | Where | Cost | Needed by |
 |---|---|---|---|
-| Expo account + `eas init` to link a project (writes `extra.eas.projectId` into `app.json`) | expo.dev | Free tier is enough to start | **Phase 2** — push notifications won't register without it (the code no-ops safely, it just never gets a token) |
-| Google Play Console | play.google.com/console | $25 one-time | Phase 4 |
+| Expo account + `eas init` to link a project (writes `extra.eas.projectId` into `app.json`) | expo.dev | Free tier is enough to start | **Phase 2 and 4** — push notifications won't register without it, and it's required to run any EAS build at all |
 | Signing keystore | Managed automatically by EAS | — | Phase 4 |
+| Amazon Appstore developer account | developer.amazon.com/apps-and-games | Free | Phase 4 (chosen distribution path) |
+| Huawei AppGallery developer account | developer.huawei.com | Free | Phase 4 (chosen distribution path) |
+| ~~Google Play Console~~ | ~~play.google.com/console~~ | ~~$25 one-time~~ | **Not needed** — skipped per the owner's decision above |
 | (Later, iOS) Apple Developer | developer.apple.com | $99/year | Phase 4+ |
 
 ## Conventions for sessions working on mobile
