@@ -72,19 +72,41 @@ mobile app authenticates with **bearer tokens signed by the same
 Keep this checklist current — tick items in the same PR that lands them.
 
 ### Phase 0 — Foundations
-- [ ] Scaffold Expo app in `mobile/` (TypeScript template + expo-router)
-- [ ] Typed API client (`mobile/src/api/`) with base-URL from env
-      (`EXPO_PUBLIC_API_URL`; dev default `http://localhost:3000`)
-- [ ] Backend: `mobileAuth.ts` + `POST /api/mobile/login` + `requireSession`
-      wrapper, with route tests following `__tests__/api/` patterns
-- [ ] CI: add a `mobile` job (install, `tsc --noEmit`, eslint) to
-      `.github/workflows/ci.yml`, path-filtered to `mobile/**`
-- [ ] Theming: port the brand tokens (primary `#2557eb` / dark `#5c86ff`,
-      surface colors from `globals.css`) into a `mobile/src/theme.ts`
+- [x] Scaffold Expo app in `mobile/` (TypeScript template + expo-router,
+      via `create-expo-app`; demo/branding files from the template removed)
+- [x] Typed API client (`mobile/src/api/client.ts` + `authStorage.ts` +
+      `AuthContext.tsx`) with base-URL from env (`EXPO_PUBLIC_API_URL`; dev
+      default `http://10.0.2.2:3000`, the Android emulator's localhost
+      alias — override in `.env` for iOS Simulator/a physical device, see
+      `mobile/.env.example`)
+- [x] Backend: `src/lib/mobileAuth.ts` (`issueMobileToken` +
+      `requireSession`) + `POST /api/mobile/login`, with route/unit tests
+      following `__tests__/api/` and `__tests__/lib/` patterns.
+      `requireSession` reuses `next-auth/jwt`'s own cookie-or-bearer lookup
+      rather than a bespoke token format — no new auth system.
+- [x] `/api/profile` GET retrofitted to `requireSession` as the
+      proof-of-concept that a route can serve both clients; the rest of the
+      API surface migrates route-by-route as Phase 1 screens need them.
+- [x] CI: `mobile` job (install, `tsc --noEmit`, eslint) added to
+      `.github/workflows/ci.yml`, path-filtered to `mobile/**` via
+      `dorny/paths-filter`
+- [x] Theming: brand tokens (primary `#2557eb` / dark `#5c86ff`, surface
+      colors from `globals.css`) ported into the template's own
+      `mobile/src/constants/theme.ts` rather than a second parallel theme
+      file — one source of truth for colors, matching the convention
+      `ThemedText`/`ThemedView` already expect
+- [x] Minimal login → "hello, {name}" flow (`mobile/src/app/login.tsx`,
+      `index.tsx`) proves the whole chain end-to-end: credentials login →
+      bearer token in `expo-secure-store` → authenticated `/api/profile`
+      fetch. Full navigation (Jobs/Applications/Logbook/Profile tabs)
+      arrives in Phase 1.
 
-**Done when:** a fresh checkout can `cd mobile && npx expo start`, log in
-with a seeded account against the live API, and see a "hello, {name}"
-screen. CI runs on mobile changes.
+**Done when:** a fresh checkout can `cd mobile && npm install && npx expo
+start`, log in with a seeded account against the live API, and see a
+"hello, {name}" screen. CI runs on mobile changes. **Not yet verified on an
+actual device/emulator** — this was built and typechecked/linted in a
+sandboxed environment with no Android/iOS runtime available; first real
+device run is on the user.
 
 ### Phase 1 — Student MVP
 - [ ] Login / signup (credentials; role tabs like the web)

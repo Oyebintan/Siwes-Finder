@@ -28,3 +28,41 @@ jobs:
 
       - name: Test
         run: npm test
+
+  mobile:
+    name: Mobile — lint and typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Only run when the push/PR actually touches mobile/ -- keeps this
+      # job (and its separate npm install) from firing on every unrelated
+      # web-only change.
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            mobile:
+              - 'mobile/**'
+
+      - uses: actions/setup-node@v4
+        if: steps.changes.outputs.mobile == 'true'
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install dependencies
+        if: steps.changes.outputs.mobile == 'true'
+        working-directory: mobile
+        run: npm ci
+
+      - name: Lint
+        if: steps.changes.outputs.mobile == 'true'
+        working-directory: mobile
+        run: npm run lint
+
+      - name: Typecheck
+        if: steps.changes.outputs.mobile == 'true'
+        working-directory: mobile
+        run: npm run typecheck

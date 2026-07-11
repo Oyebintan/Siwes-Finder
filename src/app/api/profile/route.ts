@@ -3,9 +3,14 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
+import { requireSession } from '@/lib/mobileAuth';
 
-export async function GET() {
-  const session = await getServerSession(authOptions);
+// GET accepts both the web's cookie session and the mobile app's bearer
+// token (requireSession checks cookie first, falls back to
+// Authorization: Bearer) -- it's the first route retrofitted this way, as
+// the Phase 0 proof that a route can serve both clients. See MOBILE_APP.md.
+export async function GET(req: Request) {
+  const session = await requireSession(req);
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
