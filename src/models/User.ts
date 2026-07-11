@@ -25,6 +25,11 @@ export interface IUser extends Document {
   isProfileComplete?: boolean;
   savedJobs?: mongoose.Types.ObjectId[];
   communityJoined?: boolean;
+  // Set by the mobile app (POST /api/mobile/register-push-token) after the
+  // user grants notification permission. Overwritten on every registration
+  // -- this project assumes one active mobile device per account, so a
+  // stale token from a previous device is simply replaced, not tracked.
+  expoPushToken?: string;
   // Employer / Company Specific
   companyName?: string;
   industry?: string;
@@ -69,6 +74,7 @@ const UserSchema: Schema = new Schema(
     // Opt-in flag for the student Community directory/chat -- students must
     // explicitly join before appearing to peers or being able to post.
     communityJoined: { type: Boolean, default: false },
+    expoPushToken: { type: String },
 
     // Employer / Company fields
     companyName: { type: String },
