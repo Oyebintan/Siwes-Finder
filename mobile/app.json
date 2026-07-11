@@ -11,6 +11,7 @@
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "package": "com.siwesfinder.app",
       "adaptiveIcon": {
         "backgroundColor": "#2557eb",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
