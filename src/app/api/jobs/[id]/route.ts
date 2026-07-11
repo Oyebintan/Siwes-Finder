@@ -6,12 +6,13 @@ import Job from '@/models/Job';
 import Application from '@/models/Application';
 import { isAdminRole } from '@/lib/roles';
 import { isJobOpenForApplications } from '@/lib/jobStatus';
+import { requireSession } from '@/lib/mobileAuth';
 
 // GET one job. Owners (and admins) always see it; everyone else only sees
 // active jobs from verified employers.
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await requireSession(req);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -19,7 +20,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     await connectToDatabase();
     const { id } = await params;
 
-    const job = await Job.findById(id).populate('employerId', 'name companyName industry verificationStatus');
+    const job = await Job.findById(id).populate('employerId', 'name companyName industry verificationStatus avatarUrl');
     if (!job) {
       return NextResponse.json({ error: 'Job not found' }, { status: 404 });
     }

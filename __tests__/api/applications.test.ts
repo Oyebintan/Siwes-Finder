@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('next-auth/next', () => ({ getServerSession: vi.fn() }));
+vi.mock('@/lib/mobileAuth', () => ({ requireSession: vi.fn() }));
 vi.mock('@/lib/mongodb', () => ({ connectToDatabase: vi.fn() }));
 vi.mock('@/models/Application', () => ({
   default: { create: vi.fn(), findOne: vi.fn(), find: vi.fn() },
@@ -10,7 +10,7 @@ vi.mock('@/models/Job', () => ({ default: { findById: vi.fn() } }));
 vi.mock('@/models/User', () => ({ default: { findById: vi.fn() } }));
 
 import { GET, POST } from '@/app/api/applications/route';
-import { getServerSession } from 'next-auth/next';
+import { requireSession } from '@/lib/mobileAuth';
 import Application from '@/models/Application';
 import Job from '@/models/Job';
 import User from '@/models/User';
@@ -23,6 +23,10 @@ function makePostRequest(body: unknown) {
   });
 }
 
+function makeGetRequest() {
+  return new Request('http://localhost/api/applications');
+}
+
 const completeStudent = { university: 'UNILAG', courseOfStudy: 'CS', resumeUrl: 'http://x/resume.pdf' };
 const approvedEmployer = { verificationStatus: 'approved' };
 const visibleJob = { _id: 'job1', employerId: 'emp1', isActive: true, applicationMethod: 'platform' };
@@ -33,19 +37,21 @@ describe('POST /api/applications', () => {
   });
 
   it('rejects non-student sessions', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'u1', role: 'employer' } });
-    const res = await POST(makePostRequest({ jobId: 'job1' }));
+    (requireSession as any).mockResolvedValue({ user: { id: 'u1', role: 'employer' } });
+    const req = makePostRequest({ jobId: 'job1' });
+    const res = await POST(req);
     expect(res.status).toBe(401);
+    expect(requireSession).toHaveBeenCalledWith(req);
   });
 
   it('rejects a request missing jobId', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     const res = await POST(makePostRequest({}));
     expect(res.status).toBe(400);
   });
 
   it('rejects an incomplete student profile', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     (User.findById as any).mockResolvedValue({ university: 'UNILAG' });
 
     const res = await POST(makePostRequest({ jobId: 'job1' }));
@@ -57,7 +63,7 @@ describe('POST /api/applications', () => {
   });
 
   it('404s when the job does not exist', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     (User.findById as any).mockResolvedValue(completeStudent);
     (Job.findById as any).mockResolvedValue(null);
 
@@ -66,7 +72,7 @@ describe('POST /api/applications', () => {
   });
 
   it("hides an unverified employer's job (404, matching the browse feed)", async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     (User.findById as any)
       .mockResolvedValueOnce(completeStudent)
       .mockResolvedValueOnce({ verificationStatus: 'pending' });
@@ -79,7 +85,7 @@ describe('POST /api/applications', () => {
   });
 
   it('rejects in-app applications to email/external jobs', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     (User.findById as any)
       .mockResolvedValueOnce(completeStudent)
       .mockResolvedValueOnce(approvedEmployer);
@@ -94,7 +100,7 @@ describe('POST /api/applications', () => {
   });
 
   it('rejects a duplicate application (pre-check)', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     (User.findById as any)
       .mockResolvedValueOnce(completeStudent)
       .mockResolvedValueOnce(approvedEmployer);
@@ -109,7 +115,7 @@ describe('POST /api/applications', () => {
   });
 
   it('translates a duplicate-key race (E11000) into the same friendly message', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     (User.findById as any)
       .mockResolvedValueOnce(completeStudent)
       .mockResolvedValueOnce(approvedEmployer);
@@ -125,7 +131,7 @@ describe('POST /api/applications', () => {
   });
 
   it('rejects applying to a job that is no longer open (inactive)', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     (User.findById as any)
       .mockResolvedValueOnce(completeStudent)
       .mockResolvedValueOnce(approvedEmployer);
@@ -140,7 +146,7 @@ describe('POST /api/applications', () => {
   });
 
   it('rejects applying to a job whose application deadline has passed, and persists the auto-close', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     (User.findById as any)
       .mockResolvedValueOnce(completeStudent)
       .mockResolvedValueOnce(approvedEmployer);
@@ -162,7 +168,7 @@ describe('POST /api/applications', () => {
   });
 
   it('creates the application on success', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     (User.findById as any)
       .mockResolvedValueOnce(completeStudent)
       .mockResolvedValueOnce(approvedEmployer);
@@ -185,7 +191,7 @@ describe('POST /api/applications', () => {
   });
 
   it('auto-closes the job when this application fills the last available slot', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     (User.findById as any)
       .mockResolvedValueOnce(completeStudent)
       .mockResolvedValueOnce(approvedEmployer);
@@ -214,24 +220,26 @@ describe('GET /api/applications', () => {
   });
 
   it('rejects unauthenticated requests', async () => {
-    (getServerSession as any).mockResolvedValue(null);
-    const res = await GET();
+    (requireSession as any).mockResolvedValue(null);
+    const req = makeGetRequest();
+    const res = await GET(req);
     expect(res.status).toBe(401);
+    expect(requireSession).toHaveBeenCalledWith(req);
   });
 
   it('returns the invalid-role error for a session with no recognized role', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'u1', role: 'admin' } });
-    const res = await GET();
+    (requireSession as any).mockResolvedValue({ user: { id: 'u1', role: 'admin' } });
+    const res = await GET(makeGetRequest());
     expect(res.status).toBe(400);
   });
 
   it("returns the student's own applications, populated with job + employer", async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     const sort = vi.fn().mockResolvedValue([{ _id: 'app1' }]);
     const populate = vi.fn().mockReturnValue({ sort });
     (Application.find as any).mockReturnValue({ populate });
 
-    const res = await GET();
+    const res = await GET(makeGetRequest());
     const data = await res.json();
 
     expect(Application.find).toHaveBeenCalledWith({ student: 'stu1' });

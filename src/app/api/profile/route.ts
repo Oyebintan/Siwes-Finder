@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
 import { requireSession } from '@/lib/mobileAuth';
+
+// Fields safe to return to the client -- excludes password (hash) and other
+// internal-only fields (resetOtpHash/resetOtpExpires). `role` is included so
+// the mobile app's AuthContext (which restores its session from this
+// response on boot) can gate features by role without a second request.
+const SAFE_PROFILE_FIELDS =
+  'name email phone avatarUrl university faculty courseOfStudy level skills resumeUrl siwesStartDate siwesDuration preferredState isProfileComplete role';
 
 // GET accepts both the web's cookie session and the mobile app's bearer
 // token (requireSession checks cookie first, falls back to
@@ -16,9 +21,7 @@ export async function GET(req: Request) {
   }
 
   await connectToDatabase();
-  const user = await User.findById(session.user.id).select(
-    'name email phone avatarUrl university faculty courseOfStudy level skills resumeUrl siwesStartDate siwesDuration preferredState isProfileComplete'
-  );
+  const user = await User.findById(session.user.id).select(SAFE_PROFILE_FIELDS);
 
   if (!user) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -29,7 +32,7 @@ export async function GET(req: Request) {
 
 export async function PUT(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await requireSession(req);
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -72,7 +75,7 @@ export async function PUT(req: Request) {
       session.user.id,
       { $set: update },
       { new: true }
-    );
+    ).select(SAFE_PROFILE_FIELDS);
 
     if (!updatedUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });

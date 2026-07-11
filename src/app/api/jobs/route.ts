@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Job from '@/models/Job';
 import User from '@/models/User';
+import { requireSession } from '@/lib/mobileAuth';
 
 function escapeRegex(input: string): string {
   return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -106,7 +107,7 @@ export async function POST(req: Request) {
 // of active jobs from verified companies only.
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await requireSession(req);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

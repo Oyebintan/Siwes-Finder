@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('next-auth/next', () => ({ getServerSession: vi.fn() }));
+vi.mock('@/lib/mobileAuth', () => ({ requireSession: vi.fn() }));
 vi.mock('@/lib/mongodb', () => ({ connectToDatabase: vi.fn() }));
 vi.mock('@/models/Job', () => ({
   default: { create: vi.fn(), find: vi.fn(), countDocuments: vi.fn() },
@@ -12,6 +13,7 @@ vi.mock('@/models/User', () => ({
 
 import { GET, POST } from '@/app/api/jobs/route';
 import { getServerSession } from 'next-auth/next';
+import { requireSession } from '@/lib/mobileAuth';
 import Job from '@/models/Job';
 import User from '@/models/User';
 
@@ -160,13 +162,18 @@ describe('GET /api/jobs', () => {
   });
 
   it('rejects unauthenticated requests', async () => {
-    (getServerSession as any).mockResolvedValue(null);
-    const res = await GET(makeGetRequest());
+    (requireSession as any).mockResolvedValue(null);
+    const req = makeGetRequest();
+    const res = await GET(req);
     expect(res.status).toBe(401);
+    // Confirms this route serves mobile bearer-token callers too: it must
+    // hand the raw Request through to requireSession, not call the
+    // cookie-only getServerSession directly.
+    expect(requireSession).toHaveBeenCalledWith(req);
   });
 
   it("returns the employer's own jobs, sorted newest first", async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     const sort = vi.fn().mockResolvedValue([{ _id: 'job1' }]);
     (Job.find as any).mockReturnValue({ sort });
 
@@ -179,7 +186,7 @@ describe('GET /api/jobs', () => {
   });
 
   it('scopes the public feed to active jobs from approved employers and escapes search input', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     (User.find as any).mockReturnValue({ distinct: vi.fn().mockResolvedValue(['emp1', 'emp2']) });
     (Job.countDocuments as any).mockResolvedValue(1);
 
@@ -206,7 +213,7 @@ describe('GET /api/jobs', () => {
   });
 
   it('matches search terms against skills, location and company, not just title/description', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     // First User.find: approved employer ids; second: employers whose
     // company name/industry matches the query.
     (User.find as any).mockReturnValue({ distinct: vi.fn().mockResolvedValue(['emp1']) });
@@ -231,7 +238,7 @@ describe('GET /api/jobs', () => {
   });
 
   it('excludes jobs past their application deadline or at their applicant cap from the public feed', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     (User.find as any).mockReturnValue({ distinct: vi.fn().mockResolvedValue(['emp1']) });
     (Job.countDocuments as any).mockResolvedValue(0);
 

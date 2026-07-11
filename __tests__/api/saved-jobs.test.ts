@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('next-auth/next', () => ({ getServerSession: vi.fn() }));
+vi.mock('@/lib/mobileAuth', () => ({ requireSession: vi.fn() }));
 vi.mock('@/lib/mongodb', () => ({ connectToDatabase: vi.fn() }));
 vi.mock('@/models/User', () => ({
   default: { findById: vi.fn(), findByIdAndUpdate: vi.fn(), find: vi.fn() },
@@ -9,7 +9,7 @@ vi.mock('@/models/User', () => ({
 vi.mock('@/models/Job', () => ({ default: { findById: vi.fn(), find: vi.fn() } }));
 
 import { GET, POST } from '@/app/api/saved-jobs/route';
-import { getServerSession } from 'next-auth/next';
+import { requireSession } from '@/lib/mobileAuth';
 import User from '@/models/User';
 import Job from '@/models/Job';
 
@@ -37,13 +37,15 @@ describe('GET /api/saved-jobs', () => {
   });
 
   it('rejects non-student sessions', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
-    const res = await GET(makeGetRequest());
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    const req = makeGetRequest();
+    const res = await GET(req);
     expect(res.status).toBe(401);
+    expect(requireSession).toHaveBeenCalledWith(req);
   });
 
   it('returns just the id list for ?ids=1', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     mockSavedJobs(['job1', 'job2']);
 
     const res = await GET(makeGetRequest('?ids=1'));
@@ -55,7 +57,7 @@ describe('GET /api/saved-jobs', () => {
   });
 
   it('returns populated cards filtered to visible jobs by default', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     mockSavedJobs(['job1', 'job2']);
     (User.find as any).mockReturnValue({ distinct: vi.fn().mockResolvedValue(['emp1']) });
     const sort = vi.fn().mockResolvedValue([{ _id: 'job1' }]);
@@ -81,19 +83,21 @@ describe('POST /api/saved-jobs', () => {
   });
 
   it('rejects non-student sessions', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
-    const res = await POST(makePostRequest({ jobId: 'job1' }));
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    const req = makePostRequest({ jobId: 'job1' });
+    const res = await POST(req);
     expect(res.status).toBe(401);
+    expect(requireSession).toHaveBeenCalledWith(req);
   });
 
   it('rejects a request missing jobId', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     const res = await POST(makePostRequest({}));
     expect(res.status).toBe(400);
   });
 
   it('404s when the job does not exist', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     (Job.findById as any).mockReturnValue({ select: vi.fn().mockResolvedValue(null) });
 
     const res = await POST(makePostRequest({ jobId: 'missing' }));
@@ -103,7 +107,7 @@ describe('POST /api/saved-jobs', () => {
   });
 
   it('saves an unsaved job ($addToSet) and reports saved: true', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     (Job.findById as any).mockReturnValue({ select: vi.fn().mockResolvedValue({ _id: 'job1' }) });
     mockSavedJobs([]);
 
@@ -116,7 +120,7 @@ describe('POST /api/saved-jobs', () => {
   });
 
   it('unsaves an already-saved job ($pull) and reports saved: false', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     (Job.findById as any).mockReturnValue({ select: vi.fn().mockResolvedValue({ _id: 'job1' }) });
     mockSavedJobs(['job1']);
 

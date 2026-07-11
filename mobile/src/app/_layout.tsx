@@ -3,18 +3,20 @@ import { useColorScheme } from 'react-native';
 
 import { AuthProvider } from '@/api/AuthContext';
 
-// Plain Stack for Phase 0 (login <-> home). Tab navigation (Jobs,
-// Applications, Logbook, Profile -- mirroring the web's dashboard nav in
-// src/app/(dashboard)/layout.tsx) arrives in Phase 1 once there's more than
-// one authenticated screen to switch between.
+// (tabs) holds the authenticated student experience (Jobs, Applications,
+// Profile -- see (tabs)/_layout.tsx for the auth/role gate). login, signup,
+// and jobs/[id] are full-screen stack routes pushed on top, outside the tab
+// bar.
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AuthProvider>
         <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
+          <Stack.Screen name="(tabs)" />
           <Stack.Screen name="login" />
+          <Stack.Screen name="signup" />
+          <Stack.Screen name="jobs/[id]" options={{ headerShown: true, title: 'Opportunity' }} />
         </Stack>
       </AuthProvider>
     </ThemeProvider>
