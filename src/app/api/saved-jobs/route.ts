@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
 import Job from '@/models/Job';
+import { requireSession } from '@/lib/mobileAuth';
 
 // GET: the student's saved jobs.
 // ?ids=1 returns just the id list (cheap bookmark-state check for cards);
@@ -11,7 +10,7 @@ import Job from '@/models/Job';
 // publicly visible (active + verified employer), same as the browse feed.
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await requireSession(req);
     if (!session || session.user.role !== 'student') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -53,7 +52,7 @@ export async function GET(req: Request) {
 // after the toggle — so the UI can render without a follow-up fetch.
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await requireSession(req);
     if (!session || session.user.role !== 'student') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

@@ -1,13 +1,11 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('next-auth/next', () => ({ getServerSession: vi.fn() }));
 vi.mock('@/lib/mobileAuth', () => ({ requireSession: vi.fn() }));
 vi.mock('@/lib/mongodb', () => ({ connectToDatabase: vi.fn() }));
 vi.mock('@/models/User', () => ({ default: { findById: vi.fn(), findByIdAndUpdate: vi.fn() } }));
 
 import { GET, PUT } from '@/app/api/profile/route';
-import { getServerSession } from 'next-auth/next';
 import { requireSession } from '@/lib/mobileAuth';
 import User from '@/models/User';
 
@@ -75,14 +73,18 @@ describe('PUT /api/profile', () => {
     vi.clearAllMocks();
   });
 
-  it('rejects unauthenticated requests', async () => {
-    (getServerSession as any).mockResolvedValue(null);
+  function mockUpdateResult(user: unknown) {
+    (User.findByIdAndUpdate as any).mockReturnValue({ select: vi.fn().mockResolvedValue(user) });
+  }
+
+  it('rejects unauthenticated requests (no cookie session, no bearer token)', async () => {
+    (requireSession as any).mockResolvedValue(null);
     const res = await PUT(makePutRequest({ university: 'UNILAG' }));
     expect(res.status).toBe(401);
   });
 
   it('404s when the user record is gone', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'u1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'u1', role: 'student' } });
     const select = vi.fn().mockResolvedValue(null);
     (User.findById as any).mockReturnValue({ select });
 
@@ -91,10 +93,10 @@ describe('PUT /api/profile', () => {
   });
 
   it('only writes fields present in the request body (step-by-step wizard saves)', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'u1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'u1', role: 'student' } });
     const select = vi.fn().mockResolvedValue({ university: 'UNILAG', courseOfStudy: 'CS', resumeUrl: undefined });
     (User.findById as any).mockReturnValue({ select });
-    (User.findByIdAndUpdate as any).mockResolvedValue({ _id: 'u1' });
+    mockUpdateResult({ _id: 'u1' });
 
     await PUT(makePutRequest({ phone: '+2348000000000' }));
 
@@ -106,10 +108,10 @@ describe('PUT /api/profile', () => {
   });
 
   it('marks isProfileComplete true once university, course, and resume are all present', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'u1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'u1', role: 'student' } });
     const select = vi.fn().mockResolvedValue({ university: 'UNILAG', courseOfStudy: 'CS', resumeUrl: undefined });
     (User.findById as any).mockReturnValue({ select });
-    (User.findByIdAndUpdate as any).mockResolvedValue({ _id: 'u1' });
+    mockUpdateResult({ _id: 'u1' });
 
     await PUT(makePutRequest({ resumeLink: 'https://x/resume.pdf' }));
 
@@ -121,10 +123,10 @@ describe('PUT /api/profile', () => {
   });
 
   it('trims the name and drops an all-whitespace name update', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'u1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'u1', role: 'student' } });
     const select = vi.fn().mockResolvedValue({ university: undefined, courseOfStudy: undefined, resumeUrl: undefined });
     (User.findById as any).mockReturnValue({ select });
-    (User.findByIdAndUpdate as any).mockResolvedValue({ _id: 'u1' });
+    mockUpdateResult({ _id: 'u1' });
 
     await PUT(makePutRequest({ name: '   ' }));
 
@@ -133,5 +135,27 @@ describe('PUT /api/profile', () => {
       { $set: { isProfileComplete: false } },
       { new: true }
     );
+  });
+
+  it("also accepts a mobile bearer-token caller and never leaks the password hash", async () => {
+    (requireSession as any).mockResolvedValue({ user: { id: 'u1', role: 'student' } });
+    const select = vi.fn().mockResolvedValue({ university: 'UNILAG', courseOfStudy: 'CS', resumeUrl: 'https://x/r.pdf' });
+    (User.findById as any).mockReturnValue({ select });
+    const updateSelect = vi.fn().mockResolvedValue({ _id: 'u1', name: 'Ada' });
+    (User.findByIdAndUpdate as any).mockReturnValue({ select: updateSelect });
+
+    const req = new Request('http://localhost/api/profile', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer mobile-token' },
+      body: JSON.stringify({ phone: '+2348000000000' }),
+    });
+    const res = await PUT(req);
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(requireSession).toHaveBeenCalledWith(req);
+    expect(data.user.password).toBeUndefined();
+    expect(updateSelect).toHaveBeenCalledWith(expect.stringContaining('name'));
+    expect(updateSelect.mock.calls[0][0]).not.toMatch(/password/);
   });
 });

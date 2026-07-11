@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { put } from '@vercel/blob';
+import { requireSession } from '@/lib/mobileAuth';
 
 // fs access requires the Node.js runtime (not Edge).
 export const runtime = 'nodejs';
@@ -26,7 +25,7 @@ const UPLOAD_KINDS: Record<string, { role: string | null; prefix: string; format
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await requireSession(req);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

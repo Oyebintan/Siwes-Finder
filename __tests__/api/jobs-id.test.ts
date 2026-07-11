@@ -2,12 +2,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('next-auth/next', () => ({ getServerSession: vi.fn() }));
+vi.mock('@/lib/mobileAuth', () => ({ requireSession: vi.fn() }));
 vi.mock('@/lib/mongodb', () => ({ connectToDatabase: vi.fn() }));
 vi.mock('@/models/Job', () => ({ default: { findById: vi.fn(), findOne: vi.fn() } }));
 vi.mock('@/models/Application', () => ({ default: { deleteMany: vi.fn() } }));
 
 import { DELETE, GET, PUT } from '@/app/api/jobs/[id]/route';
 import { getServerSession } from 'next-auth/next';
+import { requireSession } from '@/lib/mobileAuth';
 import Job from '@/models/Job';
 import Application from '@/models/Application';
 
@@ -32,13 +34,15 @@ describe('GET /api/jobs/[id]', () => {
   });
 
   it('rejects unauthenticated requests', async () => {
-    (getServerSession as any).mockResolvedValue(null);
-    const res = await GET(makeGetRequest(), p);
+    (requireSession as any).mockResolvedValue(null);
+    const req = makeGetRequest();
+    const res = await GET(req, p);
     expect(res.status).toBe(401);
+    expect(requireSession).toHaveBeenCalledWith(req);
   });
 
   it('404s when the job does not exist', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     const populate = vi.fn().mockResolvedValue(null);
     (Job.findById as any).mockReturnValue({ populate });
 
@@ -47,7 +51,7 @@ describe('GET /api/jobs/[id]', () => {
   });
 
   it('hides an inactive job from a non-owner, non-admin (404, not 403 — avoids leaking existence)', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     const populate = vi.fn().mockResolvedValue({
       _id: 'job1',
       isActive: false,
@@ -60,7 +64,7 @@ describe('GET /api/jobs/[id]', () => {
   });
 
   it('hides a job from an unverified employer', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
     const populate = vi.fn().mockResolvedValue({
       _id: 'job1',
       isActive: true,
@@ -73,7 +77,7 @@ describe('GET /api/jobs/[id]', () => {
   });
 
   it('lets the owning employer see their own inactive/unverified job', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     const jobDoc = {
       _id: 'job1',
       isActive: false,
@@ -87,7 +91,7 @@ describe('GET /api/jobs/[id]', () => {
   });
 
   it('lets an admin see any job regardless of status', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'admin1', role: 'admin' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'admin1', role: 'admin' } });
     const jobDoc = {
       _id: 'job1',
       isActive: false,
@@ -101,7 +105,7 @@ describe('GET /api/jobs/[id]', () => {
   });
 
   it('lets a super_admin see any job regardless of status', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'sa1', role: 'super_admin' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'sa1', role: 'super_admin' } });
     const jobDoc = {
       _id: 'job1',
       isActive: false,
