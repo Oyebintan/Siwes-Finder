@@ -1,0 +1,43 @@
+name: Progress log
+
+# Appends one row to PROGRESS.md on every push to main, so any session or
+# human can see what landed without digging through git history. The log
+# commit itself is tagged chore(progress) + [skip ci] so it neither
+# re-triggers this workflow's append step nor runs the CI suite.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    # Don't log the log: skip when the pushed commit is our own append.
+    if: ${{ !startsWith(github.event.head_commit.message, 'chore(progress)') }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Append entry to PROGRESS.md
+        run: |
+          DATE=$(date -u +%Y-%m-%d)
+          SHA="${GITHUB_SHA::7}"
+          # First line of the commit message, with | escaped so the
+          # markdown table can't be broken by a commit subject.
+          SUBJECT=$(git log -1 --pretty=%s "${GITHUB_SHA}" | sed 's/|/\\|/g')
+          # Insert the new row directly under the table header separator so
+          # newest entries stay on top.
+          awk -v row="| ${DATE} | \`${SHA}\` | ${SUBJECT} |" '
+            { print }
+            /^\|---\|---\|---\|$/ && !done { print row; done=1 }
+          ' PROGRESS.md > PROGRESS.md.tmp && mv PROGRESS.md.tmp PROGRESS.md
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add PROGRESS.md
+          git commit -m "chore(progress): log ${GITHUB_SHA::7} [skip ci]"
+          git push
