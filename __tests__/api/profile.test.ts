@@ -2,12 +2,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('next-auth/next', () => ({ getServerSession: vi.fn() }));
+vi.mock('@/lib/mobileAuth', () => ({ requireSession: vi.fn() }));
 vi.mock('@/lib/mongodb', () => ({ connectToDatabase: vi.fn() }));
 vi.mock('@/models/User', () => ({ default: { findById: vi.fn(), findByIdAndUpdate: vi.fn() } }));
 
 import { GET, PUT } from '@/app/api/profile/route';
 import { getServerSession } from 'next-auth/next';
+import { requireSession } from '@/lib/mobileAuth';
 import User from '@/models/User';
+
+function makeGetRequest() {
+  return new Request('http://localhost/api/profile');
+}
 
 function makePutRequest(body: unknown) {
   return new Request('http://localhost/api/profile', {
@@ -22,31 +28,45 @@ describe('GET /api/profile', () => {
     vi.clearAllMocks();
   });
 
-  it('rejects unauthenticated requests', async () => {
-    (getServerSession as any).mockResolvedValue(null);
-    const res = await GET();
+  it('rejects unauthenticated requests (no cookie session, no bearer token)', async () => {
+    (requireSession as any).mockResolvedValue(null);
+    const res = await GET(makeGetRequest());
     expect(res.status).toBe(401);
   });
 
   it('404s when the user record is gone', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'u1', role: 'student' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'u1', role: 'student' } });
     const select = vi.fn().mockResolvedValue(null);
     (User.findById as any).mockReturnValue({ select });
 
-    const res = await GET();
+    const res = await GET(makeGetRequest());
     expect(res.status).toBe(404);
   });
 
-  it("returns the caller's own profile", async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'u1', role: 'student' } });
+  it("returns the caller's own profile from a cookie session", async () => {
+    (requireSession as any).mockResolvedValue({ user: { id: 'u1', role: 'student' } });
     const select = vi.fn().mockResolvedValue({ name: 'Ada' });
     (User.findById as any).mockReturnValue({ select });
 
-    const res = await GET();
+    const res = await GET(makeGetRequest());
     const data = await res.json();
 
     expect(res.status).toBe(200);
     expect(data.name).toBe('Ada');
+  });
+
+  it("also serves a mobile bearer-token caller (requireSession is the single entry point for both)", async () => {
+    (requireSession as any).mockResolvedValue({ user: { id: 'u1', role: 'student' } });
+    const select = vi.fn().mockResolvedValue({ name: 'Ada' });
+    (User.findById as any).mockReturnValue({ select });
+
+    const req = new Request('http://localhost/api/profile', {
+      headers: { Authorization: 'Bearer mobile-token' },
+    });
+    const res = await GET(req);
+
+    expect(res.status).toBe(200);
+    expect(requireSession).toHaveBeenCalledWith(req);
   });
 });
 

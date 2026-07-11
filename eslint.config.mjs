@@ -15,6 +15,11 @@ const eslintConfig = defineConfig([
     // Nested git worktrees under .claude are separate checkouts on their own
     // branch state, not part of this project -- never lint their contents.
     ".claude/worktrees/**",
+    // The Expo app is its own project with its own eslint config/toolchain
+    // (mobile/eslint.config.js via `expo lint`, run as a separate CI job) --
+    // never lint it with the Next.js ruleset (it isn't React DOM, and its
+    // template scripts use CommonJS require() on purpose).
+    "mobile/**",
   ]),
   {
     // Test files lean on `as any` to type third-party mocks (e.g. a mocked
