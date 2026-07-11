@@ -20,9 +20,13 @@ terminal that opens, or scan the QR code with Expo Go on a physical device.
 ## Structure
 
 - `src/app/` — screens (file-based routing via expo-router). `login.tsx` /
-  `signup.tsx` and `jobs/[id].tsx` are full-screen stack routes; `(tabs)/`
-  holds the authenticated student experience (Jobs, Applications, Logbook,
-  Profile) behind the auth/role gate in `(tabs)/_layout.tsx`.
+  `signup.tsx`, `jobs/[id].tsx`, and `school/students/[id].tsx` are
+  full-screen stack routes; `(tabs)/` holds the authenticated experience,
+  gated by role in `(tabs)/_layout.tsx`: student gets Jobs/Applications/
+  Logbook/Profile, employer gets Applicants/Logbook/Account, school gets
+  Overview/Students/Logbooks/Account (employer and school share the
+  minimal `account.tsx` — full profile editing for those roles stays
+  web-only for now).
 - `src/api/` — `client.ts` (typed fetch wrapper + bearer auth, one function
   per API route the app calls), `authStorage.ts` (encrypted token storage),
   `AuthContext.tsx` (app-wide auth state), `logbookDrafts.ts` (offline
