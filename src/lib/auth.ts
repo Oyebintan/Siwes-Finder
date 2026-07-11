@@ -134,7 +134,12 @@ export const authOptions: AuthOptions = {
       return session;
     }
   },
-  session: { strategy: "jwt" },
+  // Sessions expire after 2 hours of inactivity instead of NextAuth's
+  // 30-day default. JWT sessions are rolling: the cookie is re-issued on
+  // activity, so someone actively using the app stays signed in, while a
+  // browser left idle past the window comes back logged out.
+  session: { strategy: "jwt", maxAge: 60 * 60 * 2 },
+  jwt: { maxAge: 60 * 60 * 2 },
   pages: {
     signIn: '/login',
   },
