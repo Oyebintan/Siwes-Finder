@@ -6,6 +6,8 @@ import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import SlidingTabs from '@/components/SlidingTabs';
+import TiltCard from '@/components/TiltCard';
 
 function Logo() {
   return (
@@ -39,6 +41,33 @@ function OAuthErrorBanner() {
   );
 }
 
+const HERO_COPY = {
+  student: {
+    quote: 'Everything I need for my SIWES search, in one clean dashboard.',
+    attribution: 'Amara O. — Computer Science, University of Lagos',
+    statLabel: 'This week',
+    statValue: '126',
+    statCaption: 'new verified opportunities',
+    emailPlaceholder: 'you@university.edu.ng',
+  },
+  company: {
+    quote: 'We hired four strong interns in a week — all pre-verified.',
+    attribution: 'Ifeoma N. — HR Lead, Interswitch',
+    statLabel: 'Platform-wide',
+    statValue: '184',
+    statCaption: 'verified companies hiring now',
+    emailPlaceholder: 'you@company.com',
+  },
+  school: {
+    quote: "We finally see every student's placement and logbook at a glance.",
+    attribution: 'Dr. Adebayo K. — SIWES Coordinator',
+    statLabel: 'Platform-wide',
+    statValue: '92',
+    statCaption: 'institutions tracking placements',
+    emailPlaceholder: 'siwes@unilag.edu.ng',
+  },
+} as const;
+
 function ResetSuccessBanner() {
   const params = useSearchParams();
   if (params.get('reset') !== 'success') return null;
@@ -52,7 +81,7 @@ function ResetSuccessBanner() {
 export default function Login() {
   const router = useRouter();
 
-  const [tab, setTab] = useState<'student' | 'company'>('student');
+  const [tab, setTab] = useState<'student' | 'company' | 'school'>('student');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -97,24 +126,21 @@ export default function Login() {
           <ThemeToggle />
         </div>
 
-        <h1 className="font-display font-extrabold text-[26px] tracking-[-0.02em] mb-1">Welcome back</h1>
-        <p className="text-[13.5px] text-muted mb-5">Log in to continue your placement journey.</p>
+        <div className="animate-fade-in-up stagger-1">
+          <h1 className="font-display font-extrabold text-[26px] tracking-[-0.02em] mb-1">Welcome back</h1>
+          <p className="text-[13.5px] text-muted mb-5">Log in to continue your placement journey.</p>
+        </div>
 
-        <div className="flex gap-2 bg-background border border-surface-border rounded-[10px] p-1 mb-5">
-          <button
-            type="button"
-            onClick={() => setTab('student')}
-            className={`flex-1 text-center py-2 rounded-lg text-[13px] transition-colors ${tab === 'student' ? 'bg-surface-1 font-bold shadow-sm' : 'font-semibold text-muted'}`}
-          >
-            Student
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('company')}
-            className={`flex-1 text-center py-2 rounded-lg text-[13px] transition-colors ${tab === 'company' ? 'bg-surface-1 font-bold shadow-sm' : 'font-semibold text-muted'}`}
-          >
-            Company
-          </button>
+        <div className="mb-5 animate-fade-in-up stagger-2">
+          <SlidingTabs
+            tabs={[
+              { key: 'student', label: 'Student' },
+              { key: 'company', label: 'Company' },
+              { key: 'school', label: 'School' },
+            ] as const}
+            active={tab}
+            onChange={setTab}
+          />
         </div>
 
         <Suspense fallback={null}>
@@ -142,7 +168,7 @@ export default function Login() {
             <input type="password" name="password" autoComplete="current-password" tabIndex={-1} />
           </div>
 
-          <div>
+          <div className="animate-fade-in-up stagger-3">
             <label className="block text-[12.5px] font-semibold mb-1">Email address</label>
             <input
               type="email"
@@ -151,12 +177,12 @@ export default function Login() {
               autoComplete="off"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder={tab === 'student' ? 'you@university.edu.ng' : 'you@company.com'}
+              placeholder={HERO_COPY[tab].emailPlaceholder}
               className="w-full px-3.5 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-foreground text-[16px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all"
             />
           </div>
 
-          <div>
+          <div className="animate-fade-in-up stagger-4">
             <div className="flex items-center justify-between mb-1">
               <label className="block text-[12.5px] font-semibold">Password</label>
               <Link href="/forgot-password" className="text-[12.5px] font-semibold text-primary-500 dark:text-primary-400">Forgot password?</Link>
@@ -176,13 +202,13 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading || googleLoading}
-            className="w-full py-2.5 rounded-lg bg-primary-500 dark:bg-primary-400 text-white font-bold text-[14.5px] shadow-lg shadow-primary-900/20 hover:brightness-110 disabled:opacity-50 transition-all flex items-center justify-center"
+            className="w-full py-2.5 rounded-lg bg-primary-500 dark:bg-primary-400 text-white font-bold text-[14.5px] shadow-lg shadow-primary-900/20 hover:brightness-110 disabled:opacity-50 transition-all flex items-center justify-center animate-fade-in-up stagger-5"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Log in'}
           </button>
         </form>
 
-        <div className="mt-4 relative">
+        <div className="mt-4 relative animate-fade-in-up stagger-6">
           <div className="absolute inset-0 flex items-center" aria-hidden="true">
             <div className="w-full border-t border-surface-border" />
           </div>
@@ -195,7 +221,7 @@ export default function Login() {
           type="button"
           onClick={handleGoogleLogin}
           disabled={loading || googleLoading}
-          className="w-full mt-4 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-surface-1 font-semibold hover:bg-surface-2 disabled:opacity-50 transition-all flex items-center justify-center gap-2 text-sm"
+          className="w-full mt-4 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-surface-1 font-semibold hover:bg-surface-2 disabled:opacity-50 transition-all flex items-center justify-center gap-2 text-sm animate-fade-in-up stagger-7"
         >
           {googleLoading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -212,30 +238,35 @@ export default function Login() {
           )}
         </button>
 
-        <div className="text-center text-[13px] text-muted mt-4">
+        <div className="text-center text-[13px] text-muted mt-4 animate-fade-in-up stagger-8">
           Don&apos;t have an account? <Link href="/signup" className="font-bold text-primary-500 dark:text-primary-400">Sign up</Link>
         </div>
       </div>
 
-      {/* RIGHT: animated visual */}
-      <div className="relative overflow-hidden hidden sm:block bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-500 dark:via-secondary-600 dark:to-secondary-900">
+      {/* RIGHT: animated visual — slides in on load, flips its copy when the
+          role tab changes, and tilts gently toward the cursor. */}
+      <div className="relative overflow-hidden hidden sm:block bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-500 dark:via-secondary-600 dark:to-secondary-900 animate-slide-in-right">
         <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 30% 20%, rgba(255,255,255,0.14), transparent 50%)' }} />
         <div className="pointer-events-none absolute -top-24 -right-16 w-[320px] h-[320px] rounded-full blur-2xl animate-blob" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.22), transparent 70%)' }} />
         <div className="pointer-events-none absolute bottom-0 -left-20 w-[280px] h-[280px] rounded-full blur-2xl animate-blob [animation-direction:reverse]" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.16), transparent 70%)' }} />
 
         <div className="relative h-full flex flex-col justify-center px-10 lg:px-14 py-10 text-white">
-          <div className="font-display font-extrabold text-[26px] leading-[1.25] tracking-[-0.02em] max-w-[380px] mb-5">
-            &ldquo;Everything I need for my SIWES search, in one clean dashboard.&rdquo;
-          </div>
-          <div className="text-sm text-white/70">Amara O. — Computer Science, University of Lagos</div>
-
-          <div className="mt-10 bg-white/[0.1] border border-white/[0.18] rounded-2xl p-5 backdrop-blur-md max-w-[270px] animate-float-card">
-            <div className="text-xs text-white/70 mb-2">This week</div>
-            <div className="flex justify-between items-center gap-3">
-              <div className="font-display font-extrabold text-[24px]">126</div>
-              <div className="text-[12px] text-white/70">new verified opportunities</div>
+          <div key={tab} className="animate-flip-in">
+            <div className="font-display font-extrabold text-[26px] leading-[1.25] tracking-[-0.02em] max-w-[380px] mb-5">
+              &ldquo;{HERO_COPY[tab].quote}&rdquo;
             </div>
+            <div className="text-sm text-white/70">{HERO_COPY[tab].attribution}</div>
           </div>
+
+          <TiltCard className="mt-10 max-w-[270px]">
+            <div key={tab} className="bg-white/[0.1] border border-white/[0.18] rounded-2xl p-5 backdrop-blur-md animate-flip-in">
+              <div className="text-xs text-white/70 mb-2">{HERO_COPY[tab].statLabel}</div>
+              <div className="flex justify-between items-center gap-3">
+                <div className="font-display font-extrabold text-[24px]">{HERO_COPY[tab].statValue}</div>
+                <div className="text-[12px] text-white/70 text-right max-w-[140px]">{HERO_COPY[tab].statCaption}</div>
+              </div>
+            </div>
+          </TiltCard>
         </div>
       </div>
     </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Search, Bookmark, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Bookmark, ChevronLeft, ChevronRight } from 'lucide-react';
 
 type Job = {
   _id: string;
@@ -155,7 +155,26 @@ export default function BrowseOpportunities() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-24"><Loader2 className="w-8 h-8 animate-spin text-primary-500" /></div>
+        // Skeleton cards shaped like the real listings, so the grid doesn't
+        // collapse to a lone spinner and then jump when results land.
+        <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]" aria-busy="true">
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="bg-surface-1 rounded-[14px] p-5 border border-surface-border">
+              <div className="flex items-center gap-2.5 mb-3.5">
+                <div className="w-[38px] h-[38px] rounded-[9px] skeleton shrink-0" />
+                <div className="flex-1 min-w-0 space-y-2">
+                  <div className="h-3.5 w-3/4 rounded skeleton" />
+                  <div className="h-2.5 w-1/2 rounded skeleton" />
+                </div>
+              </div>
+              <div className="flex gap-2 mb-3.5">
+                <div className="h-6 w-16 rounded-full skeleton" />
+                <div className="h-6 w-20 rounded-full skeleton" />
+              </div>
+              <div className="h-5 w-24 rounded-full skeleton" />
+            </div>
+          ))}
+        </div>
       ) : jobs.length === 0 ? (
         <div className="bg-surface-1 border border-surface-border rounded-[14px] p-14 text-center text-sm text-muted">
           {savedOnly
@@ -168,7 +187,8 @@ export default function BrowseOpportunities() {
             <Link
               key={job._id}
               href={`/student/jobs/${job._id}`}
-              className="bg-surface-1 rounded-[14px] p-5 border border-surface-border hover:border-primary-500 transition-colors"
+              className="bg-surface-1 rounded-[14px] p-5 border border-surface-border hover:border-primary-500 hover:-translate-y-0.5 hover:shadow-md transition-all animate-scale-in"
+              style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}
             >
               <div className="flex items-center gap-2.5 mb-3.5">
                 {job.employerId?.avatarUrl ? (

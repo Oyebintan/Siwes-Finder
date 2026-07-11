@@ -6,6 +6,8 @@ import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import SlidingTabs from '@/components/SlidingTabs';
+import TiltCard from '@/components/TiltCard';
 
 function Logo() {
   return (
@@ -108,20 +110,21 @@ export default function Signup() {
           <ThemeToggle />
         </div>
 
-        <h1 className="font-display font-extrabold text-[26px] tracking-[-0.02em] mb-1">Create your account</h1>
-        <p className="text-[13.5px] text-muted mb-4">{copy.subtitle}</p>
+        <div className="animate-fade-in-up stagger-1">
+          <h1 className="font-display font-extrabold text-[26px] tracking-[-0.02em] mb-1">Create your account</h1>
+          <p className="text-[13.5px] text-muted mb-4">{copy.subtitle}</p>
+        </div>
 
-        <div className="flex gap-2 bg-background border border-surface-border rounded-[10px] p-1 mb-4">
-          {([['student', 'Student'], ['employer', 'Company'], ['school', 'School']] as const).map(([r, label]) => (
-            <button
-              key={r}
-              type="button"
-              onClick={() => setRole(r)}
-              className={`flex-1 text-center py-2 rounded-lg text-[13px] transition-colors ${role === r ? 'bg-surface-1 font-bold shadow-sm' : 'font-semibold text-muted'}`}
-            >
-              {label}
-            </button>
-          ))}
+        <div className="mb-4 animate-fade-in-up stagger-2">
+          <SlidingTabs
+            tabs={[
+              { key: 'student', label: 'Student' },
+              { key: 'employer', label: 'Company' },
+              { key: 'school', label: 'School' },
+            ] as const}
+            active={role}
+            onChange={setRole}
+          />
         </div>
 
         {error && (
@@ -131,7 +134,7 @@ export default function Signup() {
         )}
 
         <form onSubmit={handleCredentialsSignup} className="space-y-3">
-          <div>
+          <div className="animate-fade-in-up stagger-3">
             <label className="block text-[12.5px] font-semibold mb-1">{isStudent ? 'Full name' : role === 'school' ? 'Institution name' : 'Company name'}</label>
             <input
               type="text"
@@ -143,7 +146,7 @@ export default function Signup() {
             />
           </div>
 
-          <div>
+          <div className="animate-fade-in-up stagger-4">
             <label className="block text-[12.5px] font-semibold mb-1">{isStudent ? 'School email' : role === 'school' ? 'Official institution email' : 'Work email'}</label>
             <input
               type="email"
@@ -155,7 +158,7 @@ export default function Signup() {
             />
           </div>
 
-          <div>
+          <div className="animate-fade-in-up stagger-5">
             <label className="block text-[12.5px] font-semibold mb-1">Password</label>
             <input
               type="password"
@@ -171,7 +174,7 @@ export default function Signup() {
           <button
             type="submit"
             disabled={loading || googleLoading}
-            className={`w-full py-2.5 rounded-lg font-bold text-[14.5px] shadow-lg disabled:opacity-50 transition-all flex items-center justify-center ${
+            className={`w-full py-2.5 rounded-lg font-bold text-[14.5px] shadow-lg disabled:opacity-50 transition-all flex items-center justify-center animate-fade-in-up stagger-6 ${
               isStudent
                 ? 'bg-primary-500 dark:bg-primary-400 text-white shadow-primary-900/20 hover:brightness-110'
                 : 'bg-accent-500 text-[#032E1A] shadow-accent-900/20 hover:brightness-105'
@@ -181,7 +184,7 @@ export default function Signup() {
           </button>
         </form>
 
-        <div className="mt-4 relative">
+        <div className="mt-4 relative animate-fade-in-up stagger-7">
           <div className="absolute inset-0 flex items-center" aria-hidden="true">
             <div className="w-full border-t border-surface-border" />
           </div>
@@ -194,7 +197,7 @@ export default function Signup() {
           type="button"
           onClick={handleGoogleSignup}
           disabled={loading || googleLoading}
-          className="w-full mt-4 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-surface-1 font-semibold hover:bg-surface-2 disabled:opacity-50 transition-all flex items-center justify-center gap-2 text-sm"
+          className="w-full mt-4 py-2.5 rounded-lg border-[1.5px] border-surface-border bg-surface-1 font-semibold hover:bg-surface-2 disabled:opacity-50 transition-all flex items-center justify-center gap-2 text-sm animate-fade-in-up stagger-8"
         >
           {googleLoading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -216,25 +219,30 @@ export default function Signup() {
         </div>
       </div>
 
-      {/* RIGHT: animated visual */}
-      <div className="relative overflow-hidden hidden sm:block bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-500 dark:via-secondary-600 dark:to-secondary-900">
+      {/* RIGHT: animated visual — slides in on load, flips its copy when the
+          role tab changes, and tilts gently toward the cursor. */}
+      <div className="relative overflow-hidden hidden sm:block bg-gradient-to-br from-primary-500 to-[#17307A] dark:from-primary-500 dark:via-secondary-600 dark:to-secondary-900 animate-slide-in-right">
         <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 30% 20%, rgba(255,255,255,0.14), transparent 50%)' }} />
         <div className="pointer-events-none absolute -top-24 -right-16 w-[320px] h-[320px] rounded-full blur-2xl animate-blob" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.22), transparent 70%)' }} />
         <div className="pointer-events-none absolute bottom-0 -left-20 w-[280px] h-[280px] rounded-full blur-2xl animate-blob [animation-direction:reverse]" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.16), transparent 70%)' }} />
 
         <div className="relative h-full flex flex-col justify-center px-10 lg:px-14 py-10 text-white">
-          <div key={role} className="font-display font-extrabold text-[26px] leading-[1.25] tracking-[-0.02em] max-w-[380px] mb-5 animate-fade-in-up">
-            &ldquo;{copy.heroQuote}&rdquo;
-          </div>
-          <div className="text-sm text-white/80">{copy.heroAttribution}</div>
-
-          <div className="mt-10 bg-white/[0.1] border border-white/[0.18] rounded-2xl p-5 backdrop-blur-md max-w-[270px] animate-float-card">
-            <div className="text-xs text-white/80 mb-2">{copy.statLabel}</div>
-            <div className="flex justify-between items-center gap-3">
-              <div className="font-display font-extrabold text-[24px]">{copy.statValue}</div>
-              <div className="text-[12px] text-white/80 text-right max-w-[140px]">{copy.statCaption}</div>
+          <div key={role} className="animate-flip-in">
+            <div className="font-display font-extrabold text-[26px] leading-[1.25] tracking-[-0.02em] max-w-[380px] mb-5">
+              &ldquo;{copy.heroQuote}&rdquo;
             </div>
+            <div className="text-sm text-white/80">{copy.heroAttribution}</div>
           </div>
+
+          <TiltCard className="mt-10 max-w-[270px]">
+            <div key={role} className="bg-white/[0.1] border border-white/[0.18] rounded-2xl p-5 backdrop-blur-md animate-flip-in">
+              <div className="text-xs text-white/80 mb-2">{copy.statLabel}</div>
+              <div className="flex justify-between items-center gap-3">
+                <div className="font-display font-extrabold text-[24px]">{copy.statValue}</div>
+                <div className="text-[12px] text-white/80 text-right max-w-[140px]">{copy.statCaption}</div>
+              </div>
+            </div>
+          </TiltCard>
         </div>
       </div>
     </div>

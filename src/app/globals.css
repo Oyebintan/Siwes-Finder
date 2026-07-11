@@ -65,6 +65,10 @@
   --animate-blob: blob-move 12s ease-in-out infinite;
   --animate-gradient-flow: gradient-flow 5s ease-in-out infinite;
   --animate-card-shine: card-shine 6s ease-in-out infinite;
+  --animate-flip-in: flip-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-slide-in-right: slide-in-right 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-slide-in-left: slide-in-left 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-scale-in: scale-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes fade-in-up {
@@ -95,6 +99,34 @@
 @keyframes card-shine {
   0%, 100% { transform: translateX(-120%) rotate(8deg); }
   50% { transform: translateX(120%) rotate(8deg); }
+}
+
+/* 3D flip used when auth pages swap role (student/company/school): the
+   incoming panel rotates in from a slight Y tilt. Pair with `key={role}` so
+   React remounts the element and replays the animation on every switch. */
+@keyframes flip-in {
+  0% { opacity: 0; transform: perspective(900px) rotateY(-14deg) scale(0.97); }
+  100% { opacity: 1; transform: perspective(900px) rotateY(0deg) scale(1); }
+}
+
+@keyframes slide-in-right {
+  0% { opacity: 0; transform: translateX(32px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slide-in-left {
+  0% { opacity: 0; transform: translateX(-32px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scale-in {
+  0% { opacity: 0; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
 }
 
 :root {
@@ -199,10 +231,51 @@ body {
   background: linear-gradient(100deg, transparent 40%, rgba(255, 255, 255, 0.045) 50%, transparent 60%);
 }
 
+/* Cascade helpers: give siblings increasing animation-delay so a form or a
+   card grid enters element-by-element instead of as one block. `both` fill
+   keeps delayed elements invisible until their turn. Use together with an
+   entrance animation class (animate-fade-in-up, animate-flip-in, ...). */
+.stagger-1 { animation-delay: 60ms; animation-fill-mode: both; }
+.stagger-2 { animation-delay: 120ms; animation-fill-mode: both; }
+.stagger-3 { animation-delay: 180ms; animation-fill-mode: both; }
+.stagger-4 { animation-delay: 240ms; animation-fill-mode: both; }
+.stagger-5 { animation-delay: 300ms; animation-fill-mode: both; }
+.stagger-6 { animation-delay: 360ms; animation-fill-mode: both; }
+.stagger-7 { animation-delay: 420ms; animation-fill-mode: both; }
+.stagger-8 { animation-delay: 480ms; animation-fill-mode: both; }
+
+/* Loading skeleton with a moving light band. Apply to placeholder blocks
+   sized like the content they stand in for. */
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-border) 37%, var(--surface-2) 63%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+/* Tactile press feedback on every button/link-button in the app -- small
+   enough to feel physical without reading as bouncy. */
+button:active:not(:disabled),
+a.press:active {
+  transform: scale(0.985);
+}
+button,
+a.press {
+  transition-property: transform, background-color, border-color, color, box-shadow, filter, opacity;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  /* animate-spin is exempt: a frozen spinner reads as a hang, not calm. */
   .animate-gradient-flow,
-  .card-shine {
+  .card-shine,
+  .skeleton,
+  [class*="animate-"]:not(.animate-spin) {
     animation: none !important;
+  }
+  button:active:not(:disabled),
+  a.press:active {
+    transform: none;
   }
 }
 
