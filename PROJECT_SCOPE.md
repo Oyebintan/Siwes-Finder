@@ -8,9 +8,9 @@ SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
 seeking SIWES (Students Industrial Work Experience Scheme) placements with
 verified employers, and gives their schools visibility into the process.
 
-**Last synced with:** `d6f3b45` (main, 2026-07-10) — PR #8 merged, plus the
-changes in this same PR (school logbooks/profile pages, mobile login fix);
-bump this to the actual merge commit once it lands.
+**Last synced with:** `0e52be1` (main, 2026-07-11) — PR #11 merged (session
+expiry, Vercel build fix, /api/version), plus this PR's mobile-app plan docs.
+Recent-change log: see `PROGRESS.md` (auto-appended on every push to main).
 
 ## Roles
 
@@ -100,6 +100,16 @@ role-gate on `/admin`, `/employer`, `/student`, `/school`) is first-line
 only; every API route independently re-checks `session.user.role`, which is
 the actual authorization boundary.
 
+## Mobile app (planned — Expo / React Native)
+
+A native Android-first app is being built in `mobile/` in this repo, as a
+client of the existing `/api/*` routes (no second backend). Auth will use
+bearer JWTs signed with the same `NEXTAUTH_SECRET`, issued by a
+`POST /api/mobile/login` route, alongside the existing cookie sessions.
+**Read `MOBILE_APP.md` before doing any mobile work** — it carries the full
+architecture, the phase-by-phase checklist (kept current in each PR), and
+the release/store setup steps.
+
 ## Demo/seed data
 
 `scripts/seed-companies.mjs` — idempotent script that creates 5 pre-verified
@@ -142,6 +152,8 @@ connected — don't set by hand), `RESEND_API_KEY` (forgot-password emails).
 - **`AGENTS.md`** carries an auto-managed Next.js version-drift warning block
   (don't edit between the `BEGIN`/`END` markers) — this file is a separate,
   hand-maintained companion.
+- **`PROGRESS.md` is machine-written** — a GitHub Action appends a row on
+  every push to main. Read it for recent history; never edit it by hand.
 - **Never gate a real `<input>` behind `readOnly` to fight browser autofill.**
   It silently breaks the on-screen keyboard on mobile (readonly inputs never
   trigger it, and flipping `readOnly` off in a React `onFocus` handler fires
