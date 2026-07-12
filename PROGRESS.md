@@ -7,6 +7,7 @@
 
 | Date | Commit | What landed |
 |---|---|---|
+| 2026-07-12 | `fcf237b` | Merge pull request #20 from Oyebintan/claude/email-notifications |
 | 2026-07-12 | `073fbec` | Merge pull request #19 from Oyebintan/claude/android-apk-permanent-link |
 | 2026-07-12 | `cf37d99` | Merge pull request #18 from Oyebintan/claude/android-apk-download-link |
 | 2026-07-12 | `5115721` | Merge pull request #17 from Oyebintan/claude/mobile-phase-4 |
