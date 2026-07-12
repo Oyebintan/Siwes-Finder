@@ -3,13 +3,13 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { ArrowRightCircle, ArrowUpRight, CheckCircle2, Download, Smartphone, Users } from 'lucide-react';
 
 // NEXT_PUBLIC_ANDROID_APK_URL overrides this if the app ever moves hosts
-// again. The default is the v1.0.0-android GitHub Release asset -- a
+// again. The default is the v1.1.0-android GitHub Release asset -- a
 // permanent link, unlike the EAS build artifact URL this replaced (Expo's
 // free tier only retains those for a limited time). A new Android version
 // means a new Release + a new default here (or just set the env var).
 const ANDROID_APK_URL =
   process.env.NEXT_PUBLIC_ANDROID_APK_URL ||
-  'https://github.com/Oyebintan/Siwes-Finder/releases/download/v1.0.0-android/application-129d9ddd-ee6e-4e92-9d78-0d8a852f3927.apk';
+  'https://github.com/Oyebintan/Siwes-Finder/releases/download/v1.1.0-android/application-6cc49f99-e6cd-49ee-9c4a-79d0da736ddc.apk';
 
 const companies = ['Paystack', 'Flutterwave', 'Andela', 'MTN Nigeria', 'Interswitch', 'Nigerian Breweries'];
 
