@@ -260,11 +260,19 @@ prior phase.
          store's app can be installed on **any** Android device (not
          limited to Amazon/Huawei hardware) — same APK serves both this
          and the direct download above.
-      **Still needs the owner to actually run a build** — this environment
-      has no Expo account/EAS project linked (the same gap flagged for
-      push notifications since Phase 2), so the build itself can't be
-      triggered here. Once `eas init` links a project (see the setup table
-      below), the command is:
+      `app.json`: `extra.eas.projectId` set (owner's Expo project),
+      `android.package` set to `com.siwesfinder.app` (permanent once
+      published anywhere, chosen deliberately). `expo-build-properties`
+      plugin added with `enableMinifyInReleaseBuilds` +
+      `enableShrinkResourcesInReleaseBuilds` (R8/Proguard + unused-resource
+      stripping) and `buildArchs: ["armeabi-v7a", "arm64-v8a"]` (drops the
+      `x86`/`x86_64` slices a universal APK bundles by default — those only
+      ever run on emulators, never real phones — while keeping both real
+      ARM architectures so older/budget Android devices still work) to
+      bring the release APK size down from an initial ~100MB.
+      **The owner runs the actual build** (this sandboxed environment
+      can't reach `api.expo.dev` at all, confirmed by a direct connection
+      test, so it can never run `eas` commands itself, credentials or not):
       ```
       cd mobile && eas build --platform android --profile production
       ```
