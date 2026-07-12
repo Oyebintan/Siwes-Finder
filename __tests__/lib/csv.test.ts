@@ -25,4 +25,27 @@ describe('toCsv', () => {
   it('stringifies numbers and booleans', () => {
     expect(toCsv([[1, true, false]])).toBe('1,true,false');
   });
+
+  it('neutralizes a leading = to prevent formula injection', () => {
+    expect(toCsv([['=HYPERLINK("http://evil.com","click")']])).toBe(
+      '"\'=HYPERLINK(""http://evil.com"",""click"")"'
+    );
+  });
+
+  it('neutralizes leading +, -, @, tab, and CR the same way', () => {
+    expect(toCsv([['+1+1', '-2+3', '@SUM(A1)', '\tcmd', '\rcmd']])).toBe(
+      "'+1+1,'-2+3,'@SUM(A1),'\tcmd,'\rcmd"
+    );
+  });
+
+  it('does not touch a value that merely contains (not starts with) a formula character', () => {
+    expect(toCsv([['Grade: A+', 'user@example.com']])).toBe('Grade: A+,user@example.com');
+  });
+
+  it('a leading minus in an ordinary negative number is also neutralized (accepted trade-off)', () => {
+    // toCsv only ever receives already-stringified display values in this
+    // codebase (see school-students CSV export), so this never applies to
+    // an actual numeric cell -- documented here so the behavior is explicit.
+    expect(toCsv([[-5]])).toBe("'-5");
+  });
 });
