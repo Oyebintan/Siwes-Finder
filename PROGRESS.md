@@ -7,6 +7,7 @@
 
 | Date | Commit | What landed |
 |---|---|---|
+| 2026-07-12 | `1886fdc` | Merge pull request #29 from Oyebintan/claude/mobile-env-url-fix-docs |
 | 2026-07-12 | `6bdbac3` | Merge pull request #28 from Oyebintan/claude/security-audit-fixes |
 | 2026-07-12 | `ea440d8` | Merge pull request #27 from Oyebintan/claude/fix-cron-secret-whitespace |
 | 2026-07-12 | `1f540a8` | Merge pull request #25 from Oyebintan/claude/bulk-actions-csv-streak-reminders |
