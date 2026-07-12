@@ -7,6 +7,7 @@
 
 | Date | Commit | What landed |
 |---|---|---|
+| 2026-07-12 | `977a489` | Merge pull request #33 from Oyebintan/claude/update-android-apk-link-v1-1-0 |
 | 2026-07-12 | `dd6c483` | Merge pull request #30 from Oyebintan/claude/mobile-fintech-ui-overhaul |
 | 2026-07-12 | `1886fdc` | Merge pull request #29 from Oyebintan/claude/mobile-env-url-fix-docs |
 | 2026-07-12 | `6bdbac3` | Merge pull request #28 from Oyebintan/claude/security-audit-fixes |
