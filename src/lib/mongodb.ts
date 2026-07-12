@@ -14,6 +14,7 @@ import '@/models/User';
 import '@/models/Job';
 import '@/models/Application';
 import '@/models/Logbook';
+import '@/models/Message';
 
 // Read lazily and validate at call time, NOT at module scope. `next build`
 // imports every route module while collecting page data, so a module-scope

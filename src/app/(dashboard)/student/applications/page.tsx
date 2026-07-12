@@ -5,6 +5,7 @@ import Application from "@/models/Application";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Building2 } from "lucide-react";
+import ApplicationMessageButton from "@/components/ApplicationMessageButton";
 
 function initials(name?: string) {
   if (!name) return '??';
@@ -103,6 +104,10 @@ export default async function StudentApplications() {
                 ) : (
                   <StepTracker accepted={app.status === 'Accepted'} />
                 )}
+
+                <div className="mt-4 pt-4 border-t border-surface-border/60">
+                  <ApplicationMessageButton applicationId={app._id} label={`Message ${companyName}`} />
+                </div>
               </div>
             );
           })}

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CheckCircle, XCircle, FileText, User, MapPin } from 'lucide-react';
+import ApplicationMessageButton from './ApplicationMessageButton';
 
 export type EmployerApplication = {
   _id: string;
@@ -70,6 +71,7 @@ export default function EmployerApplicationCard({ app }: { app: EmployerApplicat
       </div>
 
       <div className="flex items-center gap-4">
+        <ApplicationMessageButton applicationId={app._id} label="Message" />
         {app.student.resumeUrl ? (
           <a href={app.student.resumeUrl} target="_blank" rel="noopener noreferrer"
             className="flex-1 px-4 py-2.5 rounded-xl bg-accent-50 dark:bg-accent-500/10 text-accent-600 dark:text-accent-300 hover:bg-accent-100 dark:hover:bg-accent-500/20 text-sm font-bold flex items-center justify-center gap-2 transition-colors">
