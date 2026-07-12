@@ -1,13 +1,23 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
+import { ErrorBanner } from '@/components/ui/error-banner';
+import { Field } from '@/components/ui/field';
+import { PressableScale } from '@/components/ui/pressable-scale';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/api/AuthContext';
 import { ApiError, getProfile, updateProfile, uploadFile } from '@/api/client';
@@ -130,8 +140,15 @@ export default function ProfileScreen() {
 
   if (loading) {
     return (
-      <ThemedView style={styles.center}>
-        <ActivityIndicator color={theme.primary} />
+      <ThemedView style={styles.flex}>
+        <SafeAreaView style={styles.flex} edges={['top']}>
+          <View style={styles.loadingWrap}>
+            <Skeleton width={120} height={120} radius={60} />
+            <Skeleton width="60%" height={18} />
+            <Skeleton width="80%" height={54} radius={Radius.md} />
+            <Skeleton width="80%" height={54} radius={Radius.md} />
+          </View>
+        </SafeAreaView>
       </ThemedView>
     );
   }
@@ -140,182 +157,155 @@ export default function ProfileScreen() {
     <ThemedView style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={['top']}>
         <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-          <ThemedText type="title" style={styles.headerTitle}>
-            Profile
-          </ThemedText>
+          {/* Gradient identity header — avatar over the brand gradient. */}
+          <Animated.View entering={FadeInDown.duration(350)}>
+            <LinearGradient
+              colors={[theme.gradientStart, theme.gradientEnd]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.hero}
+            >
+              <PressableScale onPress={handlePickAvatar} disabled={uploadingAvatar} style={styles.avatarWrap}>
+                {avatarUrl ? (
+                  <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+                ) : (
+                  <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                    <ThemedText style={styles.avatarInitials}>{initials(name || user?.name || '?')}</ThemedText>
+                  </View>
+                )}
+                {uploadingAvatar ? (
+                  <View style={styles.avatarOverlay}>
+                    <ActivityIndicator color="#fff" size="small" />
+                  </View>
+                ) : (
+                  <View style={[styles.avatarEdit, { backgroundColor: theme.backgroundElement }]}>
+                    <Ionicons name="camera" size={13} color={theme.primary} />
+                  </View>
+                )}
+              </PressableScale>
+              <ThemedText style={styles.heroName}>{name || 'Your name'}</ThemedText>
+              <ThemedText style={styles.heroMeta}>
+                {[course, university].filter(Boolean).join(' · ') || 'Complete your academic details below'}
+              </ThemedText>
+            </LinearGradient>
+          </Animated.View>
 
           {success ? (
-            <ThemedView type="backgroundElement" style={[styles.banner, { borderColor: theme.success }]}>
+            <Animated.View entering={FadeInDown.duration(250)} style={[styles.successBanner, { backgroundColor: theme.successSoft }]}>
+              <Ionicons name="checkmark-circle" size={18} color={theme.success} />
               <ThemedText themeColor="success" type="small">
                 Profile updated successfully.
               </ThemedText>
-            </ThemedView>
+            </Animated.View>
           ) : null}
-          {error ? (
-            <ThemedView type="backgroundElement" style={[styles.banner, { borderColor: theme.error }]}>
-              <ThemedText themeColor="error" type="small">
-                {error}
+          {error ? <ErrorBanner message={error} /> : null}
+
+          <Animated.View entering={FadeInDown.duration(350).delay(80)}>
+            <Card style={styles.section}>
+              <SectionTitle icon="person-outline" title="Personal" />
+              <Field label="Full name" value={name} onChangeText={setName} />
+              <Field
+                label="Phone"
+                value={phone}
+                onChangeText={setPhone}
+                placeholder="+234 800 000 0000"
+                keyboardType="phone-pad"
+              />
+            </Card>
+          </Animated.View>
+
+          <Animated.View entering={FadeInDown.duration(350).delay(140)}>
+            <Card style={styles.section}>
+              <SectionTitle icon="school-outline" title="Academic" />
+              <Field label="University / Institution" value={university} onChangeText={setUniversity} placeholder="University of Lagos" />
+              <Field label="Faculty" value={faculty} onChangeText={setFaculty} placeholder="Faculty of Science" />
+              <Field label="Course of study" value={course} onChangeText={setCourse} placeholder="Computer Science" />
+              <ThemedText type="smallBold" themeColor="textSecondary">
+                Level
               </ThemedText>
-            </ThemedView>
-          ) : null}
+              <View style={styles.chipRow}>
+                {LEVELS.map((l) => (
+                  <Chip key={l} label={l} active={level === l} onPress={() => setLevel(l)} />
+                ))}
+              </View>
+            </Card>
+          </Animated.View>
 
-          <ThemedView style={styles.avatarRow}>
-            <Pressable onPress={handlePickAvatar} disabled={uploadingAvatar} style={styles.avatarWrap}>
-              {avatarUrl ? (
-                <Image source={{ uri: avatarUrl }} style={styles.avatar} />
-              ) : (
-                <ThemedView style={[styles.avatar, styles.avatarPlaceholder, { backgroundColor: theme.backgroundSelected }]}>
-                  <ThemedText type="smallBold" themeColor="primary">
-                    {initials(name || user?.name || '?')}
-                  </ThemedText>
-                </ThemedView>
-              )}
-              {uploadingAvatar ? (
-                <ThemedView style={styles.avatarOverlay}>
-                  <ActivityIndicator color="#fff" size="small" />
-                </ThemedView>
-              ) : null}
-            </Pressable>
-            <ThemedView style={styles.avatarText}>
-              <ThemedText type="smallBold">{name || 'Your name'}</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                {[course, university].filter(Boolean).join(' · ') || 'Complete your academic details below'}
+          <Animated.View entering={FadeInDown.duration(350).delay(200)}>
+            <Card style={styles.section}>
+              <SectionTitle icon="options-outline" title="Placement preferences" />
+              <ThemedText type="smallBold" themeColor="textSecondary">
+                Preferred state
               </ThemedText>
-            </ThemedView>
-          </ThemedView>
+              <View style={styles.chipRow}>
+                {STATES.map((s) => (
+                  <Chip key={s} label={s} active={preferredState === s} onPress={() => setPreferredState(s)} />
+                ))}
+              </View>
+              <ThemedText type="smallBold" themeColor="textSecondary">
+                Skills
+              </ThemedText>
+              <View style={styles.chipRow}>
+                {SKILL_OPTIONS.map((s) => (
+                  <Chip key={s} label={s} active={skills.includes(s)} onPress={() => toggleSkill(s)} />
+                ))}
+              </View>
+            </Card>
+          </Animated.View>
 
-          <Field label="Full name" theme={theme}>
-            <TextInput
-              value={name}
-              onChangeText={setName}
-              style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
+          <Animated.View entering={FadeInDown.duration(350).delay(260)}>
+            <Card style={styles.section}>
+              <SectionTitle icon="document-text-outline" title="Resume" />
+              <PressableScale
+                onPress={handlePickResume}
+                disabled={uploadingResume}
+                style={[styles.resumeBox, { borderColor: theme.border, backgroundColor: theme.background }]}
+              >
+                {uploadingResume ? (
+                  <ActivityIndicator color={theme.primary} />
+                ) : (
+                  <>
+                    <Ionicons
+                      name={resumeUrl ? 'document-attach' : 'cloud-upload-outline'}
+                      size={22}
+                      color={theme.primary}
+                    />
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {resumeUrl ? 'Resume uploaded — tap to replace' : 'Upload your resume (PDF)'}
+                    </ThemedText>
+                  </>
+                )}
+              </PressableScale>
+            </Card>
+          </Animated.View>
+
+          <Animated.View entering={FadeInDown.duration(350).delay(320)} style={styles.actions}>
+            <Button label="Save changes" icon="checkmark" onPress={handleSave} loading={savingText} />
+            <Button
+              label="Sign out"
+              icon="log-out-outline"
+              variant="danger"
+              onPress={async () => {
+                await logout();
+                router.replace('/login');
+              }}
             />
-          </Field>
-          <Field label="Phone" theme={theme}>
-            <TextInput
-              value={phone}
-              onChangeText={setPhone}
-              placeholder="+234 800 000 0000"
-              placeholderTextColor={theme.textSecondary}
-              keyboardType="phone-pad"
-              style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
-            />
-          </Field>
-          <Field label="University / Institution" theme={theme}>
-            <TextInput
-              value={university}
-              onChangeText={setUniversity}
-              placeholder="University of Lagos"
-              placeholderTextColor={theme.textSecondary}
-              style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
-            />
-          </Field>
-          <Field label="Faculty" theme={theme}>
-            <TextInput
-              value={faculty}
-              onChangeText={setFaculty}
-              placeholder="Faculty of Science"
-              placeholderTextColor={theme.textSecondary}
-              style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
-            />
-          </Field>
-          <Field label="Course of study" theme={theme}>
-            <TextInput
-              value={course}
-              onChangeText={setCourse}
-              placeholder="Computer Science"
-              placeholderTextColor={theme.textSecondary}
-              style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
-            />
-          </Field>
-
-          <Field label="Level" theme={theme}>
-            <ThemedView style={styles.chipRow}>
-              {LEVELS.map((l) => (
-                <Chip key={l} label={l} active={level === l} onPress={() => setLevel(l)} theme={theme} />
-              ))}
-            </ThemedView>
-          </Field>
-
-          <Field label="Preferred state" theme={theme}>
-            <ThemedView style={styles.chipRow}>
-              {STATES.map((s) => (
-                <Chip key={s} label={s} active={preferredState === s} onPress={() => setPreferredState(s)} theme={theme} />
-              ))}
-            </ThemedView>
-          </Field>
-
-          <Field label="Skills" theme={theme}>
-            <ThemedView style={styles.chipRow}>
-              {SKILL_OPTIONS.map((s) => (
-                <Chip key={s} label={s} active={skills.includes(s)} onPress={() => toggleSkill(s)} theme={theme} />
-              ))}
-            </ThemedView>
-          </Field>
-
-          <Field label="Resume" theme={theme}>
-            <Pressable
-              onPress={handlePickResume}
-              disabled={uploadingResume}
-              style={[styles.resumeBox, { borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
-            >
-              {uploadingResume ? (
-                <ActivityIndicator color={theme.primary} />
-              ) : (
-                <>
-                  <ThemedText type="small">{resumeUrl ? 'Resume uploaded — tap to replace' : 'No resume uploaded yet'}</ThemedText>
-                  <ThemedText type="small" themeColor="primary">
-                    {resumeUrl ? 'Replace resume' : 'Upload resume'}
-                  </ThemedText>
-                </>
-              )}
-            </Pressable>
-          </Field>
-
-          <Pressable
-            onPress={handleSave}
-            disabled={savingText}
-            style={[styles.saveButton, { backgroundColor: theme.primary, opacity: savingText ? 0.6 : 1 }]}
-          >
-            {savingText ? <ActivityIndicator color="#fff" /> : <ThemedText style={styles.saveButtonText}>Save changes</ThemedText>}
-          </Pressable>
-
-          <Pressable
-            onPress={async () => {
-              await logout();
-              router.replace('/login');
-            }}
-            style={[styles.signOutButton, { borderColor: theme.border }]}
-          >
-            <ThemedText themeColor="error">Sign out</ThemedText>
-          </Pressable>
+          </Animated.View>
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
   );
 }
 
-function Field({ label, theme, children }: { label: string; theme: ReturnType<typeof useTheme>; children: React.ReactNode }) {
+function SectionTitle({ icon, title }: { icon: keyof typeof Ionicons.glyphMap; title: string }) {
+  const theme = useTheme();
   return (
-    <ThemedView style={styles.field}>
-      <ThemedText type="small" themeColor="textSecondary" style={{ color: theme.textSecondary }}>
-        {label}
-      </ThemedText>
-      {children}
-    </ThemedView>
-  );
-}
-
-function Chip({ label, active, onPress, theme }: { label: string; active: boolean; onPress: () => void; theme: ReturnType<typeof useTheme> }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[styles.chip, { borderColor: theme.border, backgroundColor: active ? theme.primary : theme.backgroundElement }]}
-    >
-      <ThemedText type="small" style={active ? styles.chipTextActive : undefined} themeColor={active ? undefined : 'textSecondary'}>
-        {label}
-      </ThemedText>
-    </Pressable>
+    <View style={styles.sectionTitle}>
+      <View style={[styles.sectionIcon, { backgroundColor: theme.primarySoft }]}>
+        <Ionicons name={icon} size={15} color={theme.primary} />
+      </View>
+      <ThemedText type="smallBold">{title}</ThemedText>
+    </View>
   );
 }
 
@@ -323,42 +313,45 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  center: {
+  loadingWrap: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: Spacing.three,
+    padding: Spacing.four,
   },
   container: {
     padding: Spacing.four,
     gap: Spacing.three,
     paddingBottom: Spacing.six,
   },
-  headerTitle: {
-    fontSize: 28,
-    lineHeight: 34,
-  },
-  banner: {
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
-    borderWidth: 1,
-  },
-  avatarRow: {
-    flexDirection: 'row',
+  hero: {
     alignItems: 'center',
-    gap: Spacing.three,
+    gap: Spacing.one,
+    padding: Spacing.four,
+    borderRadius: Radius.xl,
   },
   avatarWrap: {
-    width: 64,
-    height: 64,
+    width: 84,
+    height: 84,
+    marginBottom: Spacing.two,
   },
   avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.6)',
   },
   avatarPlaceholder: {
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  avatarInitials: {
+    color: '#ffffff',
+    fontWeight: '800',
+    fontSize: 26,
   },
   avatarOverlay: {
     position: 'absolute',
@@ -366,61 +359,70 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderRadius: 32,
+    borderRadius: 42,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(0,0,0,0.35)',
   },
-  avatarText: {
-    flex: 1,
-    gap: Spacing.half,
+  avatarEdit: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  field: {
+  heroName: {
+    color: '#ffffff',
+    fontWeight: '800',
+    fontSize: 20,
+    lineHeight: 26,
+  },
+  heroMeta: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+  },
+  successBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    padding: Spacing.three,
+    borderRadius: Radius.md,
+  },
+  section: {
+    gap: Spacing.three,
+  },
+  sectionTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: Spacing.two,
   },
-  input: {
-    borderWidth: 1.5,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.three,
-    fontSize: 16,
+  sectionIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: Radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
   },
-  chip: {
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.five,
-    borderWidth: 1.5,
-  },
-  chipTextActive: {
-    color: '#ffffff',
-    fontWeight: '700',
-  },
   resumeBox: {
     borderWidth: 1.5,
-    borderRadius: Spacing.two,
-    padding: Spacing.three,
+    borderStyle: 'dashed',
+    borderRadius: Radius.md,
+    padding: Spacing.four,
     alignItems: 'center',
-    gap: Spacing.half,
+    gap: Spacing.two,
   },
-  saveButton: {
-    borderRadius: Spacing.two,
-    paddingVertical: Spacing.three,
-    alignItems: 'center',
+  actions: {
+    gap: Spacing.three,
     marginTop: Spacing.two,
-  },
-  saveButtonText: {
-    color: '#ffffff',
-    fontWeight: '700',
-  },
-  signOutButton: {
-    borderWidth: 1.5,
-    borderRadius: Spacing.two,
-    paddingVertical: Spacing.three,
-    alignItems: 'center',
   },
 });

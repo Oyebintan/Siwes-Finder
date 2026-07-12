@@ -1,21 +1,24 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing, ThemeColor } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { Badge, type BadgeTone } from '@/components/ui/badge';
+import { Card, InitialAvatar } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Radius, Spacing } from '@/constants/theme';
 import { ApiError, getSchoolStudentDetail, type SchoolStudentDetail } from '@/api/client';
 
-const STATUS_COLOR: Record<string, ThemeColor> = {
+const STATUS_TONE: Record<string, BadgeTone> = {
   Pending: 'warning',
   Accepted: 'success',
   Rejected: 'error',
 };
 
 export default function SchoolStudentDetailScreen() {
-  const theme = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [detail, setDetail] = useState<SchoolStudentDetail | null>(null);
@@ -41,18 +44,30 @@ export default function SchoolStudentDetailScreen() {
 
   if (loading) {
     return (
-      <ThemedView style={styles.center}>
-        <ActivityIndicator color={theme.primary} />
+      <ThemedView style={styles.loadingWrap}>
+        <View style={styles.loadingHeader}>
+          <Skeleton width={56} height={56} radius={28} />
+          <View style={styles.loadingLines}>
+            <Skeleton width="70%" height={18} />
+            <Skeleton width="50%" height={13} />
+          </View>
+        </View>
+        <Skeleton height={110} radius={Radius.lg} />
+        <Skeleton height={110} radius={Radius.lg} />
       </ThemedView>
     );
   }
 
   if (error || !detail) {
     return (
-      <ThemedView style={styles.center}>
-        <ThemedText themeColor="error" style={styles.centerText}>
-          {error || 'Student not found.'}
-        </ThemedText>
+      <ThemedView style={styles.centerFill}>
+        <EmptyState
+          icon="cloud-offline-outline"
+          title="Couldn't load this student"
+          message={error || 'Student not found.'}
+          actionLabel="Try again"
+          onAction={load}
+        />
       </ThemedView>
     );
   }
@@ -62,23 +77,28 @@ export default function SchoolStudentDetailScreen() {
   return (
     <ThemedView style={styles.flex}>
       <ScrollView contentContainerStyle={styles.container}>
-        <ThemedText type="subtitle">{student.name}</ThemedText>
-        <ThemedText themeColor="textSecondary">{student.email}</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          {[student.courseOfStudy, student.faculty, student.level].filter(Boolean).join(' · ')}
-        </ThemedText>
+        <Animated.View entering={FadeInDown.duration(320)} style={styles.headerRow}>
+          <InitialAvatar name={student.name} size={56} />
+          <View style={styles.headerText}>
+            <ThemedText style={styles.name}>{student.name}</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              {student.email}
+            </ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              {[student.courseOfStudy, student.faculty, student.level].filter(Boolean).join(' · ')}
+            </ThemedText>
+          </View>
+        </Animated.View>
 
         {student.skills && student.skills.length > 0 ? (
-          <ThemedView style={styles.chipRow}>
+          <Animated.View entering={FadeInDown.duration(320).delay(60)} style={styles.chipRow}>
             {student.skills.map((s) => (
-              <ThemedView key={s} type="backgroundSelected" style={styles.chip}>
-                <ThemedText type="small">{s}</ThemedText>
-              </ThemedView>
+              <Badge key={s} label={s} tone="primary" />
             ))}
-          </ThemedView>
+          </Animated.View>
         ) : null}
 
-        <ThemedView style={styles.section}>
+        <Animated.View entering={FadeInDown.duration(320).delay(120)} style={styles.section}>
           <ThemedText type="smallBold">Applications</ThemedText>
           {applications.length === 0 ? (
             <ThemedText type="small" themeColor="textSecondary">
@@ -86,24 +106,22 @@ export default function SchoolStudentDetailScreen() {
             </ThemedText>
           ) : (
             applications.map((a) => (
-              <ThemedView key={a._id} type="backgroundElement" style={[styles.row, { borderColor: theme.border }]}>
-                <ThemedView style={styles.rowText}>
-                  <ThemedText type="small">{a.job?.title ?? 'Opportunity no longer available'}</ThemedText>
-                  <ThemedText type="small" themeColor="textSecondary">
+              <Card key={a._id} style={styles.row}>
+                <View style={styles.rowText}>
+                  <ThemedText type="smallBold" numberOfLines={1}>
+                    {a.job?.title ?? 'Opportunity no longer available'}
+                  </ThemedText>
+                  <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
                     {a.employer?.companyName || a.employer?.name}
                   </ThemedText>
-                </ThemedView>
-                <ThemedView type="backgroundSelected" style={styles.badge}>
-                  <ThemedText type="small" themeColor={STATUS_COLOR[a.status]}>
-                    {a.status}
-                  </ThemedText>
-                </ThemedView>
-              </ThemedView>
+                </View>
+                <Badge label={a.status} tone={STATUS_TONE[a.status] ?? 'neutral'} />
+              </Card>
             ))
           )}
-        </ThemedView>
+        </Animated.View>
 
-        <ThemedView style={styles.section}>
+        <Animated.View entering={FadeInDown.duration(320).delay(180)} style={styles.section}>
           <ThemedText type="smallBold">Logbook</ThemedText>
           {logbook.length === 0 ? (
             <ThemedText type="small" themeColor="textSecondary">
@@ -111,24 +129,24 @@ export default function SchoolStudentDetailScreen() {
             </ThemedText>
           ) : (
             logbook.map((log) => (
-              <ThemedView key={log._id} type="backgroundElement" style={[styles.row, { borderColor: theme.border }]}>
-                <ThemedView style={styles.rowText}>
-                  <ThemedText type="small">
+              <Card key={log._id} style={styles.row}>
+                <View style={styles.rowText}>
+                  <ThemedText type="smallBold">
                     Week {log.weekNumber} · {log.dayOfWeek}
                   </ThemedText>
                   <ThemedText type="small" themeColor="textSecondary">
                     {log.activityDescription}
                   </ThemedText>
-                </ThemedView>
-                <ThemedView type="backgroundSelected" style={styles.badge}>
-                  <ThemedText type="small" themeColor={log.isApproved ? 'success' : 'warning'}>
-                    {log.isApproved ? 'Approved' : 'Pending'}
-                  </ThemedText>
-                </ThemedView>
-              </ThemedView>
+                </View>
+                <Badge
+                  label={log.isApproved ? 'Approved' : 'Pending'}
+                  tone={log.isApproved ? 'success' : 'warning'}
+                  icon={log.isApproved ? 'checkmark-circle' : 'time-outline'}
+                />
+              </Card>
             ))
           )}
-        </ThemedView>
+        </Animated.View>
       </ScrollView>
     </ThemedView>
   );
@@ -138,51 +156,61 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  center: {
+  centerFill: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
-    padding: Spacing.four,
   },
-  centerText: {
-    textAlign: 'center',
+  loadingWrap: {
+    flex: 1,
+    padding: Spacing.four,
+    gap: Spacing.three,
+  },
+  loadingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+  },
+  loadingLines: {
+    flex: 1,
+    gap: Spacing.two,
   },
   container: {
     padding: Spacing.four,
-    gap: Spacing.two,
+    gap: Spacing.three,
     paddingBottom: Spacing.six,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+  },
+  headerText: {
+    flex: 1,
+    gap: Spacing.half,
+  },
+  name: {
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '800',
+    letterSpacing: -0.4,
   },
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
-    marginTop: Spacing.two,
-  },
-  chip: {
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.half,
-    borderRadius: Spacing.five,
   },
   section: {
     gap: Spacing.two,
-    marginTop: Spacing.three,
+    marginTop: Spacing.one,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: Spacing.two,
-    borderWidth: 1.5,
-    borderRadius: Spacing.three,
-    padding: Spacing.three,
+    gap: Spacing.three,
   },
   rowText: {
     flex: 1,
     gap: Spacing.half,
-  },
-  badge: {
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.half,
-    borderRadius: Spacing.two,
   },
 });

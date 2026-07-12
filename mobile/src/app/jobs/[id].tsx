@@ -1,10 +1,19 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, InitialAvatar } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ErrorBanner } from '@/components/ui/error-banner';
+import { PressableScale } from '@/components/ui/pressable-scale';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import {
   ApiError,
@@ -67,7 +76,7 @@ export default function JobDetailScreen() {
       const { saved: nowSaved } = await toggleSavedJob(id);
       setSaved(nowSaved);
     } catch {
-      // Best-effort, same as the Jobs list -- leave the star state unchanged.
+      // Best-effort, same as the Jobs list -- leave the bookmark unchanged.
     }
   };
 
@@ -99,18 +108,30 @@ export default function JobDetailScreen() {
 
   if (loading) {
     return (
-      <ThemedView style={styles.center}>
-        <ActivityIndicator color={theme.primary} />
+      <ThemedView style={styles.loadingWrap}>
+        <View style={styles.loadingHeader}>
+          <Skeleton width={56} height={56} radius={28} />
+          <View style={styles.loadingLines}>
+            <Skeleton width="80%" height={20} />
+            <Skeleton width="55%" height={14} />
+          </View>
+        </View>
+        <Skeleton height={110} radius={Radius.lg} />
+        <Skeleton height={160} radius={Radius.lg} />
       </ThemedView>
     );
   }
 
   if (loadError || !job) {
     return (
-      <ThemedView style={styles.center}>
-        <ThemedText themeColor="error" style={styles.centerText}>
-          {loadError || 'This opportunity is no longer available.'}
-        </ThemedText>
+      <ThemedView style={styles.flex}>
+        <EmptyState
+          icon="cloud-offline-outline"
+          title="Couldn't load this opportunity"
+          message={loadError || 'This opportunity is no longer available.'}
+          actionLabel="Try again"
+          onAction={load}
+        />
       </ThemedView>
     );
   }
@@ -121,122 +142,108 @@ export default function JobDetailScreen() {
   return (
     <ThemedView style={styles.flex}>
       <ScrollView contentContainerStyle={styles.container}>
-        <ThemedView style={styles.titleRow}>
-          <ThemedView style={styles.titleText}>
-            <ThemedText type="subtitle">{job.title}</ThemedText>
-            <ThemedText themeColor="textSecondary">
+        <Animated.View entering={FadeInDown.duration(320)} style={styles.titleRow}>
+          <InitialAvatar name={companyName} size={56} />
+          <View style={styles.titleText}>
+            <ThemedText style={styles.title}>{job.title}</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
               {companyName} · {job.location}
             </ThemedText>
-          </ThemedView>
-          <Pressable onPress={handleToggleSave} hitSlop={8}>
-            <ThemedText style={[styles.star, { color: saved ? theme.primary : theme.textSecondary }]}>{saved ? '★' : '☆'}</ThemedText>
-          </Pressable>
-        </ThemedView>
+          </View>
+          <PressableScale
+            onPress={handleToggleSave}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={saved ? 'Remove bookmark' : 'Bookmark this opportunity'}
+          >
+            <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={24} color={saved ? theme.primary : theme.textSecondary} />
+          </PressableScale>
+        </Animated.View>
 
-        <ThemedView style={styles.badgeRow}>
-          <ThemedView type="backgroundSelected" style={styles.badge}>
-            <ThemedText type="small">{job.type}</ThemedText>
-          </ThemedView>
-          <ThemedView type="backgroundSelected" style={styles.badge}>
-            <ThemedText type="small">{job.duration}</ThemedText>
-          </ThemedView>
-          {job.stipend ? (
-            <ThemedView type="backgroundSelected" style={styles.badge}>
-              <ThemedText type="small">{job.stipend}</ThemedText>
-            </ThemedView>
-          ) : null}
-          {job.matchScore != null ? (
-            <ThemedView type="backgroundSelected" style={styles.badge}>
-              <ThemedText type="small" themeColor="primary">
-                {job.matchScore}% match
-              </ThemedText>
-            </ThemedView>
-          ) : null}
-        </ThemedView>
+        <Animated.View entering={FadeInDown.duration(320).delay(70)} style={styles.badgeRow}>
+          <Badge label={job.type} tone="neutral" />
+          <Badge label={job.duration} tone="neutral" icon="time-outline" />
+          {job.stipend ? <Badge label={job.stipend} tone="success" icon="cash-outline" /> : null}
+          {job.matchScore != null ? <Badge label={`${job.matchScore}% match`} tone="primary" icon="flash" /> : null}
+        </Animated.View>
 
         {job.employerId?._id ? (
-          <Pressable
-            onPress={handleToggleFollow}
-            disabled={followBusy}
-            style={[
-              styles.followButton,
-              { borderColor: following ? theme.primary : theme.border, opacity: followBusy ? 0.6 : 1 },
-            ]}
-          >
-            <ThemedText type="small" themeColor={following ? 'primary' : 'textSecondary'}>
-              {following ? '✓ Following' : `Follow ${companyName}`}
-            </ThemedText>
-          </Pressable>
+          <Animated.View entering={FadeInDown.duration(320).delay(120)}>
+            <Button
+              label={following ? 'Following' : `Follow ${companyName}`}
+              icon={following ? 'checkmark-circle' : 'notifications-outline'}
+              variant={following ? 'ghost' : 'secondary'}
+              small
+              onPress={handleToggleFollow}
+              disabled={followBusy}
+              style={styles.followButton}
+            />
+          </Animated.View>
         ) : null}
 
-        <ThemedView type="backgroundElement" style={[styles.section, { borderColor: theme.border }]}>
-          <ThemedText type="smallBold" style={styles.sectionTitle}>
-            Overview
-          </ThemedText>
-          <OverviewRow label="Application method" value={METHOD_LABEL[job.applicationMethod] ?? 'In-app'} theme={theme} />
-          {job.applicationDeadline ? (
-            <OverviewRow
-              label="Apply by"
-              value={new Date(job.applicationDeadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-              theme={theme}
-            />
-          ) : null}
-          {spotsRemaining != null ? (
-            <OverviewRow label="Spots remaining" value={`${spotsRemaining} of ${job.maxApplicants}`} theme={theme} />
-          ) : null}
-        </ThemedView>
+        <Animated.View entering={FadeInDown.duration(320).delay(170)}>
+          <Card style={styles.section}>
+            <ThemedText type="smallBold">Overview</ThemedText>
+            <OverviewRow icon="paper-plane-outline" label="Application method" value={METHOD_LABEL[job.applicationMethod] ?? 'In-app'} />
+            {job.applicationDeadline ? (
+              <OverviewRow
+                icon="calendar-outline"
+                label="Apply by"
+                value={new Date(job.applicationDeadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+              />
+            ) : null}
+            {spotsRemaining != null ? (
+              <OverviewRow icon="people-outline" label="Spots remaining" value={`${spotsRemaining} of ${job.maxApplicants}`} />
+            ) : null}
+          </Card>
+        </Animated.View>
 
-        <ThemedView type="backgroundElement" style={[styles.section, { borderColor: theme.border }]}>
-          <ThemedText type="smallBold" style={styles.sectionTitle}>
-            Description
-          </ThemedText>
-          <ThemedText themeColor="textSecondary" style={styles.description}>
-            {job.description}
-          </ThemedText>
-        </ThemedView>
+        <Animated.View entering={FadeInDown.duration(320).delay(220)}>
+          <Card style={styles.section}>
+            <ThemedText type="smallBold">Description</ThemedText>
+            <ThemedText themeColor="textSecondary" style={styles.description}>
+              {job.description}
+            </ThemedText>
+          </Card>
+        </Animated.View>
 
         {job.requirements.length > 0 ? (
-          <ThemedView type="backgroundElement" style={[styles.section, { borderColor: theme.border }]}>
-            <ThemedText type="smallBold" style={styles.sectionTitle}>
-              Requirements
-            </ThemedText>
-            {job.requirements.map((req, idx) => (
-              <ThemedText key={idx} themeColor="textSecondary" style={styles.requirement}>
-                ✓ {req}
-              </ThemedText>
-            ))}
-          </ThemedView>
+          <Animated.View entering={FadeInDown.duration(320).delay(270)}>
+            <Card style={styles.section}>
+              <ThemedText type="smallBold">Requirements</ThemedText>
+              {job.requirements.map((req, idx) => (
+                <View key={idx} style={styles.requirementRow}>
+                  <Ionicons name="checkmark-circle" size={16} color={theme.success} style={styles.requirementIcon} />
+                  <ThemedText type="small" themeColor="textSecondary" style={styles.requirement}>
+                    {req}
+                  </ThemedText>
+                </View>
+              ))}
+            </Card>
+          </Animated.View>
         ) : null}
       </ScrollView>
 
       <ThemedView type="backgroundElement" style={[styles.applyBar, { borderColor: theme.border }]}>
-        {applyError ? (
-          <ThemedText themeColor="error" type="small" style={styles.applyError}>
-            {applyError}
-          </ThemedText>
-        ) : null}
-        <ApplyAction
-          job={job}
-          applying={applying}
-          applied={applied}
-          onApply={handleApply}
-          theme={theme}
-        />
+        {applyError ? <ErrorBanner message={applyError} /> : null}
+        <ApplyAction job={job} applying={applying} applied={applied} onApply={handleApply} />
       </ThemedView>
     </ThemedView>
   );
 }
 
-function OverviewRow({ label, value, theme }: { label: string; value: string; theme: ReturnType<typeof useTheme> }) {
+function OverviewRow({ icon, label, value }: { icon: keyof typeof Ionicons.glyphMap; label: string; value: string }) {
+  const theme = useTheme();
   return (
-    <ThemedView style={styles.overviewRow}>
-      <ThemedText type="small" themeColor="textSecondary">
-        {label}
-      </ThemedText>
-      <ThemedText type="smallBold" style={{ color: theme.text }}>
-        {value}
-      </ThemedText>
-    </ThemedView>
+    <View style={styles.overviewRow}>
+      <View style={styles.overviewLabel}>
+        <Ionicons name={icon} size={15} color={theme.textSecondary} />
+        <ThemedText type="small" themeColor="textSecondary">
+          {label}
+        </ThemedText>
+      </View>
+      <ThemedText type="smallBold">{value}</ThemedText>
+    </View>
   );
 }
 
@@ -245,65 +252,63 @@ function ApplyAction({
   applying,
   applied,
   onApply,
-  theme,
 }: {
   job: Job;
   applying: boolean;
   applied: boolean;
   onApply: () => void;
-  theme: ReturnType<typeof useTheme>;
 }) {
+  const theme = useTheme();
+
   if (job.applicationMethod === 'email' && job.applicationEmail) {
     const subject = encodeURIComponent(`SIWES Application: ${job.title}`);
     return (
-      <Pressable
+      <Button
+        label="Apply via Email"
+        icon="mail-outline"
         onPress={() => Linking.openURL(`mailto:${job.applicationEmail}?subject=${subject}`)}
-        style={[styles.applyButton, { backgroundColor: theme.primary }]}
-      >
-        <ThemedText style={styles.applyButtonText}>Apply via Email</ThemedText>
-      </Pressable>
+      />
     );
   }
 
   if (job.applicationMethod === 'external' && job.applicationUrl) {
-    return (
-      <Pressable onPress={() => Linking.openURL(job.applicationUrl!)} style={[styles.applyButton, { backgroundColor: theme.primary }]}>
-        <ThemedText style={styles.applyButtonText}>Apply on Company Site</ThemedText>
-      </Pressable>
-    );
+    return <Button label="Apply on Company Site" icon="open-outline" onPress={() => Linking.openURL(job.applicationUrl!)} />;
   }
 
   if (applied) {
     return (
-      <ThemedView style={[styles.applyButton, styles.appliedButton, { borderColor: theme.success }]}>
-        <ThemedText themeColor="success">Application submitted ✓</ThemedText>
-      </ThemedView>
+      <Animated.View
+        entering={FadeInDown.duration(300)}
+        style={[styles.appliedButton, { backgroundColor: theme.successSoft }]}
+      >
+        <Ionicons name="checkmark-circle" size={20} color={theme.success} />
+        <ThemedText themeColor="success" type="smallBold">
+          Application submitted
+        </ThemedText>
+      </Animated.View>
     );
   }
 
-  return (
-    <Pressable
-      onPress={onApply}
-      disabled={applying}
-      style={[styles.applyButton, { backgroundColor: theme.primary, opacity: applying ? 0.6 : 1 }]}
-    >
-      {applying ? <ActivityIndicator color="#fff" /> : <ThemedText style={styles.applyButtonText}>Apply Now</ThemedText>}
-    </Pressable>
-  );
+  return <Button label="Apply Now" icon="paper-plane" onPress={onApply} loading={applying} />;
 }
 
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  center: {
+  loadingWrap: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
     padding: Spacing.four,
+    gap: Spacing.three,
   },
-  centerText: {
-    textAlign: 'center',
+  loadingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+  },
+  loadingLines: {
+    flex: 1,
+    gap: Spacing.two,
   },
   container: {
     padding: Spacing.four,
@@ -312,73 +317,67 @@ const styles = StyleSheet.create({
   },
   titleRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: Spacing.two,
+    alignItems: 'center',
+    gap: Spacing.three,
   },
   titleText: {
     flex: 1,
     gap: Spacing.half,
   },
-  star: {
-    fontSize: 24,
+  title: {
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '800',
+    letterSpacing: -0.4,
   },
   badgeRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
   },
-  badge: {
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.half,
-    borderRadius: Spacing.two,
-  },
   followButton: {
     alignSelf: 'flex-start',
-    borderWidth: 1.5,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
   },
   section: {
-    borderWidth: 1.5,
-    borderRadius: Spacing.three,
-    padding: Spacing.three,
     gap: Spacing.two,
-  },
-  sectionTitle: {
-    marginBottom: Spacing.half,
   },
   description: {
     lineHeight: 22,
   },
+  requirementRow: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+  },
+  requirementIcon: {
+    marginTop: 2,
+  },
   requirement: {
+    flex: 1,
     lineHeight: 20,
   },
   overviewRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     gap: Spacing.two,
+  },
+  overviewLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one + Spacing.half,
   },
   applyBar: {
     padding: Spacing.three,
-    borderTopWidth: 1.5,
+    borderTopWidth: StyleSheet.hairlineWidth,
     gap: Spacing.two,
   },
-  applyError: {
-    textAlign: 'center',
-  },
-  applyButton: {
-    borderRadius: Spacing.two,
-    paddingVertical: Spacing.three,
-    alignItems: 'center',
-  },
   appliedButton: {
-    borderWidth: 1.5,
-    backgroundColor: 'transparent',
-  },
-  applyButtonText: {
-    color: '#ffffff',
-    fontWeight: '700',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.two,
+    borderRadius: Radius.md,
+    paddingVertical: Spacing.three,
+    minHeight: 52,
   },
 });

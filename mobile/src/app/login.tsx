@@ -1,16 +1,21 @@
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, TextInput } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { BrandLogo } from '@/components/ui/brand-logo';
+import { Button } from '@/components/ui/button';
+import { ErrorBanner } from '@/components/ui/error-banner';
+import { Field } from '@/components/ui/field';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/api/AuthContext';
 import { ApiError } from '@/api/client';
 
 export default function LoginScreen() {
-  const theme = useTheme();
   const { login } = useAuth();
 
   const [email, setEmail] = useState('');
@@ -32,97 +37,100 @@ export default function LoginScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
-      <ThemedText type="title" style={styles.title}>
-        SIWES Finder
-      </ThemedText>
-      <ThemedText type="small" themeColor="textSecondary" style={styles.subtitle}>
-        Log in to continue your placement journey.
-      </ThemedText>
+    <ThemedView style={styles.flex}>
+      <SafeAreaView style={styles.flex}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
+          <ScrollView
+            contentContainerStyle={styles.container}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <Animated.View entering={FadeInDown.duration(450)} style={styles.hero}>
+              <BrandLogo size={76} withWordmark />
+              <ThemedText type="small" themeColor="textSecondary" style={styles.tagline}>
+                Welcome back — pick up your placement journey.
+              </ThemedText>
+            </Animated.View>
 
-      {error ? (
-        <ThemedView type="backgroundElement" style={[styles.errorBanner, { borderColor: theme.error }]}>
-          <ThemedText themeColor="error" type="small">
-            {error}
-          </ThemedText>
-        </ThemedView>
-      ) : null}
+            <View style={styles.form}>
+              {error ? <ErrorBanner message={error} /> : null}
 
-      <TextInput
-        value={email}
-        onChangeText={setEmail}
-        placeholder="Email address"
-        placeholderTextColor={theme.textSecondary}
-        autoCapitalize="none"
-        autoComplete="email"
-        keyboardType="email-address"
-        style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
-      />
-      <TextInput
-        value={password}
-        onChangeText={setPassword}
-        placeholder="Password"
-        placeholderTextColor={theme.textSecondary}
-        secureTextEntry
-        autoComplete="password"
-        style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
-      />
+              <Animated.View entering={FadeInDown.duration(400).delay(120)}>
+                <Field
+                  label="Email"
+                  icon="mail-outline"
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="you@school.edu.ng"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  keyboardType="email-address"
+                  returnKeyType="next"
+                />
+              </Animated.View>
 
-      <Pressable
-        onPress={handleLogin}
-        disabled={loading || !email || !password}
-        style={[styles.button, { backgroundColor: theme.primary, opacity: loading || !email || !password ? 0.6 : 1 }]}
-      >
-        {loading ? <ActivityIndicator color="#fff" /> : <ThemedText style={styles.buttonText}>Log in</ThemedText>}
-      </Pressable>
+              <Animated.View entering={FadeInDown.duration(400).delay(200)}>
+                <Field
+                  label="Password"
+                  icon="lock-closed-outline"
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Your password"
+                  password
+                  autoComplete="password"
+                  returnKeyType="go"
+                  onSubmitEditing={handleLogin}
+                />
+              </Animated.View>
 
-      <Pressable onPress={() => router.replace('/signup')} style={styles.linkRow}>
-        <ThemedText type="small" themeColor="textSecondary">
-          New here? <ThemedText type="smallBold" themeColor="primary">Create an account</ThemedText>
-        </ThemedText>
-      </Pressable>
+              <Animated.View entering={FadeInDown.duration(400).delay(280)}>
+                <Button
+                  label="Log in"
+                  icon="arrow-forward"
+                  onPress={handleLogin}
+                  loading={loading}
+                  disabled={!email || !password}
+                />
+              </Animated.View>
+            </View>
+
+            <Animated.View entering={FadeInUp.duration(400).delay(400)}>
+              <PressableScale onPress={() => router.replace('/signup')} style={styles.linkRow} haptic={false}>
+                <ThemedText type="small" themeColor="textSecondary">
+                  New here? <ThemedText type="smallBold" themeColor="primary">Create an account</ThemedText>
+                </ThemedText>
+              </PressableScale>
+            </Animated.View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  flex: {
     flex: 1,
+  },
+  container: {
+    flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.five,
+    gap: Spacing.five,
+  },
+  hero: {
+    alignItems: 'center',
     gap: Spacing.three,
   },
-  title: {
+  tagline: {
     textAlign: 'center',
   },
-  subtitle: {
-    textAlign: 'center',
-    marginBottom: Spacing.three,
-  },
-  errorBanner: {
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
-    borderWidth: 1,
-  },
-  input: {
-    borderWidth: 1.5,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.three,
-    fontSize: 16,
-  },
-  button: {
-    borderRadius: Spacing.two,
-    paddingVertical: Spacing.three,
-    alignItems: 'center',
-    marginTop: Spacing.two,
-  },
-  buttonText: {
-    color: '#ffffff',
-    fontWeight: '700',
+  form: {
+    gap: Spacing.three,
   },
   linkRow: {
     alignItems: 'center',
-    marginTop: Spacing.two,
+    paddingVertical: Spacing.two,
   },
 });

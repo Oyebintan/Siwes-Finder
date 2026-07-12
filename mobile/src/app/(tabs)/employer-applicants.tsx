@@ -1,11 +1,21 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeInDown, FadeInUp, FadeOut } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing, ThemeColor } from '@/constants/theme';
+import { Badge, type BadgeTone } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, InitialAvatar } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ErrorBanner } from '@/components/ui/error-banner';
+import { PressableScale } from '@/components/ui/pressable-scale';
+import { ScreenHeader } from '@/components/ui/screen-header';
+import { SkeletonList } from '@/components/ui/skeleton';
+import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import {
   ApiError,
@@ -15,11 +25,14 @@ import {
   type EmployerApplication,
 } from '@/api/client';
 
-const STATUS_COLOR: Record<EmployerApplication['status'], ThemeColor> = {
+const STATUS_TONE: Record<EmployerApplication['status'], BadgeTone> = {
   Pending: 'warning',
   Accepted: 'success',
   Rejected: 'error',
 };
+
+const STAGGER_MS = 55;
+const MAX_STAGGERED = 8;
 
 export default function EmployerApplicantsScreen() {
   const theme = useTheme();
@@ -91,153 +104,144 @@ export default function EmployerApplicantsScreen() {
   return (
     <ThemedView style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={['top']}>
-        <ThemedView style={styles.headerRow}>
-          <ThemedText type="title" style={styles.headerTitle}>
-            Applicants
-          </ThemedText>
-          {applications.some((a) => a.status === 'Pending') ? (
-            <Pressable
-              onPress={() => {
-                setSelectMode((v) => !v);
-                setSelected(new Set());
-              }}
-              style={[styles.selectToggle, { borderColor: selectMode ? theme.primary : theme.border }]}
-            >
-              <ThemedText type="small" themeColor={selectMode ? 'primary' : 'textSecondary'}>
-                {selectMode ? 'Cancel' : 'Select'}
-              </ThemedText>
-            </Pressable>
-          ) : null}
-        </ThemedView>
+        <ScreenHeader
+          title="Applicants"
+          subtitle="Review and decide on applications"
+          right={
+            applications.some((a) => a.status === 'Pending') ? (
+              <Button
+                label={selectMode ? 'Cancel' : 'Select'}
+                icon={selectMode ? 'close' : 'checkbox-outline'}
+                variant="secondary"
+                small
+                onPress={() => {
+                  setSelectMode((v) => !v);
+                  setSelected(new Set());
+                }}
+              />
+            ) : undefined
+          }
+        />
 
-        {error ? (
-          <ThemedView type="backgroundElement" style={[styles.errorBanner, { borderColor: theme.error }]}>
-            <ThemedText themeColor="error" type="small">
-              {error}
-            </ThemedText>
-          </ThemedView>
-        ) : null}
+        {error ? <ErrorBanner message={error} style={styles.errorBanner} /> : null}
 
         {loading ? (
-          <ThemedView style={styles.center}>
-            <ActivityIndicator color={theme.primary} />
-          </ThemedView>
+          <SkeletonList />
         ) : (
           <FlatList
             data={applications}
             keyExtractor={(a) => a._id}
             contentContainerStyle={styles.list}
             ListEmptyComponent={
-              <ThemedView style={styles.center}>
-                <ThemedText themeColor="textSecondary">No applicants yet.</ThemedText>
-              </ThemedView>
+              <EmptyState
+                icon="people-outline"
+                title="No applicants yet"
+                message="Applications to your posted opportunities will land here."
+              />
             }
-            renderItem={({ item }) => {
+            renderItem={({ item, index }) => {
               const showCheckbox = selectMode && item.status === 'Pending';
+              const isSelected = selected.has(item._id);
               return (
-              <ThemedView
-                type="backgroundElement"
-                style={[styles.card, { borderColor: selected.has(item._id) ? theme.primary : theme.border }]}
-              >
-                <Pressable
-                  disabled={!showCheckbox}
-                  onPress={() => toggleSelected(item._id)}
-                  style={styles.cardHeader}
+                <Animated.View
+                  entering={FadeInDown.duration(320).delay(Math.min(index, MAX_STAGGERED) * STAGGER_MS)}
                 >
-                  {showCheckbox ? (
-                    <ThemedText style={{ color: selected.has(item._id) ? theme.primary : theme.textSecondary }}>
-                      {selected.has(item._id) ? '☑' : '☐'}
-                    </ThemedText>
-                  ) : null}
-                  <ThemedView style={styles.cardHeaderText}>
-                    <ThemedText type="smallBold">{item.student?.name ?? 'Unknown applicant'}</ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {item.job?.title ?? 'Opportunity no longer available'}
-                    </ThemedText>
-                  </ThemedView>
-                  <ThemedView type="backgroundSelected" style={styles.badge}>
-                    <ThemedText type="small" themeColor={STATUS_COLOR[item.status]}>
-                      {item.status}
-                    </ThemedText>
-                  </ThemedView>
-                </Pressable>
-
-                {item.student?.university || item.student?.courseOfStudy ? (
-                  <ThemedText type="small" themeColor="textSecondary">
-                    {[item.student.courseOfStudy, item.student.university].filter(Boolean).join(' · ')}
-                  </ThemedText>
-                ) : null}
-                <ThemedText type="small" themeColor="textSecondary">
-                  {item.student?.email}
-                </ThemedText>
-
-                <Pressable
-                  onPress={() => router.push(`/messages/${item._id}`)}
-                  style={[styles.messageButton, { borderColor: theme.border }]}
-                >
-                  <ThemedText type="small" themeColor="primary">
-                    Message {item.student?.name ?? 'applicant'}
-                  </ThemedText>
-                </Pressable>
-
-                {item.status === 'Pending' ? (
-                  <ThemedView style={styles.actionRow}>
-                    <Pressable
-                      onPress={() => handleDecision(item._id, 'Rejected')}
-                      disabled={actioningId === item._id}
-                      style={[styles.actionButton, styles.rejectButton, { borderColor: theme.error }]}
+                  <Card style={isSelected ? { borderColor: theme.primary, borderWidth: 1.5 } : undefined}>
+                    <PressableScale
+                      disabled={!showCheckbox}
+                      onPress={() => toggleSelected(item._id)}
+                      style={styles.cardHeader}
+                      haptic={showCheckbox}
                     >
-                      <ThemedText themeColor="error" type="small">
-                        Reject
-                      </ThemedText>
-                    </Pressable>
-                    <Pressable
-                      onPress={() => handleDecision(item._id, 'Accepted')}
-                      disabled={actioningId === item._id}
-                      style={[styles.actionButton, { backgroundColor: theme.primary, opacity: actioningId === item._id ? 0.6 : 1 }]}
-                    >
-                      {actioningId === item._id ? (
-                        <ActivityIndicator color="#fff" size="small" />
+                      {showCheckbox ? (
+                        <Ionicons
+                          name={isSelected ? 'checkbox' : 'square-outline'}
+                          size={22}
+                          color={isSelected ? theme.primary : theme.textSecondary}
+                        />
                       ) : (
-                        <ThemedText style={styles.acceptButtonText}>Accept</ThemedText>
+                        <InitialAvatar name={item.student?.name ?? '?'} />
                       )}
-                    </Pressable>
-                  </ThemedView>
-                ) : null}
-              </ThemedView>
+                      <View style={styles.cardHeaderText}>
+                        <ThemedText type="smallBold" numberOfLines={1}>
+                          {item.student?.name ?? 'Unknown applicant'}
+                        </ThemedText>
+                        <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+                          {item.job?.title ?? 'Opportunity no longer available'}
+                        </ThemedText>
+                      </View>
+                      <Badge label={item.status} tone={STATUS_TONE[item.status]} />
+                    </PressableScale>
+
+                    {item.student?.university || item.student?.courseOfStudy ? (
+                      <ThemedText type="small" themeColor="textSecondary">
+                        {[item.student.courseOfStudy, item.student.university].filter(Boolean).join(' · ')}
+                      </ThemedText>
+                    ) : null}
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {item.student?.email}
+                    </ThemedText>
+
+                    <View style={styles.actionRow}>
+                      <Button
+                        label="Message"
+                        icon="chatbubble-ellipses-outline"
+                        variant="ghost"
+                        small
+                        onPress={() => router.push(`/messages/${item._id}`)}
+                      />
+                      {item.status === 'Pending' ? (
+                        <View style={styles.decisionRow}>
+                          <Button
+                            label="Reject"
+                            icon="close"
+                            variant="danger"
+                            small
+                            onPress={() => handleDecision(item._id, 'Rejected')}
+                            disabled={actioningId === item._id}
+                          />
+                          <Button
+                            label="Accept"
+                            icon="checkmark"
+                            small
+                            onPress={() => handleDecision(item._id, 'Accepted')}
+                            loading={actioningId === item._id}
+                          />
+                        </View>
+                      ) : null}
+                    </View>
+                  </Card>
+                </Animated.View>
               );
             }}
           />
         )}
 
         {selectMode && selected.size > 0 ? (
-          <ThemedView type="backgroundElement" style={[styles.bulkBar, { borderColor: theme.border }]}>
-            <ThemedText type="small" themeColor="textSecondary">
-              {selected.size} selected
-            </ThemedText>
-            <ThemedView style={styles.bulkActions}>
-              <Pressable
+          <Animated.View
+            entering={FadeInUp.duration(250)}
+            exiting={FadeOut.duration(150)}
+            style={[styles.bulkBar, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
+          >
+            <ThemedText type="smallBold">{selected.size} selected</ThemedText>
+            <View style={styles.bulkActions}>
+              <Button
+                label="Reject selected"
+                variant="danger"
+                small
                 onPress={() => handleBulkDecision('Rejected')}
                 disabled={bulkActing}
-                style={[styles.actionButton, styles.rejectButton, { borderColor: theme.error }]}
-              >
-                <ThemedText themeColor="error" type="small">
-                  Reject selected
-                </ThemedText>
-              </Pressable>
-              <Pressable
+                style={styles.bulkButton}
+              />
+              <Button
+                label="Accept selected"
+                small
                 onPress={() => handleBulkDecision('Accepted')}
-                disabled={bulkActing}
-                style={[styles.actionButton, { backgroundColor: theme.primary, opacity: bulkActing ? 0.6 : 1 }]}
-              >
-                {bulkActing ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <ThemedText style={styles.acceptButtonText}>Accept selected</ThemedText>
-                )}
-              </Pressable>
-            </ThemedView>
-          </ThemedView>
+                loading={bulkActing}
+                style={styles.bulkButton}
+              />
+            </View>
+          </Animated.View>
         ) : null}
       </SafeAreaView>
     </ThemedView>
@@ -248,94 +252,45 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.two,
-  },
-  headerTitle: {
-    fontSize: 28,
-    lineHeight: 34,
-  },
-  selectToggle: {
-    borderWidth: 1.5,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-  },
   errorBanner: {
     marginHorizontal: Spacing.four,
     marginTop: Spacing.three,
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
-    borderWidth: 1,
-  },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.six,
   },
   list: {
     padding: Spacing.four,
     gap: Spacing.three,
-  },
-  card: {
-    borderWidth: 1.5,
-    borderRadius: Spacing.three,
-    padding: Spacing.three,
-    gap: Spacing.half,
+    flexGrow: 1,
   },
   cardHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: Spacing.two,
+    alignItems: 'center',
+    gap: Spacing.three,
   },
   cardHeaderText: {
     flex: 1,
     gap: Spacing.half,
   },
-  badge: {
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.half,
-    borderRadius: Spacing.two,
-  },
-  messageButton: {
-    alignSelf: 'flex-start',
-    borderWidth: 1.5,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    marginTop: Spacing.half,
-  },
   actionRow: {
     flexDirection: 'row',
-    gap: Spacing.two,
-    marginTop: Spacing.two,
-  },
-  actionButton: {
-    flex: 1,
-    borderRadius: Spacing.two,
-    paddingVertical: Spacing.two,
     alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+    marginTop: Spacing.one,
   },
-  rejectButton: {
-    borderWidth: 1.5,
-  },
-  acceptButtonText: {
-    color: '#ffffff',
-    fontWeight: '700',
+  decisionRow: {
+    flexDirection: 'row',
+    gap: Spacing.two,
   },
   bulkBar: {
-    borderTopWidth: 1.5,
+    borderTopWidth: StyleSheet.hairlineWidth,
     padding: Spacing.three,
     gap: Spacing.two,
   },
   bulkActions: {
     flexDirection: 'row',
     gap: Spacing.two,
+  },
+  bulkButton: {
+    flex: 1,
   },
 });

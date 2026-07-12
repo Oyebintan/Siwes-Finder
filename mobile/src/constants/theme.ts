@@ -23,6 +23,16 @@ export const Colors = {
     success: '#12b76a',
     warning: '#b45309',
     error: '#dc2626',
+    // Soft tints for badge/icon-circle backgrounds (≈10% alpha of the
+    // semantic color on the light surface).
+    primarySoft: '#e7edfd',
+    successSoft: '#e2f8ee',
+    warningSoft: '#fdf0e0',
+    errorSoft: '#fde8e8',
+    // Brand gradient (CTA buttons, hero panels). Blue → indigo, same
+    // family as the web's primary.
+    gradientStart: '#2557eb',
+    gradientEnd: '#4338ca',
   },
   dark: {
     text: '#f3f5f8',
@@ -35,7 +45,22 @@ export const Colors = {
     success: '#3fe6a0',
     warning: '#fbbf24',
     error: '#ff6b6b',
+    primarySoft: '#1a2340',
+    successSoft: '#0e2b21',
+    warningSoft: '#33270d',
+    errorSoft: '#3a1717',
+    gradientStart: '#2557eb',
+    gradientEnd: '#4338ca',
   },
+} as const;
+
+// Corner radii — one scale everywhere so surfaces read as one system.
+export const Radius = {
+  sm: 10,
+  md: 14,
+  lg: 20,
+  xl: 28,
+  full: 999,
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;

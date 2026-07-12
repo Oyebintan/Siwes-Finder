@@ -1,11 +1,22 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import NetInfo from '@react-native-community/netinfo';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ErrorBanner } from '@/components/ui/error-banner';
+import { Field } from '@/components/ui/field';
+import { ScreenHeader } from '@/components/ui/screen-header';
+import { SkeletonCard } from '@/components/ui/skeleton';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { ApiError, createLogbookEntry, listLogbookEntries, type LogbookEntry } from '@/api/client';
@@ -138,141 +149,102 @@ export default function LogbookScreen() {
     <ThemedView style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={['top']}>
         <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-          <ThemedText type="title" style={styles.headerTitle}>
-            e-Logbook
-          </ThemedText>
+          <ScreenHeader title="e-Logbook" subtitle="Your daily record, synced to your school" />
 
-          <ThemedView type="backgroundElement" style={[styles.form, { borderColor: theme.border }]}>
-            {submitError ? (
-              <ThemedText themeColor="error" type="small">
-                {submitError}
-              </ThemedText>
-            ) : null}
-            {syncNotice ? (
-              <ThemedText themeColor="success" type="small">
-                {syncNotice}
-              </ThemedText>
-            ) : null}
-
-            <ThemedView style={styles.row}>
-              <ThemedView style={styles.weekField}>
-                <ThemedText type="small" themeColor="textSecondary">
-                  Week
-                </ThemedText>
-                <TextInput
-                  value={week}
-                  onChangeText={setWeek}
-                  keyboardType="number-pad"
-                  style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.background }]}
-                />
-              </ThemedView>
-              <ThemedView style={styles.hoursField}>
-                <ThemedText type="small" themeColor="textSecondary">
-                  Hours
-                </ThemedText>
-                <TextInput
-                  value={hours}
-                  onChangeText={setHours}
-                  keyboardType="number-pad"
-                  style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.background }]}
-                />
-              </ThemedView>
-            </ThemedView>
-
-            <ThemedText type="small" themeColor="textSecondary">
-              Day
-            </ThemedText>
-            <ThemedView style={styles.chipRow}>
-              {DAYS.map((d) => (
-                <Pressable
-                  key={d}
-                  onPress={() => setDay(d)}
-                  style={[styles.chip, { borderColor: theme.border, backgroundColor: day === d ? theme.primary : theme.background }]}
-                >
-                  <ThemedText type="small" themeColor={day === d ? undefined : 'textSecondary'} style={day === d ? styles.chipTextActive : undefined}>
-                    {d}
+          <Animated.View entering={FadeInDown.duration(350).delay(80)}>
+            <Card style={styles.form}>
+              {submitError ? <ErrorBanner message={submitError} /> : null}
+              {syncNotice ? (
+                <View style={[styles.notice, { backgroundColor: theme.successSoft }]}>
+                  <Ionicons name="cloud-done-outline" size={16} color={theme.success} />
+                  <ThemedText themeColor="success" type="small">
+                    {syncNotice}
                   </ThemedText>
-                </Pressable>
-              ))}
-            </ThemedView>
+                </View>
+              ) : null}
 
-            <ThemedText type="small" themeColor="textSecondary">
-              What did you work on?
-            </ThemedText>
-            <TextInput
-              value={activity}
-              onChangeText={setActivity}
-              placeholder="Describe today's tasks…"
-              placeholderTextColor={theme.textSecondary}
-              multiline
-              numberOfLines={3}
-              style={[styles.input, styles.textArea, { color: theme.text, borderColor: theme.border, backgroundColor: theme.background }]}
-            />
+              <View style={styles.row}>
+                <View style={styles.flexField}>
+                  <Field label="Week" value={week} onChangeText={setWeek} keyboardType="number-pad" />
+                </View>
+                <View style={styles.flexField}>
+                  <Field label="Hours" value={hours} onChangeText={setHours} keyboardType="number-pad" />
+                </View>
+              </View>
 
-            <Pressable
-              onPress={handleSubmit}
-              disabled={submitting}
-              style={[styles.submitButton, { backgroundColor: theme.primary, opacity: submitting ? 0.6 : 1 }]}
-            >
-              {submitting ? <ActivityIndicator color="#fff" /> : <ThemedText style={styles.submitButtonText}>Add entry</ThemedText>}
-            </Pressable>
-          </ThemedView>
-
-          {error ? (
-            <ThemedView type="backgroundElement" style={[styles.errorBanner, { borderColor: theme.error }]}>
-              <ThemedText themeColor="error" type="small">
-                {error}
+              <ThemedText type="smallBold" themeColor="textSecondary" style={styles.dayLabel}>
+                Day
               </ThemedText>
-            </ThemedView>
-          ) : null}
+              <View style={styles.chipRow}>
+                {DAYS.map((d) => (
+                  <Chip key={d} label={d.slice(0, 3)} active={day === d} onPress={() => setDay(d)} />
+                ))}
+              </View>
+
+              <Field
+                label="What did you work on?"
+                value={activity}
+                onChangeText={setActivity}
+                placeholder="Describe today's tasks…"
+                multiline
+                numberOfLines={3}
+                style={styles.textArea}
+              />
+
+              <Button label="Add entry" icon="add-circle-outline" onPress={handleSubmit} loading={submitting} />
+            </Card>
+          </Animated.View>
+
+          {error ? <ErrorBanner message={error} /> : null}
 
           {loading ? (
-            <ThemedView style={styles.center}>
-              <ActivityIndicator color={theme.primary} />
-            </ThemedView>
+            <View style={styles.skeletons}>
+              <SkeletonCard />
+              <SkeletonCard />
+            </View>
           ) : weekGroups.length === 0 ? (
-            <ThemedView style={styles.center}>
-              <ThemedText themeColor="textSecondary">No entries yet. Add your first one above.</ThemedText>
-            </ThemedView>
+            <EmptyState
+              icon="book-outline"
+              title="No entries yet"
+              message="Add your first daily entry above — 20 seconds a day keeps your logbook ready for sign-off."
+            />
           ) : (
             weekGroups.map((group) => (
-              <ThemedView key={group.weekNumber} style={styles.weekGroup}>
-                <ThemedText type="smallBold">Week {group.weekNumber}</ThemedText>
+              <View key={group.weekNumber} style={styles.weekGroup}>
+                <View style={styles.weekHeader}>
+                  <View style={[styles.weekDot, { backgroundColor: theme.primary }]} />
+                  <ThemedText type="smallBold">Week {group.weekNumber}</ThemedText>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    · {group.entries.length + group.drafts.length} {group.entries.length + group.drafts.length === 1 ? 'entry' : 'entries'}
+                  </ThemedText>
+                </View>
                 {group.drafts.map((d) => (
-                  <ThemedView key={d.localId} type="backgroundElement" style={[styles.entryCard, styles.pendingCard, { borderColor: theme.warning }]}>
-                    <ThemedView style={styles.entryHeader}>
-                      <ThemedText type="small">{d.dayOfWeek}</ThemedText>
-                      <ThemedView type="backgroundSelected" style={styles.badge}>
-                        <ThemedText type="small" themeColor="warning">
-                          Pending sync
-                        </ThemedText>
-                      </ThemedView>
-                    </ThemedView>
+                  <Card key={d.localId} style={[styles.entryCard, styles.pendingCard, { borderColor: theme.warning }]}>
+                    <View style={styles.entryHeader}>
+                      <ThemedText type="smallBold">{d.dayOfWeek}</ThemedText>
+                      <Badge label="Pending sync" tone="warning" icon="cloud-offline-outline" />
+                    </View>
                     <ThemedText type="small" themeColor="textSecondary">
                       {d.activityDescription}
                     </ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {d.hoursWorked}h logged
-                    </ThemedText>
-                  </ThemedView>
+                    <Badge label={`${d.hoursWorked}h logged`} tone="neutral" icon="time-outline" />
+                  </Card>
                 ))}
                 {group.entries.map((e) => (
-                  <ThemedView key={e._id} type="backgroundElement" style={[styles.entryCard, { borderColor: theme.border }]}>
-                    <ThemedView style={styles.entryHeader}>
-                      <ThemedText type="small">{e.dayOfWeek}</ThemedText>
+                  <Card key={e._id} style={styles.entryCard}>
+                    <View style={styles.entryHeader}>
+                      <ThemedText type="smallBold">{e.dayOfWeek}</ThemedText>
                       <ThemedText type="small" themeColor="textSecondary">
                         {new Date(e.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
                       </ThemedText>
-                    </ThemedView>
+                    </View>
                     <ThemedText type="small" themeColor="textSecondary">
                       {e.activityDescription}
                     </ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {e.hoursWorked}h logged
-                    </ThemedText>
-                  </ThemedView>
+                    <Badge label={`${e.hoursWorked}h logged`} tone="neutral" icon="time-outline" />
+                  </Card>
                 ))}
-              </ThemedView>
+              </View>
             ))
           )}
         </ScrollView>
@@ -286,98 +258,68 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   container: {
-    padding: Spacing.four,
-    gap: Spacing.three,
     paddingBottom: Spacing.six,
-  },
-  headerTitle: {
-    fontSize: 28,
-    lineHeight: 34,
+    gap: Spacing.three,
   },
   form: {
-    borderWidth: 1.5,
-    borderRadius: Spacing.three,
-    padding: Spacing.three,
+    marginHorizontal: Spacing.four,
+    gap: Spacing.three,
+  },
+  notice: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: Spacing.two,
+    padding: Spacing.two,
+    borderRadius: Spacing.two,
   },
   row: {
     flexDirection: 'row',
     gap: Spacing.two,
   },
-  weekField: {
+  flexField: {
     flex: 1,
-    gap: Spacing.half,
   },
-  hoursField: {
-    flex: 1,
-    gap: Spacing.half,
-  },
-  input: {
-    borderWidth: 1.5,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    fontSize: 16,
-  },
-  textArea: {
-    minHeight: 80,
-    textAlignVertical: 'top',
+  dayLabel: {
+    marginBottom: -Spacing.two,
   },
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
   },
-  chip: {
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.five,
-    borderWidth: 1.5,
+  textArea: {
+    minHeight: 80,
+    textAlignVertical: 'top',
   },
-  chipTextActive: {
-    color: '#ffffff',
-    fontWeight: '700',
-  },
-  submitButton: {
-    borderRadius: Spacing.two,
-    paddingVertical: Spacing.three,
-    alignItems: 'center',
-    marginTop: Spacing.two,
-  },
-  submitButtonText: {
-    color: '#ffffff',
-    fontWeight: '700',
-  },
-  errorBanner: {
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
-    borderWidth: 1,
-  },
-  center: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.six,
+  skeletons: {
+    paddingHorizontal: Spacing.four,
+    gap: Spacing.three,
   },
   weekGroup: {
+    paddingHorizontal: Spacing.four,
     gap: Spacing.two,
   },
+  weekHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    marginTop: Spacing.two,
+  },
+  weekDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
   entryCard: {
-    borderWidth: 1.5,
-    borderRadius: Spacing.three,
-    padding: Spacing.three,
-    gap: Spacing.half,
+    gap: Spacing.two,
   },
   pendingCard: {
+    borderWidth: 1.5,
     borderStyle: 'dashed',
   },
   entryHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  badge: {
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.half,
-    borderRadius: Spacing.two,
   },
 });

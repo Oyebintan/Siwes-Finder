@@ -1,17 +1,25 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, InitialAvatar } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ErrorBanner } from '@/components/ui/error-banner';
+import { ScreenHeader } from '@/components/ui/screen-header';
+import { SkeletonList } from '@/components/ui/skeleton';
 import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
 import { ApiError, approveLogbookEntry, listEmployerLogbookEntries, type EmployerLogbookEntry } from '@/api/client';
 
-export default function EmployerLogbookScreen() {
-  const theme = useTheme();
+const STAGGER_MS = 55;
+const MAX_STAGGERED = 8;
 
+export default function EmployerLogbookScreen() {
   const [entries, setEntries] = useState<EmployerLogbookEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -50,71 +58,59 @@ export default function EmployerLogbookScreen() {
   return (
     <ThemedView style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={['top']}>
-        <ThemedText type="title" style={styles.headerTitle}>
-          Logbook approvals
-        </ThemedText>
+        <ScreenHeader title="Logbook approvals" subtitle="Sign off your interns' daily entries" />
 
-        {error ? (
-          <ThemedView type="backgroundElement" style={[styles.errorBanner, { borderColor: theme.error }]}>
-            <ThemedText themeColor="error" type="small">
-              {error}
-            </ThemedText>
-          </ThemedView>
-        ) : null}
+        {error ? <ErrorBanner message={error} style={styles.errorBanner} /> : null}
 
         {loading ? (
-          <ThemedView style={styles.center}>
-            <ActivityIndicator color={theme.primary} />
-          </ThemedView>
+          <SkeletonList />
         ) : (
           <FlatList
             data={entries}
             keyExtractor={(e) => e._id}
             contentContainerStyle={styles.list}
             ListEmptyComponent={
-              <ThemedView style={styles.center}>
-                <ThemedText themeColor="textSecondary">No logbook entries from your interns yet.</ThemedText>
-              </ThemedView>
+              <EmptyState
+                icon="book-outline"
+                title="No entries yet"
+                message="Logbook entries from your interns will appear here for sign-off."
+              />
             }
-            renderItem={({ item }) => (
-              <ThemedView type="backgroundElement" style={[styles.card, { borderColor: theme.border }]}>
-                <ThemedView style={styles.cardHeader}>
-                  <ThemedView style={styles.cardHeaderText}>
-                    <ThemedText type="smallBold">{item.studentId?.name ?? 'Unknown student'}</ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary">
-                      Week {item.weekNumber} · {item.dayOfWeek}
-                    </ThemedText>
-                  </ThemedView>
-                  {item.isApproved ? (
-                    <ThemedView type="backgroundSelected" style={styles.badge}>
-                      <ThemedText type="small" themeColor="success">
-                        Approved
+            renderItem={({ item, index }) => (
+              <Animated.View
+                entering={FadeInDown.duration(320).delay(Math.min(index, MAX_STAGGERED) * STAGGER_MS)}
+              >
+                <Card>
+                  <View style={styles.cardHeader}>
+                    <InitialAvatar name={item.studentId?.name ?? '?'} />
+                    <View style={styles.cardHeaderText}>
+                      <ThemedText type="smallBold" numberOfLines={1}>
+                        {item.studentId?.name ?? 'Unknown student'}
                       </ThemedText>
-                    </ThemedView>
+                      <ThemedText type="small" themeColor="textSecondary">
+                        Week {item.weekNumber} · {item.dayOfWeek}
+                      </ThemedText>
+                    </View>
+                    {item.isApproved ? <Badge label="Approved" tone="success" icon="checkmark-circle" /> : null}
+                  </View>
+
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {item.activityDescription}
+                  </ThemedText>
+                  <Badge label={`${item.hoursWorked}h logged`} tone="neutral" icon="time-outline" />
+
+                  {!item.isApproved ? (
+                    <Button
+                      label="Approve entry"
+                      icon="checkmark-circle-outline"
+                      small
+                      onPress={() => handleApprove(item._id)}
+                      loading={approvingId === item._id}
+                      style={styles.approveButton}
+                    />
                   ) : null}
-                </ThemedView>
-
-                <ThemedText type="small" themeColor="textSecondary">
-                  {item.activityDescription}
-                </ThemedText>
-                <ThemedText type="small" themeColor="textSecondary">
-                  {item.hoursWorked}h logged
-                </ThemedText>
-
-                {!item.isApproved ? (
-                  <Pressable
-                    onPress={() => handleApprove(item._id)}
-                    disabled={approvingId === item._id}
-                    style={[styles.approveButton, { backgroundColor: theme.primary, opacity: approvingId === item._id ? 0.6 : 1 }]}
-                  >
-                    {approvingId === item._id ? (
-                      <ActivityIndicator color="#fff" size="small" />
-                    ) : (
-                      <ThemedText style={styles.approveButtonText}>Approve entry</ThemedText>
-                    )}
-                  </Pressable>
-                ) : null}
-              </ThemedView>
+                </Card>
+              </Animated.View>
             )}
           />
         )}
@@ -127,58 +123,25 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  headerTitle: {
-    fontSize: 28,
-    lineHeight: 34,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.two,
-  },
   errorBanner: {
     marginHorizontal: Spacing.four,
     marginTop: Spacing.three,
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
-    borderWidth: 1,
-  },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.six,
   },
   list: {
     padding: Spacing.four,
     gap: Spacing.three,
-  },
-  card: {
-    borderWidth: 1.5,
-    borderRadius: Spacing.three,
-    padding: Spacing.three,
-    gap: Spacing.half,
+    flexGrow: 1,
   },
   cardHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: Spacing.two,
+    alignItems: 'center',
+    gap: Spacing.three,
   },
   cardHeaderText: {
     flex: 1,
     gap: Spacing.half,
   },
-  badge: {
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.half,
-    borderRadius: Spacing.two,
-  },
   approveButton: {
-    borderRadius: Spacing.two,
-    paddingVertical: Spacing.two,
-    alignItems: 'center',
-    marginTop: Spacing.two,
-  },
-  approveButtonText: {
-    color: '#ffffff',
-    fontWeight: '700',
+    marginTop: Spacing.one,
   },
 });
