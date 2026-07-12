@@ -8,12 +8,11 @@ SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
 seeking SIWES (Students Industrial Work Experience Scheme) placements with
 verified employers, and gives their schools visibility into the process.
 
-**Last synced with:** `7652b0e` (main, 2026-07-11) — PR #16 merged (Mobile
-Phase 3: employer applicant/logbook review, school read-only dashboards),
-plus this PR's start of Mobile Phase 4 (Android app icon/splash, a new
-`/privacy` page for the Play Store requirement — the store publishing steps
-themselves are on hold pending a distribution-path decision, see
-`MOBILE_APP.md` Phase 4).
+**Last synced with:** `bc77191` (main, 2026-07-12) — PR #19 merged (Android
+download button → permanent GitHub Release link; mobile Phases 0-4 all
+shipped), plus this PR's email notifications (application decisions,
+logbook approvals, verification decisions — closing that long-standing
+gap).
 Recent-change log: see `PROGRESS.md` (auto-appended on every push to main).
 
 ## Roles
@@ -59,6 +58,15 @@ equivalent everywhere except that one deletion-hierarchy check.
 privileged role. OTP-based forgot-password flow (`/api/auth/forgot-password`,
 `/api/auth/reset-password`) via Resend, 10-minute expiry, generic response to
 avoid email enumeration.
+
+**Email notifications** (`src/lib/email.ts`, Resend) — sent best-effort
+(failures logged, never fail the underlying action) on: application
+accepted/rejected (to the student, from `PUT /api/applications/[id]`),
+logbook entry approved (to the student, from `PUT /api/logbook/[id]`),
+and verification approved/rejected (to the employer/school, from
+`PATCH /api/admin/companies/[id]`, wording adapted per role, rejection
+reason included). Mobile push (where a token is registered) and email are
+independent channels — one failing never blocks the other.
 
 **Students** — browse/search jobs (`/student/jobs`, filters: keyword, type,
 location, sort; search matches title, description, **required
@@ -152,9 +160,10 @@ software, design, engineering, finance, telecoms, and marketing. Run with
   `/admin/users` yet.
 - **No saved-jobs UI on the school/employer side** — bookmarking is
   student-only (matches the feature's purpose).
-- **No email notifications** for application status changes, job approval,
-  or school/company verification decisions — Resend is only wired for
-  password reset.
+- **No email notification for job moderation/takedown** — application
+  decisions, logbook approvals, and verification decisions all email now
+  (see Feature surface), but an admin taking down a job doesn't notify the
+  employer.
 - **No automated tests for the E2E Playwright suite in CI** — `test:e2e`
   exists (`e2e/`) but only the Vitest unit/integration suite
   (`npm test`) runs in `.github/workflows/ci.yml`.

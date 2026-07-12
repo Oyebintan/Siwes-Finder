@@ -4,11 +4,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('next-auth/next', () => ({ getServerSession: vi.fn() }));
 vi.mock('@/lib/mongodb', () => ({ connectToDatabase: vi.fn() }));
 vi.mock('@/models/User', () => ({ default: { find: vi.fn(), findOne: vi.fn() } }));
+vi.mock('@/lib/email', () => ({ sendVerificationDecisionEmail: vi.fn() }));
 
 import { GET } from '@/app/api/admin/companies/route';
 import { PATCH } from '@/app/api/admin/companies/[id]/route';
 import { getServerSession } from 'next-auth/next';
 import User from '@/models/User';
+import { sendVerificationDecisionEmail } from '@/lib/email';
 
 function makeGetRequest(query = '') {
   return new Request(`http://localhost/api/admin/companies${query}`);
@@ -120,5 +122,55 @@ describe('PATCH /api/admin/companies/[id]', () => {
     expect(company.verificationStatus).toBe('rejected');
     expect(company.verificationRejectionReason).toBe('No reason provided.');
     expect(data.verificationStatus).toBe('rejected');
+  });
+
+  it('emails the account the decision, adapted to its role', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'admin1', role: 'admin' } });
+    const company: any = {
+      email: 'siwes@unilag.edu.ng',
+      name: 'University of Lagos',
+      role: 'school',
+      verificationStatus: 'pending',
+      save: vi.fn().mockResolvedValue(undefined),
+    };
+    (User.findOne as any).mockResolvedValue(company);
+
+    const res = await PATCH(makePatchRequest({ action: 'approve' }), { params: Promise.resolve({ id: 'c1' }) });
+
+    expect(res.status).toBe(200);
+    expect(sendVerificationDecisionEmail).toHaveBeenCalledWith(
+      'siwes@unilag.edu.ng',
+      'University of Lagos',
+      'school',
+      'approved',
+      undefined
+    );
+  });
+
+  it('includes the rejection reason in the email and never fails the decision on email errors', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'admin1', role: 'admin' } });
+    const company: any = {
+      email: 'hr@acme.com',
+      companyName: 'Acme Ltd',
+      role: 'employer',
+      verificationStatus: 'pending',
+      save: vi.fn().mockResolvedValue(undefined),
+    };
+    (User.findOne as any).mockResolvedValue(company);
+    (sendVerificationDecisionEmail as any).mockRejectedValue(new Error('Resend outage'));
+
+    const res = await PATCH(
+      makePatchRequest({ action: 'reject', reason: 'CAC number does not match' }),
+      { params: Promise.resolve({ id: 'c1' }) }
+    );
+
+    expect(res.status).toBe(200);
+    expect(sendVerificationDecisionEmail).toHaveBeenCalledWith(
+      'hr@acme.com',
+      'Acme Ltd',
+      'employer',
+      'rejected',
+      'CAC number does not match'
+    );
   });
 });

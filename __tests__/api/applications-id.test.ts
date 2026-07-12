@@ -7,6 +7,7 @@ vi.mock('@/models/Application', () => ({ default: { findOneAndUpdate: vi.fn() } 
 vi.mock('@/models/Job', () => ({ default: { findById: vi.fn() } }));
 vi.mock('@/models/User', () => ({ default: { findById: vi.fn() } }));
 vi.mock('@/lib/push', () => ({ sendPushNotification: vi.fn() }));
+vi.mock('@/lib/email', () => ({ sendApplicationDecisionEmail: vi.fn() }));
 
 import { PUT } from '@/app/api/applications/[id]/route';
 import { requireSession } from '@/lib/mobileAuth';
@@ -14,6 +15,7 @@ import Application from '@/models/Application';
 import Job from '@/models/Job';
 import User from '@/models/User';
 import { sendPushNotification } from '@/lib/push';
+import { sendApplicationDecisionEmail } from '@/lib/email';
 
 function makeRequest(body: unknown) {
   return new Request('http://localhost/api/applications/app1', {
@@ -132,5 +134,49 @@ describe('PUT /api/applications/[id]', () => {
 
     expect(res.status).toBe(200);
     expect(data.status).toBe('Accepted');
+  });
+
+  it('emails the student the decision (independently of whether they have a push token)', async () => {
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (Application.findOneAndUpdate as any).mockResolvedValue({
+      _id: 'app1',
+      status: 'Rejected',
+      student: 'stu1',
+      job: 'job1',
+    });
+    // Email on file, but no push token -- the email must still go out.
+    (User.findById as any).mockReturnValue({
+      select: vi.fn().mockResolvedValue({ email: 'ada@example.com', name: 'Ada' }),
+    });
+    (Job.findById as any).mockReturnValue({ select: vi.fn().mockResolvedValue({ title: 'Frontend Intern' }) });
+
+    const res = await PUT(makeRequest({ status: 'Rejected' }), { params: Promise.resolve({ id: 'app1' }) });
+
+    expect(res.status).toBe(200);
+    expect(sendPushNotification).not.toHaveBeenCalled();
+    expect(sendApplicationDecisionEmail).toHaveBeenCalledWith('ada@example.com', 'Ada', 'Frontend Intern', 'Rejected');
+  });
+
+  it('a push failure does not stop the email, and an email failure does not fail the request', async () => {
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (Application.findOneAndUpdate as any).mockResolvedValue({
+      _id: { toString: () => 'app1' },
+      status: 'Accepted',
+      student: 'stu1',
+      job: 'job1',
+    });
+    (User.findById as any).mockReturnValue({
+      select: vi.fn().mockResolvedValue({ expoPushToken: 'ExponentPushToken[xxx]', email: 'ada@example.com', name: 'Ada' }),
+    });
+    (Job.findById as any).mockReturnValue({ select: vi.fn().mockResolvedValue({ title: 'Frontend Intern' }) });
+    (sendPushNotification as any).mockRejectedValue(new Error('DeviceNotRegistered'));
+    (sendApplicationDecisionEmail as any).mockRejectedValue(new Error('Resend outage'));
+
+    const res = await PUT(makeRequest({ status: 'Accepted' }), { params: Promise.resolve({ id: 'app1' }) });
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.status).toBe('Accepted');
+    expect(sendApplicationDecisionEmail).toHaveBeenCalled();
   });
 });

@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
 import { isAdminRole } from '@/lib/roles';
+import { sendVerificationDecisionEmail } from '@/lib/email';
 
 // PATCH: approve or reject a company's verification.
 // Body: { action: 'approve' | 'reject', reason?: string }
@@ -36,6 +37,20 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
     company.verificationReviewedAt = new Date();
     await company.save();
+
+    // Best-effort email -- a delivery failure must never fail the decision
+    // itself (same convention as the application/logbook notifications).
+    try {
+      await sendVerificationDecisionEmail(
+        company.email,
+        company.companyName || company.name || 'there',
+        company.role === 'school' ? 'school' : 'employer',
+        company.verificationStatus as 'approved' | 'rejected',
+        company.verificationRejectionReason
+      );
+    } catch (emailError) {
+      console.error('Failed to send verification decision email:', emailError);
+    }
 
     return NextResponse.json(
       { message: `Company ${action}d`, verificationStatus: company.verificationStatus },

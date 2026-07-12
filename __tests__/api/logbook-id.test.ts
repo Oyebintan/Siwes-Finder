@@ -6,12 +6,14 @@ vi.mock('@/lib/mongodb', () => ({ connectToDatabase: vi.fn() }));
 vi.mock('@/models/Logbook', () => ({ default: { findOneAndUpdate: vi.fn() } }));
 vi.mock('@/models/User', () => ({ default: { findById: vi.fn() } }));
 vi.mock('@/lib/push', () => ({ sendPushNotification: vi.fn() }));
+vi.mock('@/lib/email', () => ({ sendLogbookApprovalEmail: vi.fn() }));
 
 import { PUT } from '@/app/api/logbook/[id]/route';
 import { requireSession } from '@/lib/mobileAuth';
 import Logbook from '@/models/Logbook';
 import User from '@/models/User';
 import { sendPushNotification } from '@/lib/push';
+import { sendLogbookApprovalEmail } from '@/lib/email';
 
 function makeRequest() {
   return new Request('http://localhost/api/logbook/log1', { method: 'PUT' });
@@ -101,6 +103,47 @@ describe('PUT /api/logbook/[id]', () => {
     });
     (User.findById as any).mockReturnValue({ select: vi.fn().mockResolvedValue({ expoPushToken: 'ExponentPushToken[xxx]' }) });
     (sendPushNotification as any).mockRejectedValue(new Error('DeviceNotRegistered'));
+
+    const res = await PUT(makeRequest(), { params: Promise.resolve({ id: 'log1' }) });
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.isApproved).toBe(true);
+  });
+
+  it('emails the student the approval (independently of whether they have a push token)', async () => {
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (Logbook.findOneAndUpdate as any).mockResolvedValue({
+      _id: 'log1',
+      studentId: 'stu1',
+      weekNumber: 2,
+      dayOfWeek: 'Tuesday',
+      isApproved: true,
+    });
+    (User.findById as any).mockReturnValue({
+      select: vi.fn().mockResolvedValue({ email: 'ada@example.com', name: 'Ada' }),
+    });
+
+    const res = await PUT(makeRequest(), { params: Promise.resolve({ id: 'log1' }) });
+
+    expect(res.status).toBe(200);
+    expect(sendPushNotification).not.toHaveBeenCalled();
+    expect(sendLogbookApprovalEmail).toHaveBeenCalledWith('ada@example.com', 'Ada', 2, 'Tuesday');
+  });
+
+  it('an email failure never fails the approval', async () => {
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (Logbook.findOneAndUpdate as any).mockResolvedValue({
+      _id: 'log1',
+      studentId: 'stu1',
+      weekNumber: 2,
+      dayOfWeek: 'Tuesday',
+      isApproved: true,
+    });
+    (User.findById as any).mockReturnValue({
+      select: vi.fn().mockResolvedValue({ email: 'ada@example.com', name: 'Ada' }),
+    });
+    (sendLogbookApprovalEmail as any).mockRejectedValue(new Error('Resend outage'));
 
     const res = await PUT(makeRequest(), { params: Promise.resolve({ id: 'log1' }) });
     const data = await res.json();
