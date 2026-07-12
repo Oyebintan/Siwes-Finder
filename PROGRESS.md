@@ -7,6 +7,7 @@
 
 | Date | Commit | What landed |
 |---|---|---|
+| 2026-07-12 | `15dcfc0` | Merge pull request #26 from Oyebintan/claude/ecc-install-all-sessions-r5nbto |
 | 2026-07-12 | `6c4547d` | Merge pull request #24 from Oyebintan/claude/mobile-parity-match-follow-messaging |
 | 2026-07-12 | `c86dc4e` | Merge pull request #23 from Oyebintan/claude/employer-applicant-messaging |
 | 2026-07-12 | `5ca58ee` | Merge pull request #22 from Oyebintan/claude/match-score-and-alerts |
