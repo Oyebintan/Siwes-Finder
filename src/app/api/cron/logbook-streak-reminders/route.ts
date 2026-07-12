@@ -23,8 +23,13 @@ function isStale(date: Date | undefined, thresholdMs: number): boolean {
 // acceptance date as the reference when they've never logged at all, so a
 // placement that started yesterday doesn't immediately nag.
 export async function POST(req: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret || req.headers.get('x-cron-secret') !== secret) {
+  // Trimmed on both sides: a stray trailing newline picked up when the
+  // secret was copy-pasted into GitHub Actions or Vercel's env var UI
+  // (both are easy to do with a generated hex string) would otherwise
+  // make an otherwise-correct secret fail this comparison.
+  const secret = process.env.CRON_SECRET?.trim();
+  const provided = req.headers.get('x-cron-secret')?.trim();
+  if (!secret || provided !== secret) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
