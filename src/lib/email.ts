@@ -126,6 +126,25 @@ export async function sendNewJobAlertEmail(
   );
 }
 
+export async function sendNewMessageEmail(
+  to: string,
+  recipientName: string,
+  senderName: string,
+  jobTitle: string,
+  recipientRole: 'student' | 'employer'
+): Promise<void> {
+  await send(
+    to,
+    `New message from ${senderName}`,
+    layout(
+      'You have a new message',
+      `<p style="color: #555;">Hi ${recipientName},</p>
+       <p style="color: #555;"><strong>${senderName}</strong> sent you a message about <strong>${jobTitle}</strong>.</p>`,
+      { label: 'View conversation', path: recipientRole === 'employer' ? '/employer/applications' : '/student/applications' }
+    )
+  );
+}
+
 export async function sendVerificationDecisionEmail(
   to: string,
   accountName: string,

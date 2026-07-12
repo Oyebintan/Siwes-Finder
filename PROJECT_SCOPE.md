@@ -8,10 +8,11 @@ SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
 seeking SIWES (Students Industrial Work Experience Scheme) placements with
 verified employers, and gives their schools visibility into the process.
 
-**Last synced with:** `31dce2b` (main, 2026-07-12) — PR #19 (Android download
-link), PR #20 (email notifications), and PR #21 (web employer logbook page
-+ corrected stale "known gaps") all merged, plus this PR's real match-score
-algorithm and company-follow job-posting alerts.
+**Last synced with:** `3548174` (main, 2026-07-12) — PR #19 (Android download
+link), PR #20 (email notifications), PR #21 (web employer logbook page +
+corrected stale "known gaps"), and PR #22 (real match-score algorithm +
+company-follow job-posting alerts) all merged, plus this PR's per-application
+employer↔applicant messaging.
 Recent-change log: see `PROGRESS.md` (auto-appended on every push to main).
 
 ## Roles
@@ -50,6 +51,10 @@ equivalent everywhere except that one deletion-hierarchy check.
   `Pending | Accepted | Rejected`.
 - **Logbook** — daily/weekly entries a student writes against their accepted
   placement; the employer approves each entry (`isApproved`).
+- **Message** — one message in a per-`Application` thread between the
+  student and employer on that application. `senderRole` records who sent
+  it (avoids a lookup just to render "you" vs. the other party), `read`
+  flips true once the recipient opens the thread.
 
 ## Feature surface
 
@@ -65,20 +70,33 @@ accepted/rejected (to the student, from `PUT /api/applications/[id]`),
 logbook entry approved (to the student, from `PUT /api/logbook/[id]`),
 verification approved/rejected (to the employer/school, from
 `PATCH /api/admin/companies/[id]`, wording adapted per role, rejection
-reason included), and a new opportunity posted by a followed company (to
-every student following that employer, from `POST /api/jobs`). Mobile push
-(where a token is registered) and email are independent channels — one
-failing never blocks the other, and one recipient's failure never blocks
-the next recipient's (see the followers loop in `POST /api/jobs`).
+reason included), a new opportunity posted by a followed company (to every
+student following that employer, from `POST /api/jobs`), and a new
+application message (to whichever party didn't send it, from
+`POST /api/applications/[id]/messages`). Mobile push (where a token is
+registered) and email are independent channels — one failing never blocks
+the other, and one recipient's failure never blocks the next recipient's
+(see the followers loop in `POST /api/jobs`).
+
+**Messaging** (`Message` model, `GET`/`POST /api/applications/[id]/messages`)
+— a lightweight thread per application, restricted to that application's
+student and employer (a flat 404 either way if the caller isn't a party to
+it, same as the existing application-decision route). `ApplicationMessageButton`
+(`src/components/`) is a self-contained button+modal used identically on
+the employer applicant card and the student applications list; it polls
+every 8s while open rather than using a websocket. Opening the thread marks
+the other party's unread messages read; there's no unread badge on the list
+views themselves (see Known gaps).
 
 **Students** — browse/search jobs (`/student/jobs`, filters: keyword, type,
 location, sort — including "Best match"; search matches title, description,
 **required skills/requirements**, location, and company name/industry), job
 details with Apply (in-app / email / external depending on the listing),
 save jobs for later, follow a company for new-listing alerts (email + push),
-e-Logbook, profile (academic details + faculty + skills + resume PDF +
-avatar), opt-in Community directory (peers who also joined, grouped
-implicitly by shared placement visibility).
+message the employer on any of their own applications, e-Logbook, profile
+(academic details + faculty + skills + resume PDF + avatar), opt-in
+Community directory (peers who also joined, grouped implicitly by shared
+placement visibility).
 
 **Match score** (`src/lib/match.ts`, `computeMatchScore`) — a genuine (not
 decorative) 0-100% overlap between a student's `skills` and a job's
@@ -94,7 +112,7 @@ marketing mockup for logged-out visitors who have no profile to score
 against.
 
 **Employers** — post/edit/deactivate jobs (multi-step wizard with
-deadline/cap controls), manage applicants (accept/reject), company
+deadline/cap controls), manage applicants (accept/reject, message), company
 verification submission (CAC number + document + company logo), approve
 student logbook entries (`/employer/logbook`, backed by `GET /api/logbook`
 and `PUT /api/logbook/[id]`, scoped to entries tied to their own
@@ -184,6 +202,14 @@ software, design, engineering, finance, telecoms, and marketing. Run with
 - **Community feature** is a directory + implied connection, not a full chat
   — see `021b140`/`55fa53c` history for what actually shipped vs. what was
   scoped early on.
+- **No unread-message badge on the applications list views** — a new
+  message only becomes visible once you open that application's thread
+  (`ApplicationMessageButton`); the employer applicant list and student
+  applications list don't show which threads have unread messages.
+- **No mobile UI for application messaging, company follow, or the
+  "Best match" sort** — all three exist only on the web dashboard; the
+  backend routes work for any bearer-token client, but the Expo app's
+  screens haven't been built for them yet.
 
 ## Environment variables
 
