@@ -82,6 +82,9 @@ export type Job = {
   employerId: Employer;
   createdAt: string;
   updatedAt: string;
+  // Only present for a student caller who has listed at least one skill --
+  // see src/lib/match.ts on the web side. Omitted (not zero) otherwise.
+  matchScore?: number;
 };
 
 export type Application = {
@@ -138,7 +141,7 @@ export type JobSearchParams = {
   q?: string;
   type?: 'On-site' | 'Remote' | 'Hybrid';
   location?: string;
-  sort?: 'newest' | 'oldest';
+  sort?: 'newest' | 'oldest' | 'match';
   page?: number;
   limit?: number;
 };
@@ -212,6 +215,34 @@ export async function listLogbookEntries(): Promise<LogbookEntry[]> {
 
 export async function registerPushToken(token: string): Promise<{ message: string }> {
   return apiFetch('/api/mobile/register-push-token', { method: 'POST', body: JSON.stringify({ token }) });
+}
+
+// A student following a company gets a best-effort email/push alert
+// whenever that employer posts a new opportunity -- see POST /api/jobs.
+export async function getFollowStatus(employerId: string): Promise<{ following: boolean }> {
+  return apiFetch(`/api/companies/${employerId}/follow`);
+}
+
+export async function toggleFollowCompany(employerId: string): Promise<{ following: boolean }> {
+  return apiFetch(`/api/companies/${employerId}/follow`, { method: 'POST' });
+}
+
+// A lightweight thread per application -- restricted server-side to that
+// application's student and employer. Shared by both roles' screens.
+export type ThreadMessage = {
+  _id: string;
+  senderRole: 'student' | 'employer';
+  body: string;
+  createdAt: string;
+  sender?: { name?: string };
+};
+
+export async function listMessages(applicationId: string): Promise<{ messages: ThreadMessage[] }> {
+  return apiFetch(`/api/applications/${applicationId}/messages`);
+}
+
+export async function sendMessage(applicationId: string, body: string): Promise<{ message: ThreadMessage }> {
+  return apiFetch(`/api/applications/${applicationId}/messages`, { method: 'POST', body: JSON.stringify({ body }) });
 }
 
 // -- Employer --------------------------------------------------------------

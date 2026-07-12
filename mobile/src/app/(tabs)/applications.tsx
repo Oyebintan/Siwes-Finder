@@ -77,25 +77,35 @@ export default function ApplicationsScreen() {
               const status = STATUS_COPY[item.status];
               const companyName = item.job?.employerId?.companyName || 'Company';
               return (
-                <Pressable
-                  onPress={() => item.job && router.push(`/jobs/${item.job._id}`)}
-                  disabled={!item.job}
-                  style={[styles.card, { borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
-                >
-                  <ThemedView style={styles.cardHeaderText}>
-                    <ThemedText type="smallBold">{item.job?.title ?? 'Opportunity no longer available'}</ThemedText>
-                    {item.job ? (
-                      <ThemedText type="small" themeColor="textSecondary">
-                        {companyName} · {item.job.location}
+                <ThemedView style={[styles.card, { borderColor: theme.border, backgroundColor: theme.backgroundElement }]}>
+                  <Pressable
+                    onPress={() => item.job && router.push(`/jobs/${item.job._id}`)}
+                    disabled={!item.job}
+                    style={styles.cardRow}
+                  >
+                    <ThemedView style={styles.cardHeaderText}>
+                      <ThemedText type="smallBold">{item.job?.title ?? 'Opportunity no longer available'}</ThemedText>
+                      {item.job ? (
+                        <ThemedText type="small" themeColor="textSecondary">
+                          {companyName} · {item.job.location}
+                        </ThemedText>
+                      ) : null}
+                    </ThemedView>
+                    <ThemedView type="backgroundSelected" style={styles.badge}>
+                      <ThemedText type="small" themeColor={status.color}>
+                        {status.label}
                       </ThemedText>
-                    ) : null}
-                  </ThemedView>
-                  <ThemedView type="backgroundSelected" style={styles.badge}>
-                    <ThemedText type="small" themeColor={status.color}>
-                      {status.label}
+                    </ThemedView>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => router.push(`/messages/${item._id}`)}
+                    style={[styles.messageButton, { borderColor: theme.border }]}
+                  >
+                    <ThemedText type="small" themeColor="primary">
+                      Message {companyName}
                     </ThemedText>
-                  </ThemedView>
-                </Pressable>
+                  </Pressable>
+                </ThemedView>
               );
             }}
           />
@@ -137,17 +147,27 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   card: {
+    borderWidth: 1.5,
+    borderRadius: Spacing.three,
+    padding: Spacing.three,
+    gap: Spacing.two,
+  },
+  cardRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: Spacing.two,
-    borderWidth: 1.5,
-    borderRadius: Spacing.three,
-    padding: Spacing.three,
   },
   cardHeaderText: {
     flex: 1,
     gap: Spacing.half,
+  },
+  messageButton: {
+    alignSelf: 'flex-start',
+    borderWidth: 1.5,
+    borderRadius: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
   },
   badge: {
     paddingHorizontal: Spacing.two,

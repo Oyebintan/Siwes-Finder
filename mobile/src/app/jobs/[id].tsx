@@ -6,7 +6,16 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { ApiError, applyToJob, getJob, listSavedJobIds, toggleSavedJob, type Job } from '@/api/client';
+import {
+  ApiError,
+  applyToJob,
+  getFollowStatus,
+  getJob,
+  listSavedJobIds,
+  toggleFollowCompany,
+  toggleSavedJob,
+  type Job,
+} from '@/api/client';
 
 const METHOD_LABEL: Record<Job['applicationMethod'], string> = {
   platform: 'In-app',
@@ -22,6 +31,8 @@ export default function JobDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [saved, setSaved] = useState(false);
+  const [following, setFollowing] = useState(false);
+  const [followBusy, setFollowBusy] = useState(false);
 
   const [applying, setApplying] = useState(false);
   const [applyError, setApplyError] = useState('');
@@ -34,6 +45,11 @@ export default function JobDetailScreen() {
       const [{ job: jobData }, { ids }] = await Promise.all([getJob(id), listSavedJobIds()]);
       setJob(jobData);
       setSaved(ids.includes(id));
+      if (jobData.employerId?._id) {
+        getFollowStatus(jobData.employerId._id)
+          .then(({ following: isFollowing }) => setFollowing(isFollowing))
+          .catch(() => setFollowing(false));
+      }
     } catch (err) {
       setLoadError(err instanceof ApiError ? err.message : 'Could not load this opportunity. Check your connection.');
     } finally {
@@ -52,6 +68,19 @@ export default function JobDetailScreen() {
       setSaved(nowSaved);
     } catch {
       // Best-effort, same as the Jobs list -- leave the star state unchanged.
+    }
+  };
+
+  const handleToggleFollow = async () => {
+    if (!job?.employerId?._id || followBusy) return;
+    setFollowBusy(true);
+    try {
+      const { following: nowFollowing } = await toggleFollowCompany(job.employerId._id);
+      setFollowing(nowFollowing);
+    } catch {
+      // Best-effort -- leave the button state unchanged, the user can retry.
+    } finally {
+      setFollowBusy(false);
     }
   };
 
@@ -116,7 +145,29 @@ export default function JobDetailScreen() {
               <ThemedText type="small">{job.stipend}</ThemedText>
             </ThemedView>
           ) : null}
+          {job.matchScore != null ? (
+            <ThemedView type="backgroundSelected" style={styles.badge}>
+              <ThemedText type="small" themeColor="primary">
+                {job.matchScore}% match
+              </ThemedText>
+            </ThemedView>
+          ) : null}
         </ThemedView>
+
+        {job.employerId?._id ? (
+          <Pressable
+            onPress={handleToggleFollow}
+            disabled={followBusy}
+            style={[
+              styles.followButton,
+              { borderColor: following ? theme.primary : theme.border, opacity: followBusy ? 0.6 : 1 },
+            ]}
+          >
+            <ThemedText type="small" themeColor={following ? 'primary' : 'textSecondary'}>
+              {following ? '✓ Following' : `Follow ${companyName}`}
+            </ThemedText>
+          </Pressable>
+        ) : null}
 
         <ThemedView type="backgroundElement" style={[styles.section, { borderColor: theme.border }]}>
           <ThemedText type="smallBold" style={styles.sectionTitle}>
@@ -281,6 +332,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.half,
     borderRadius: Spacing.two,
+  },
+  followButton: {
+    alignSelf: 'flex-start',
+    borderWidth: 1.5,
+    borderRadius: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
   },
   section: {
     borderWidth: 1.5,

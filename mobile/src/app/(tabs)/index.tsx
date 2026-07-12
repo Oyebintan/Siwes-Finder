@@ -18,6 +18,7 @@ export default function JobsScreen() {
   const [query, setQuery] = useState('');
   const [type, setType] = useState<JobType | null>(null);
   const [savedOnly, setSavedOnly] = useState(false);
+  const [bestMatch, setBestMatch] = useState(false);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -32,7 +33,12 @@ export default function JobsScreen() {
         setJobs(savedJobs);
         setSavedIds(new Set(ids));
       } else {
-        const { jobs: feedJobs } = await listJobs({ q: query.trim() || undefined, type: type ?? undefined, limit: 30 });
+        const { jobs: feedJobs } = await listJobs({
+          q: query.trim() || undefined,
+          type: type ?? undefined,
+          sort: bestMatch ? 'match' : undefined,
+          limit: 30,
+        });
         setJobs(feedJobs);
       }
     } catch (err) {
@@ -40,7 +46,7 @@ export default function JobsScreen() {
     } finally {
       setLoading(false);
     }
-  }, [query, type, savedOnly]);
+  }, [query, type, savedOnly, bestMatch]);
 
   // Re-fetch every time the tab regains focus, so a bookmark toggled from the
   // job-detail screen (or an apply that closes a job) is reflected on return.
@@ -122,17 +128,37 @@ export default function JobsScreen() {
               );
             }}
             ListFooterComponent={
-              <Pressable
-                onPress={() => setSavedOnly((v) => !v)}
-                style={[
-                  styles.chip,
-                  { borderColor: theme.border, backgroundColor: savedOnly ? theme.primary : theme.backgroundElement },
-                ]}
-              >
-                <ThemedText type="small" style={savedOnly ? styles.chipTextActive : undefined} themeColor={savedOnly ? undefined : 'textSecondary'}>
-                  ★ Saved
-                </ThemedText>
-              </Pressable>
+              <ThemedView style={styles.filterRowInline}>
+                <Pressable
+                  onPress={() => {
+                    setSavedOnly(false);
+                    setBestMatch((v) => !v);
+                  }}
+                  style={[
+                    styles.chip,
+                    { borderColor: theme.border, backgroundColor: bestMatch && !savedOnly ? theme.primary : theme.backgroundElement },
+                  ]}
+                >
+                  <ThemedText
+                    type="small"
+                    style={bestMatch && !savedOnly ? styles.chipTextActive : undefined}
+                    themeColor={bestMatch && !savedOnly ? undefined : 'textSecondary'}
+                  >
+                    ⚡ Best match
+                  </ThemedText>
+                </Pressable>
+                <Pressable
+                  onPress={() => setSavedOnly((v) => !v)}
+                  style={[
+                    styles.chip,
+                    { borderColor: theme.border, backgroundColor: savedOnly ? theme.primary : theme.backgroundElement },
+                  ]}
+                >
+                  <ThemedText type="small" style={savedOnly ? styles.chipTextActive : undefined} themeColor={savedOnly ? undefined : 'textSecondary'}>
+                    ★ Saved
+                  </ThemedText>
+                </Pressable>
+              </ThemedView>
             }
           />
         </ThemedView>
@@ -191,6 +217,13 @@ export default function JobsScreen() {
                       <ThemedText type="small">{item.stipend}</ThemedText>
                     </ThemedView>
                   ) : null}
+                  {item.matchScore != null ? (
+                    <ThemedView type="backgroundSelected" style={styles.badge}>
+                      <ThemedText type="small" themeColor="primary">
+                        {item.matchScore}% match
+                      </ThemedText>
+                    </ThemedView>
+                  ) : null}
                 </ThemedView>
               </Pressable>
             )}
@@ -224,6 +257,10 @@ const styles = StyleSheet.create({
   filterRow: {
     gap: Spacing.two,
     paddingBottom: Spacing.two,
+  },
+  filterRowInline: {
+    flexDirection: 'row',
+    gap: Spacing.two,
   },
   chip: {
     paddingHorizontal: Spacing.three,

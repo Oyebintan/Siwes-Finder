@@ -294,6 +294,62 @@ prior phase.
       need a real build running on a device/emulator, which (like every
       prior phase) this sandboxed environment can't produce.
 
+### Phase 5 — Mobile parity for web-only features
+Batches 3-4 of the post-launch feature work (see `PROJECT_SCOPE.md`) shipped
+match score, company-follow alerts, and application messaging on the web
+dashboard only — the backend routes work for any bearer-token caller, but no
+mobile screens existed yet. This phase closes that gap, reusing the existing
+API entirely (no backend changes):
+- [x] Match score + "Best match" sort — `Job.matchScore` (already returned
+      by `GET /api/jobs` for a student with skills listed) surfaced as a
+      badge on `(tabs)/index.tsx`'s job cards and `jobs/[id].tsx`'s detail
+      screen; a "⚡ Best match" filter chip sends `sort=match`.
+- [x] Follow company — `jobs/[id].tsx` gets a Follow button
+      (`getFollowStatus`/`toggleFollowCompany` in `api/client.ts`, wrapping
+      `GET`/`POST /api/companies/[id]/follow`).
+- [x] Application messaging — new `messages/[id].tsx` stack screen (bubble
+      thread, 8s poll while open, matching the web modal's cadence), reached
+      via a "Message" button from both `(tabs)/applications.tsx` (student)
+      and `(tabs)/employer-applicants.tsx` (employer). `listMessages`/
+      `sendMessage` added to `api/client.ts`.
+- [ ] Not yet verified on an actual device/emulator — same sandboxed-
+      environment caveat as every prior phase.
+
+**A new mobile build is needed to ship this to existing installs** — unlike
+the backend-only parts of batches 1-4 (which reached installed apps
+automatically once merged, since the app is just an API client), these are
+new screens compiled into the binary. See "Cutting a new Android build"
+below.
+
+## Cutting a new Android build
+
+Run this whenever mobile-visible code changes (a new screen, a new
+`app.json`/`eas.json` setting) — **not** needed for backend-only changes,
+which every installed app already picks up automatically on its next
+API call.
+
+```
+cd mobile
+eas build --platform android --profile production
+```
+
+This uploads the build to expo.dev and prints a download link when it
+finishes (10-20 min). Then, to publish it:
+
+1. Download the `.apk` from that link.
+2. On GitHub: go to the repo → Releases → either edit the existing
+   `v1.0.0-android` release (delete the old asset, upload the new one) or
+   publish a new tag (e.g. `v1.1.0-android`) with the new `.apk` attached.
+3. If you used a new tag, update the download link: either set
+   `NEXT_PUBLIC_ANDROID_APK_URL` in Vercel's project settings to the new
+   asset URL, or ask a session to update the hardcoded fallback in
+   `src/app/page.tsx`.
+
+This sandboxed environment can't run `eas` (`api.expo.dev` is unreachable
+from here, confirmed by a direct connection test) or upload a Release asset
+(no file to upload from and no network path to GitHub's upload endpoint for
+binary assets) — both steps are the owner's to run locally.
+
 ## One-time account setup (owner to-dos)
 
 | What | Where | Cost | Needed by |

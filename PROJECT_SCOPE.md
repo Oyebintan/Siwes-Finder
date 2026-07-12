@@ -8,11 +8,12 @@ SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
 seeking SIWES (Students Industrial Work Experience Scheme) placements with
 verified employers, and gives their schools visibility into the process.
 
-**Last synced with:** `3548174` (main, 2026-07-12) — PR #19 (Android download
+**Last synced with:** `17e61e5` (main, 2026-07-12) — PR #19 (Android download
 link), PR #20 (email notifications), PR #21 (web employer logbook page +
-corrected stale "known gaps"), and PR #22 (real match-score algorithm +
-company-follow job-posting alerts) all merged, plus this PR's per-application
-employer↔applicant messaging.
+corrected stale "known gaps"), PR #22 (real match-score algorithm +
+company-follow job-posting alerts), and PR #23 (per-application
+employer↔applicant messaging) all merged, plus this PR's mobile parity
+(Mobile Phase 5) for match score/best-match sort, follow, and messaging.
 Recent-change log: see `PROGRESS.md` (auto-appended on every push to main).
 
 ## Roles
@@ -172,8 +173,11 @@ assets and a `/privacy` policy page (a Play Store requirement) done, but
 the actual store publishing is on hold — the user doesn't want to pay
 Google Play Console's $25 one-time fee, so a distribution-path decision
 (direct APK download, an alternate free app store, or paying later) is
-still open. **Read `MOBILE_APP.md` before doing any mobile work** — it
-carries the full
+still open. Phase 5 (mobile parity for match score, company-follow, and
+messaging) is done in-code but **not yet in any published build** — the
+owner needs to run a new `eas build` and re-publish before installed apps
+get these screens; see `MOBILE_APP.md`'s "Cutting a new Android build".
+**Read `MOBILE_APP.md` before doing any mobile work** — it carries the full
 architecture, the phase-by-phase checklist (kept current in each PR), and
 the release/store setup steps.
 
@@ -204,12 +208,13 @@ software, design, engineering, finance, telecoms, and marketing. Run with
   scoped early on.
 - **No unread-message badge on the applications list views** — a new
   message only becomes visible once you open that application's thread
-  (`ApplicationMessageButton`); the employer applicant list and student
-  applications list don't show which threads have unread messages.
-- **No mobile UI for application messaging, company follow, or the
-  "Best match" sort** — all three exist only on the web dashboard; the
-  backend routes work for any bearer-token client, but the Expo app's
-  screens haven't been built for them yet.
+  (web: `ApplicationMessageButton`; mobile: `messages/[id].tsx`); neither
+  the employer applicant list nor the student applications list (web or
+  mobile) shows which threads have unread messages.
+- **Mobile screens exist for match score/best-match sort, company follow,
+  and messaging as of Mobile Phase 5** (`MOBILE_APP.md`), but a new Android
+  build + Release upload is needed before an already-installed app picks
+  them up — see "Cutting a new Android build" in that doc.
 
 ## Environment variables
 
