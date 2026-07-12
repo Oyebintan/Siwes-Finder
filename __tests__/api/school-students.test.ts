@@ -14,8 +14,8 @@ import User from '@/models/User';
 import Application from '@/models/Application';
 import Logbook from '@/models/Logbook';
 
-function makeRequest() {
-  return new Request('http://localhost/api/school/students');
+function makeRequest(query = '') {
+  return new Request(`http://localhost/api/school/students${query}`);
 }
 
 function mockSchoolAccount(verificationStatus: string, name = 'University of Lagos') {
@@ -84,6 +84,36 @@ describe('GET /api/school/students', () => {
     expect(ada.logbookApproved).toBe(7);
     const bode = data.students.find((s: any) => s._id === 'stu2');
     expect(bode.placedAt).toBeNull();
+  });
+
+  it('returns a CSV attachment for ?format=csv with the same roster data', async () => {
+    (requireSession as any).mockResolvedValue({ user: { id: 'sch1', role: 'school' } });
+    mockSchoolAccount('approved', 'University of Lagos');
+
+    const students = [
+      { _id: 'stu1', name: 'Ada, Lovelace', email: 'ada@x.com', courseOfStudy: 'Computer Science', faculty: 'Science', isProfileComplete: true },
+    ];
+    const sort = vi.fn().mockResolvedValue(students);
+    const select = vi.fn().mockReturnValue({ sort });
+    (User.find as any).mockReturnValue({ select });
+
+    const appSelect = vi.fn().mockResolvedValue([{ student: 'stu1', employer: { companyName: 'Paystack' } }]);
+    const appPopulate = vi.fn().mockReturnValue({ select: appSelect });
+    (Application.find as any).mockReturnValue({ populate: appPopulate });
+    (Application.aggregate as any).mockResolvedValue([{ _id: 'stu1', total: 2 }]);
+    (Logbook.aggregate as any).mockResolvedValue([{ _id: 'stu1', total: 5, approved: 4 }]);
+
+    const res = await GET(makeRequest('?format=csv'));
+    const csv = await res.text();
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toMatch(/text\/csv/);
+    expect(res.headers.get('Content-Disposition')).toMatch(/attachment/);
+    expect(res.headers.get('Content-Disposition')).toMatch(/university-of-lagos-students\.csv/);
+    // A comma inside a field is quoted, not left to break the column count.
+    expect(csv).toContain('"Ada, Lovelace"');
+    expect(csv).toContain('Paystack');
+    expect(csv).toContain('2,5,4,Yes');
   });
 });
 

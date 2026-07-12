@@ -321,6 +321,19 @@ automatically once merged, since the app is just an API client), these are
 new screens compiled into the binary. See "Cutting a new Android build"
 below.
 
+### Phase 6 — Bulk accept/reject on employer-applicants
+Batch 6's employer-side bulk accept/reject (`PATCH /api/applications/bulk`,
+see `PROJECT_SCOPE.md`) got a mobile equivalent alongside the web one, not
+a separate later pass: `(tabs)/employer-applicants.tsx` gets a "Select"
+toggle in the header, a checkbox on each pending applicant's card while in
+select mode, and a bottom action bar ("Accept selected" / "Reject
+selected") wired to the new `bulkUpdateApplications` client function. Also
+compiled-in — needs the same new build as Phase 5 to reach existing
+installs. CSV export (school roster) and the logbook streak push reminders
+from the same batch are **not** mobile features — CSV export is
+deliberately web-only (file downloads aren't a mobile-native workflow),
+and the streak reminder is a server-side cron job with no UI at all.
+
 ## Cutting a new Android build
 
 Run this whenever mobile-visible code changes (a new screen, a new

@@ -19,7 +19,17 @@ export type EmployerApplication = {
   };
 };
 
-export default function EmployerApplicationCard({ app }: { app: EmployerApplication }) {
+export default function EmployerApplicationCard({
+  app,
+  selectable = false,
+  selected = false,
+  onToggleSelect,
+}: {
+  app: EmployerApplication;
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: () => void;
+}) {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(app.status);
   const router = useRouter();
@@ -44,11 +54,22 @@ export default function EmployerApplicationCard({ app }: { app: EmployerApplicat
   };
 
   return (
-    <div className="bg-surface-1 border border-surface-border hover:border-accent-400/40 shadow-sm rounded-2xl p-6 transition-all">
+    <div className={`bg-surface-1 border shadow-sm rounded-2xl p-6 transition-all ${selected ? 'border-accent-500' : 'border-surface-border hover:border-accent-400/40'}`}>
       <div className="flex justify-between items-start mb-6">
-        <div>
-          <h3 className="text-lg font-bold text-accent-600 dark:text-accent-300 mb-1">{app.job.title}</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Applied on {new Date(app.createdAt).toLocaleDateString()}</p>
+        <div className="flex items-start gap-3">
+          {selectable && (
+            <input
+              type="checkbox"
+              checked={selected}
+              onChange={onToggleSelect}
+              className="w-4 h-4 mt-1 accent-accent-500 shrink-0"
+              aria-label={`Select ${app.student.name}'s application`}
+            />
+          )}
+          <div>
+            <h3 className="text-lg font-bold text-accent-600 dark:text-accent-300 mb-1">{app.job.title}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Applied on {new Date(app.createdAt).toLocaleDateString()}</p>
+          </div>
         </div>
         {status === 'Pending' && <span className="px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold border border-amber-200 dark:border-amber-800/40">Pending</span>}
         {status === 'Accepted' && <span className="px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-200 dark:border-emerald-800/40">Accepted</span>}

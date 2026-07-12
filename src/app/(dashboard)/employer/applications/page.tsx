@@ -2,9 +2,9 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import Application from "@/models/Application";
-import EmployerApplicationCard, { type EmployerApplication } from "@/components/EmployerApplicationCard";
+import { type EmployerApplication } from "@/components/EmployerApplicationCard";
+import EmployerApplicationsBoard from "@/components/EmployerApplicationsBoard";
 import { redirect } from "next/navigation";
-import { UserCheck } from "lucide-react";
 
 async function getEmployerApplications(employerId: string): Promise<EmployerApplication[]> {
   await connectToDatabase();
@@ -28,19 +28,7 @@ export default async function EmployerApplications() {
         <p className="text-gray-500 dark:text-gray-400 mt-1">Manage and review students who applied to your IT placements.</p>
       </div>
 
-      {applications.length === 0 ? (
-        <div className="text-center py-20 bg-surface-1 border border-surface-border shadow-sm rounded-3xl">
-          <UserCheck className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
-          <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">No applicants yet</h3>
-          <p className="text-gray-500 dark:text-gray-400">When students apply, they will appear here.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {applications.map((app) => (
-            <EmployerApplicationCard key={app._id} app={app} />
-          ))}
-        </div>
-      )}
+      <EmployerApplicationsBoard applications={applications} />
     </div>
   );
 }
