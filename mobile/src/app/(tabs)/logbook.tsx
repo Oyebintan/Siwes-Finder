@@ -17,6 +17,7 @@ import { ErrorBanner } from '@/components/ui/error-banner';
 import { Field } from '@/components/ui/field';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { SkeletonCard } from '@/components/ui/skeleton';
+import { StreakCard } from '@/components/ui/streak-card';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { ApiError, createLogbookEntry, listLogbookEntries, type LogbookEntry } from '@/api/client';
@@ -151,6 +152,12 @@ export default function LogbookScreen() {
         <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
           <ScreenHeader title="e-Logbook" subtitle="Your daily record, synced to your school" />
 
+          {!loading && entries.length > 0 ? (
+            <View style={styles.streakWrap}>
+              <StreakCard entries={entries} />
+            </View>
+          ) : null}
+
           <Animated.View entering={FadeInDown.duration(350).delay(80)}>
             <Card style={styles.form}>
               {submitError ? <ErrorBanner message={submitError} /> : null}
@@ -260,6 +267,9 @@ const styles = StyleSheet.create({
   container: {
     paddingBottom: Spacing.six,
     gap: Spacing.three,
+  },
+  streakWrap: {
+    paddingHorizontal: Spacing.four,
   },
   form: {
     marginHorizontal: Spacing.four,
