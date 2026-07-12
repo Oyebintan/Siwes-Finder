@@ -221,6 +221,13 @@ connected — don't set by hand), `RESEND_API_KEY` (forgot-password emails).
   DB-query shape).
 - `npm run lint`, `npx tsc --noEmit`, and `npm test` all must pass before a
   PR is considered done — CI (`.github/workflows/ci.yml`) enforces this.
+- **`.claude/` carries a project-level install of [ECC](https://github.com/affaan-m/ECC)
+  v2.0.0**, trimmed to a curated, stack-relevant subset (14 agents, 20 skills,
+  4 rule packs — no hooks, no legacy commands; see `.claude/ECC-NOTICE.md` for
+  the full list and why it's trimmed rather than the full ~734-file bundle).
+  This is separate from `.agents/skills/` + `skills-lock.json`, which is a
+  different, unrelated skill-manager already used by this repo — don't merge
+  the two systems.
 
 ## Keeping this file in sync
 
