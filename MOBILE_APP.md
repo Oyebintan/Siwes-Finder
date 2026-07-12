@@ -229,20 +229,71 @@ can be minted in this sandboxed environment.
 prior phase.
 
 ### Phase 4 — Release (Android)
-- [ ] App icon + splash from the existing logomark (`public/logos` blue
-      two-circle mark; see `src/app/icon.svg`)
-- [ ] EAS build profile (`eas.json`), production Android build (AAB)
-- [ ] Play Console: internal testing track → closed → production
-- [ ] Store listing: screenshots, description, feature graphic
-- [ ] Privacy policy page on the website (Play Store requirement)
+- [x] App icon + splash from the existing logomark (`src/app/icon.svg`'s
+      two-circle mark) — regenerated every Android icon asset
+      (`mobile/assets/images/icon.png`, `android-icon-{foreground,
+      background,monochrome}.png`, `splash-icon.png`) from the brand SVG
+      via `sharp`, white mark on the brand blue (`#2557eb`), respecting
+      Android's adaptive-icon safe zone. `favicon.png` uses the original
+      blue-on-transparent mark, matching the website's own favicon.
+      **iOS's `assets/expo.icon/` (Apple's newer layered "Icon Composer"
+      bundle format) was deliberately left untouched** — this phase is
+      titled Release (Android), iOS icon work needs Apple's own tooling to
+      verify visually and isn't scoped here.
+- [x] Privacy policy page on the website (Play Store requirement) —
+      `src/app/privacy/page.tsx`, linked from the homepage footer. Plain
+      language, describes what's actually collected per role (including
+      the mobile app's push token) and the third-party processors used
+      (MongoDB Atlas, Vercel/Vercel Blob, Resend, Google, Expo) — not a
+      lawyer-reviewed document, written in good faith for an MVP-stage
+      platform; revisit if the platform scales significantly.
+- [x] EAS build profile — `mobile/eas.json`, `production` (and `preview`)
+      profiles both set `android.buildType: "apk"` (EAS's default for
+      `production` is an AAB, Play-Store-only). An APK is what both chosen
+      distribution paths below need. **Decision (owner, 2026-07-11): skip
+      Google Play — no $25 registration fee.** Do both of the following
+      instead, from the same build:
+      1. **Direct download** — host the built `.apk` on the website; the
+         owner adds the download link themselves once a build exists.
+      2. **Free alternate app store** — Amazon Appstore and/or Huawei
+         AppGallery, both free to register, both accept a plain APK. Either
+         store's app can be installed on **any** Android device (not
+         limited to Amazon/Huawei hardware) — same APK serves both this
+         and the direct download above.
+      `app.json`: `extra.eas.projectId` set (owner's Expo project),
+      `android.package` set to `com.siwesfinder.app` (permanent once
+      published anywhere, chosen deliberately). `expo-build-properties`
+      plugin added with `enableMinifyInReleaseBuilds` +
+      `enableShrinkResourcesInReleaseBuilds` (R8/Proguard + unused-resource
+      stripping) and `buildArchs: ["armeabi-v7a", "arm64-v8a"]` (drops the
+      `x86`/`x86_64` slices a universal APK bundles by default — those only
+      ever run on emulators, never real phones — while keeping both real
+      ARM architectures so older/budget Android devices still work) to
+      bring the release APK size down from an initial ~100MB.
+      **The owner runs the actual build** (this sandboxed environment
+      can't reach `api.expo.dev` at all, confirmed by a direct connection
+      test, so it can never run `eas` commands itself, credentials or not):
+      ```
+      cd mobile && eas build --platform android --profile production
+      ```
+      which uploads the resulting APK to expo.dev, downloadable from
+      there or via the CLI's own link.
+- [ ] Play Console submission — **explicitly out of scope**, per the
+      decision above.
+- [ ] Store listing (screenshots, description, feature graphic) — needed
+      for the Amazon/Huawei submissions above; not started. Screenshots
+      need a real build running on a device/emulator, which (like every
+      prior phase) this sandboxed environment can't produce.
 
 ## One-time account setup (owner to-dos)
 
 | What | Where | Cost | Needed by |
 |---|---|---|---|
-| Expo account + `eas init` to link a project (writes `extra.eas.projectId` into `app.json`) | expo.dev | Free tier is enough to start | **Phase 2** — push notifications won't register without it (the code no-ops safely, it just never gets a token) |
-| Google Play Console | play.google.com/console | $25 one-time | Phase 4 |
+| Expo account + `eas init` to link a project (writes `extra.eas.projectId` into `app.json`) | expo.dev | Free tier is enough to start | **Phase 2 and 4** — push notifications won't register without it, and it's required to run any EAS build at all |
 | Signing keystore | Managed automatically by EAS | — | Phase 4 |
+| Amazon Appstore developer account | developer.amazon.com/apps-and-games | Free | Phase 4 (chosen distribution path) |
+| Huawei AppGallery developer account | developer.huawei.com | Free | Phase 4 (chosen distribution path) |
+| ~~Google Play Console~~ | ~~play.google.com/console~~ | ~~$25 one-time~~ | **Not needed** — skipped per the owner's decision above |
 | (Later, iOS) Apple Developer | developer.apple.com | $99/year | Phase 4+ |
 
 ## Conventions for sessions working on mobile

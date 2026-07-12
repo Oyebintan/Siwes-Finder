@@ -11,8 +11,9 @@
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "package": "com.siwesfinder.app",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#2557eb",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -44,11 +45,26 @@
         {
           "color": "#2557eb"
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "buildArchs": ["armeabi-v7a", "arm64-v8a"]
+          }
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f4d8dee9-8d13-4ead-a3f4-c8bab0f17a3a"
+      }
     }
   }
 }
