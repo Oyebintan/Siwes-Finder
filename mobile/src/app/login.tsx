@@ -83,6 +83,14 @@ export default function LoginScreen() {
                 />
               </Animated.View>
 
+              <Animated.View entering={FadeInDown.duration(400).delay(240)}>
+                <PressableScale onPress={() => router.push('/forgot-password')} style={styles.forgotRow} haptic={false}>
+                  <ThemedText type="smallBold" themeColor="primary">
+                    Forgot password?
+                  </ThemedText>
+                </PressableScale>
+              </Animated.View>
+
               <Animated.View entering={FadeInDown.duration(400).delay(280)}>
                 <Button
                   label="Log in"
@@ -128,6 +136,10 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: Spacing.three,
+  },
+  forgotRow: {
+    alignSelf: 'flex-end',
+    marginTop: -Spacing.two,
   },
   linkRow: {
     alignItems: 'center',

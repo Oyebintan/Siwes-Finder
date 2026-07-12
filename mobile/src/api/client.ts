@@ -54,6 +54,16 @@ export async function register(
   return apiFetch('/api/auth/register', { method: 'POST', body: JSON.stringify({ name, email, password, role }) });
 }
 
+// Password reset reuses the website's public OTP flow (10-minute code sent
+// by email). Both endpoints are unauthenticated by design.
+export async function requestPasswordReset(email: string): Promise<{ message: string }> {
+  return apiFetch('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) });
+}
+
+export async function resetPassword(email: string, otp: string, newPassword: string): Promise<{ message: string }> {
+  return apiFetch('/api/auth/reset-password', { method: 'POST', body: JSON.stringify({ email, otp, newPassword }) });
+}
+
 export type Employer = {
   _id: string;
   name?: string;

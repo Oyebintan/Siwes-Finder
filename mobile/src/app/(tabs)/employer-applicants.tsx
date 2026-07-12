@@ -15,6 +15,7 @@ import { ErrorBanner } from '@/components/ui/error-banner';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { SkeletonList } from '@/components/ui/skeleton';
+import { SwipeRow } from '@/components/ui/swipe-row';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import {
@@ -146,6 +147,16 @@ export default function EmployerApplicantsScreen() {
                 <Animated.View
                   entering={FadeInDown.duration(320).delay(Math.min(index, MAX_STAGGERED) * STAGGER_MS)}
                 >
+                  <SwipeRow
+                    actions={
+                      item.status === 'Pending' && !selectMode
+                        ? [
+                            { icon: 'close', label: 'Reject', color: theme.error, onPress: () => handleDecision(item._id, 'Rejected') },
+                            { icon: 'checkmark', label: 'Accept', color: theme.success, onPress: () => handleDecision(item._id, 'Accepted') },
+                          ]
+                        : []
+                    }
+                  >
                   <Card style={isSelected ? { borderColor: theme.primary, borderWidth: 1.5 } : undefined}>
                     <PressableScale
                       disabled={!showCheckbox}
@@ -211,6 +222,7 @@ export default function EmployerApplicantsScreen() {
                       ) : null}
                     </View>
                   </Card>
+                  </SwipeRow>
                 </Animated.View>
               );
             }}

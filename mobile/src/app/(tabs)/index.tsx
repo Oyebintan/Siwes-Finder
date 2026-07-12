@@ -15,6 +15,7 @@ import { ErrorBanner } from '@/components/ui/error-banner';
 import { Field } from '@/components/ui/field';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { SkeletonList } from '@/components/ui/skeleton';
+import { SwipeRow } from '@/components/ui/swipe-row';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/api/AuthContext';
@@ -202,6 +203,16 @@ export default function JobsScreen() {
                 <Animated.View
                   entering={FadeInDown.duration(320).delay(Math.min(index, MAX_STAGGERED) * STAGGER_MS)}
                 >
+                  <SwipeRow
+                    actions={[
+                      {
+                        icon: isSaved ? 'bookmark' : 'bookmark-outline',
+                        label: isSaved ? 'Unsave' : 'Save',
+                        color: theme.primary,
+                        onPress: () => handleToggleSave(item._id),
+                      },
+                    ]}
+                  >
                   <Card onPress={() => router.push(`/jobs/${item._id}`)}>
                     <View style={styles.cardHeader}>
                       <InitialAvatar name={companyName} />
@@ -236,6 +247,7 @@ export default function JobsScreen() {
                       ) : null}
                     </View>
                   </Card>
+                  </SwipeRow>
                 </Animated.View>
               );
             }}
