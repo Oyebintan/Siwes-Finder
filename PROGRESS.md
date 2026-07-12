@@ -7,6 +7,7 @@
 
 | Date | Commit | What landed |
 |---|---|---|
+| 2026-07-12 | `c86dc4e` | Merge pull request #23 from Oyebintan/claude/employer-applicant-messaging |
 | 2026-07-12 | `5ca58ee` | Merge pull request #22 from Oyebintan/claude/match-score-and-alerts |
 | 2026-07-12 | `eb02b6e` | Merge pull request #21 from Oyebintan/claude/admin-promotion-and-employer-logbook-ui |
 | 2026-07-12 | `fcf237b` | Merge pull request #20 from Oyebintan/claude/email-notifications |
