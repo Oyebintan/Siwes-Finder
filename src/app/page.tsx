@@ -1,6 +1,12 @@
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { ArrowRightCircle, ArrowUpRight, CheckCircle2, Users } from 'lucide-react';
+import { ArrowRightCircle, ArrowUpRight, CheckCircle2, Download, Smartphone, Users } from 'lucide-react';
+
+// Set once a build exists (see MOBILE_APP.md Phase 4) -- a direct link to
+// the built .apk, e.g. a GitHub Release asset URL. Unset by default so the
+// button never points at a 404; the banner still renders with a
+// "Coming soon" state either way, so it's not a mystery why it's missing.
+const ANDROID_APK_URL = process.env.NEXT_PUBLIC_ANDROID_APK_URL;
 
 const companies = ['Paystack', 'Flutterwave', 'Andela', 'MTN Nigeria', 'Interswitch', 'Nigerian Breweries'];
 
@@ -161,6 +167,33 @@ export default function Home() {
               ))}
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* MOBILE APP */}
+      <section className="max-w-[1220px] mx-auto px-6 sm:px-10 lg:px-14 pb-6 sm:pb-8">
+        <div className="rounded-2xl bg-surface-1 border border-surface-border px-6 py-5 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-[12px] bg-primary-500/10 dark:bg-primary-400/15 flex items-center justify-center shrink-0">
+              <Smartphone className="w-5 h-5 text-primary-500 dark:text-primary-400" />
+            </div>
+            <div>
+              <div className="font-display font-bold text-[15px]">SIWES Finder is also on Android</div>
+              <div className="text-[13px] text-muted">Browse, apply, and log your SIWES hours from your phone.</div>
+            </div>
+          </div>
+          {ANDROID_APK_URL ? (
+            <a
+              href={ANDROID_APK_URL}
+              className="inline-flex items-center gap-2 bg-primary-500 dark:bg-primary-400 text-white px-5 py-2.5 rounded-[9px] text-[14px] font-bold hover:brightness-110 transition-all shrink-0"
+            >
+              <Download className="w-4 h-4" /> Download for Android
+            </a>
+          ) : (
+            <span className="inline-flex items-center gap-2 bg-surface-2 text-muted px-5 py-2.5 rounded-[9px] text-[14px] font-bold shrink-0 cursor-default">
+              <Download className="w-4 h-4" /> Coming soon
+            </span>
+          )}
         </div>
       </section>
 
