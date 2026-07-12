@@ -22,7 +22,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger reminder sweep
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
+          # Strip any stray trailing newline/whitespace picked up when the
+          # secret was pasted into the GitHub UI -- an embedded newline
+          # here would otherwise split the -H argument across lines and
+          # silently break the header.
+          SECRET=$(printf '%s' "$CRON_SECRET" | tr -d '\n\r')
           curl -sS -X POST "${{ vars.SITE_URL || 'https://siwes-finder-eight.vercel.app' }}/api/cron/logbook-streak-reminders" \
-            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            -H "x-cron-secret: ${SECRET}" \
             --fail-with-body
