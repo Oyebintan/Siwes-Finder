@@ -8,11 +8,12 @@ SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
 seeking SIWES (Students Industrial Work Experience Scheme) placements with
 verified employers, and gives their schools visibility into the process.
 
-**Last synced with:** `bc77191` (main, 2026-07-12) — PR #19 merged (Android
-download button → permanent GitHub Release link; mobile Phases 0-4 all
-shipped), plus this PR's email notifications (application decisions,
-logbook approvals, verification decisions — closing that long-standing
-gap).
+**Last synced with:** `4402eef` (main, 2026-07-12) — PR #19 (Android download
+link) and PR #20 (email notifications) merged, plus this PR's real
+match-score algorithm and company-follow job-posting alerts. A separate,
+still-open PR rebuilds the web employer logbook page and corrects a couple
+of stale "known gaps" below — check `git log` if this file looks out of
+sync with what's actually on `main`.
 Recent-change log: see `PROGRESS.md` (auto-appended on every push to main).
 
 ## Roles
@@ -36,7 +37,8 @@ equivalent everywhere except that one deletion-hierarchy check.
 
 - **User** — one schema for all roles (see `role` enum above). Notable fields:
   `avatarUrl` (profile picture / company logo / school crest, shared field),
-  `savedJobs` (student bookmarks), `communityJoined` (opt-in flag),
+  `savedJobs` (student bookmarks), `followedEmployers` (student→employer
+  follows, drives new-job-posted alerts), `communityJoined` (opt-in flag),
   `verificationStatus` (`unsubmitted → pending → approved/rejected`, used by
   both employers and schools), `resetOtpHash`/`resetOtpExpires` (password
   reset, hash-only — the OTP itself is never stored).
@@ -63,18 +65,35 @@ avoid email enumeration.
 (failures logged, never fail the underlying action) on: application
 accepted/rejected (to the student, from `PUT /api/applications/[id]`),
 logbook entry approved (to the student, from `PUT /api/logbook/[id]`),
-and verification approved/rejected (to the employer/school, from
+verification approved/rejected (to the employer/school, from
 `PATCH /api/admin/companies/[id]`, wording adapted per role, rejection
-reason included). Mobile push (where a token is registered) and email are
-independent channels — one failing never blocks the other.
+reason included), and a new opportunity posted by a followed company (to
+every student following that employer, from `POST /api/jobs`). Mobile push
+(where a token is registered) and email are independent channels — one
+failing never blocks the other, and one recipient's failure never blocks
+the next recipient's (see the followers loop in `POST /api/jobs`).
 
 **Students** — browse/search jobs (`/student/jobs`, filters: keyword, type,
-location, sort; search matches title, description, **required
-skills/requirements**, location, and company name/industry), job details
-with Apply (in-app / email / external depending on the listing), save jobs
-for later, e-Logbook, profile (academic details + faculty + skills + resume
-PDF + avatar), opt-in Community directory (peers who also joined, grouped
+location, sort — including "Best match"; search matches title, description,
+**required skills/requirements**, location, and company name/industry), job
+details with Apply (in-app / email / external depending on the listing),
+save jobs for later, follow a company for new-listing alerts (email + push),
+e-Logbook, profile (academic details + faculty + skills + resume PDF +
+avatar), opt-in Community directory (peers who also joined, grouped
 implicitly by shared placement visibility).
+
+**Match score** (`src/lib/match.ts`, `computeMatchScore`) — a genuine (not
+decorative) 0-100% overlap between a student's `skills` and a job's
+`requirements` (case-insensitive substring match either direction), plus a
++10 boost when the job's `location` contains the student's
+`preferredState`. Attached server-side to every job in `GET /api/jobs`'s
+student branch and to the single-job details lookup, but only when the
+student has listed at least one skill — otherwise omitted entirely rather
+than showing a misleading 0%. `sort=match` on the feed sorts by this score
+(computed in memory over the filtered set, since it isn't a stored field).
+The landing page's floating "92%" card is unrelated — it's a static
+marketing mockup for logged-out visitors who have no profile to score
+against.
 
 **Employers** — post/edit/deactivate jobs (multi-step wizard with
 deadline/cap controls), manage applicants (accept/reject), company

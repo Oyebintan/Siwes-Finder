@@ -24,6 +24,10 @@ export interface IUser extends Document {
   preferredState?: string;
   isProfileComplete?: boolean;
   savedJobs?: mongoose.Types.ObjectId[];
+  // Employer accounts this student follows -- triggers a best-effort
+  // email/push alert (see POST /api/jobs) whenever one of them posts a new
+  // opportunity.
+  followedEmployers?: mongoose.Types.ObjectId[];
   communityJoined?: boolean;
   // Set by the mobile app (POST /api/mobile/register-push-token) after the
   // user grants notification permission. Overwritten on every registration
@@ -71,6 +75,7 @@ const UserSchema: Schema = new Schema(
     preferredState: { type: String },
     isProfileComplete: { type: Boolean, default: false },
     savedJobs: { type: [Schema.Types.ObjectId], ref: 'Job', default: [] },
+    followedEmployers: { type: [Schema.Types.ObjectId], ref: 'User', default: [] },
     // Opt-in flag for the student Community directory/chat -- students must
     // explicitly join before appearing to peers or being able to post.
     communityJoined: { type: Boolean, default: false },
