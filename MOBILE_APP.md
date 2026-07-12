@@ -278,6 +278,19 @@ prior phase.
       ```
       which uploads the resulting APK to expo.dev, downloadable from
       there or via the CLI's own link.
+- [x] Direct download — the homepage's "Also on Android" banner
+      (`src/app/page.tsx`) is live, currently pointing at the first
+      production build's own EAS artifact link (hardcoded as the fallback
+      default when `NEXT_PUBLIC_ANDROID_APK_URL` is unset). **This is a
+      stopgap, not the permanent link** — Expo's free tier only retains
+      build artifacts for a limited time (~30 days). **TODO before it
+      expires:** download the `.apk` from that link, attach it to a GitHub
+      Release on this repo, and set `NEXT_PUBLIC_ANDROID_APK_URL` to the
+      Release asset URL (in Vercel's env vars, or just update the
+      fallback in `page.tsx` again) — then the temporary artifact-link
+      fallback can be deleted.
+- [ ] Amazon Appstore / Huawei AppGallery submission — not started; needs
+      the owner's free developer account on each (see setup table below).
 - [ ] Play Console submission — **explicitly out of scope**, per the
       decision above.
 - [ ] Store listing (screenshots, description, feature graphic) — needed
