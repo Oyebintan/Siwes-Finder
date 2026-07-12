@@ -3,6 +3,7 @@ import User from '@/models/User';
 import Application from '@/models/Application';
 import Logbook from '@/models/Logbook';
 import { requireApprovedSchool, studentsOfSchoolFilter } from '@/lib/schoolAuth';
+import { toCsv } from '@/lib/csv';
 
 // GET: every student registered under this school's institution name, with
 // their placement status and logbook counts — the data a SIWES coordinator
@@ -70,6 +71,33 @@ export async function GET(req: Request) {
         logbookApproved: logs?.approved || 0,
       };
     });
+
+    if (new URL(req.url).searchParams.get('format') === 'csv') {
+      const header = [
+        'Name', 'Email', 'Faculty', 'Department', 'Level', 'Placement',
+        'Applications', 'Logbook Entries', 'Logbook Approved', 'Profile Complete',
+      ];
+      const rows = result.map((s) => [
+        s.name,
+        s.email,
+        s.faculty || '',
+        s.department,
+        s.level || '',
+        s.placedAt || 'Not placed',
+        s.applicationCount,
+        s.logbookEntries,
+        s.logbookApproved,
+        s.isProfileComplete ? 'Yes' : 'No',
+      ]);
+      const filename = `${auth.school.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-students.csv`;
+      return new NextResponse(toCsv([header, ...rows]), {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/csv; charset=utf-8',
+          'Content-Disposition': `attachment; filename="${filename}"`,
+        },
+      });
+    }
 
     return NextResponse.json({ students: result, school: auth.school.name }, { status: 200 });
   } catch (error) {

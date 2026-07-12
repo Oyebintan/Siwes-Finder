@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Loader2, Search, Users, ShieldAlert } from 'lucide-react';
+import { Loader2, Search, Users, ShieldAlert, Download } from 'lucide-react';
 
 type SchoolStudent = {
   _id: string;
@@ -78,9 +78,21 @@ export default function SchoolStudents() {
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-      <div>
-        <h1 className="font-display font-extrabold text-[26px] tracking-[-0.02em] mb-1">Students</h1>
-        <div className="text-sm text-muted">Grouped by faculty and department. Open a student to view their logbook and applications.</div>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-display font-extrabold text-[26px] tracking-[-0.02em] mb-1">Students</h1>
+          <div className="text-sm text-muted">Grouped by faculty and department. Open a student to view their logbook and applications.</div>
+        </div>
+        {students.length > 0 && (
+          // File download from an API route, not a page navigation -- next/link doesn't apply here.
+          // eslint-disable-next-line @next/next/no-html-link-for-pages
+          <a
+            href="/api/school/students?format=csv"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-surface-1 border-[1.5px] border-surface-border text-sm font-bold hover:border-primary-500 transition-colors shrink-0"
+          >
+            <Download className="w-4 h-4" /> Export CSV
+          </a>
+        )}
       </div>
 
       <div className="flex items-center gap-2.5 bg-surface-1 border-[1.5px] border-surface-border rounded-[10px] px-4 py-3 max-w-md">

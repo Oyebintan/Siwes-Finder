@@ -276,6 +276,13 @@ export async function updateApplicationStatus(
   return apiFetch(`/api/applications/${id}`, { method: 'PUT', body: JSON.stringify({ status }) });
 }
 
+export async function bulkUpdateApplications(
+  ids: string[],
+  status: 'Accepted' | 'Rejected'
+): Promise<{ modifiedCount: number }> {
+  return apiFetch('/api/applications/bulk', { method: 'PATCH', body: JSON.stringify({ ids, status }) });
+}
+
 // GET /api/logbook's employer branch, similarly a different shape from the
 // student one above -- studentId comes back populated, not a bare id.
 export type EmployerLogbookEntry = {

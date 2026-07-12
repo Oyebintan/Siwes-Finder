@@ -8,12 +8,12 @@ SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
 seeking SIWES (Students Industrial Work Experience Scheme) placements with
 verified employers, and gives their schools visibility into the process.
 
-**Last synced with:** `17e61e5` (main, 2026-07-12) — PR #19 (Android download
-link), PR #20 (email notifications), PR #21 (web employer logbook page +
-corrected stale "known gaps"), PR #22 (real match-score algorithm +
-company-follow job-posting alerts), and PR #23 (per-application
-employer↔applicant messaging) all merged, plus this PR's mobile parity
-(Mobile Phase 5) for match score/best-match sort, follow, and messaging.
+**Last synced with:** `0cd5b9b` (main, 2026-07-12) — PRs #19-24 (Android
+download link, email notifications, web employer logbook page, real
+match-score algorithm + company-follow alerts, per-application messaging,
+and Mobile Phase 5 parity for all three) all merged, plus this PR's bulk
+accept/reject for employers, CSV export for schools, and logbook streak
+push reminders — the last batch of the post-launch feature set.
 Recent-change log: see `PROGRESS.md` (auto-appended on every push to main).
 
 ## Roles
@@ -113,29 +113,46 @@ marketing mockup for logged-out visitors who have no profile to score
 against.
 
 **Employers** — post/edit/deactivate jobs (multi-step wizard with
-deadline/cap controls), manage applicants (accept/reject, message), company
-verification submission (CAC number + document + company logo), approve
-student logbook entries (`/employer/logbook`, backed by `GET /api/logbook`
-and `PUT /api/logbook/[id]`, scoped to entries tied to their own
-placements). This approval access was removed in an earlier commit
-("logbooks are now a private student record"), then restored — API and
-mobile screen during mobile Phase 3, the web page in a later session — at
-the user's explicit confirmation; see `MOBILE_APP.md` Phase 3.
+deadline/cap controls), manage applicants (accept/reject — singly or in
+bulk via a select-all-pending checkbox row and `PATCH /api/applications/bulk`,
+web and mobile; message), company verification submission (CAC number +
+document + company logo), approve student logbook entries
+(`/employer/logbook`, backed by `GET /api/logbook` and
+`PUT /api/logbook/[id]`, scoped to entries tied to their own placements).
+This approval access was removed in an earlier commit ("logbooks are now a
+private student record"), then restored — API and mobile screen during
+mobile Phase 3, the web page in a later session — at the user's explicit
+confirmation; see `MOBILE_APP.md` Phase 3. Both the single-item route and
+the bulk route share their best-effort notification logic via
+`src/lib/notifyApplicationDecision.ts`.
 
 **Schools** — `/school/dashboard` (KPI overview: registered/placed/applying
 students, department count, logbook volume, plus a by-department breakdown
 table with placement rate), `/school/students` (directory grouped by
-faculty → department, search, per-student placement + logbook status) →
-`/school/students/[id]` (full record: profile, every application, complete
-logbook with approval state), `/school/logbooks` (every logbook entry
-across every student and company in one filterable feed — read-only,
-approval is the employer's call), and `/school/profile` (institution
-details + accreditation document submission for admin review — same
-`/api/companies/verification` endpoint employers use, shared fields/labels
-adapted per role). A student belongs to a school when their profile's
-`university` matches the school account's institution name
-(case-insensitive). Locked behind admin verification — same queue as
+faculty → department, search, per-student placement + logbook status, an
+"Export CSV" button streaming the same roster data as
+`GET /api/school/students?format=csv`) → `/school/students/[id]` (full
+record: profile, every application, complete logbook with approval state),
+`/school/logbooks` (every logbook entry across every student and company in
+one filterable feed — read-only, approval is the employer's call), and
+`/school/profile` (institution details + accreditation document submission
+for admin review — same `/api/companies/verification` endpoint employers
+use, shared fields/labels adapted per role). A student belongs to a school
+when their profile's `university` matches the school account's institution
+name (case-insensitive). Locked behind admin verification — same queue as
 employers, badged "School".
+
+**Logbook streak reminders** — a daily best-effort push notification
+(`POST /api/cron/logbook-streak-reminders`) to students with an active
+(Accepted) placement who haven't logged an entry in 2+ days, using the
+placement's acceptance date as the reference for a student who has never
+logged at all (so a brand-new placement isn't nagged immediately). This
+route has no user session — it's fired by a scheduled GitHub Action
+(`.github/workflows/logbook-streak-reminders.yml`, daily) and gated by a
+shared `CRON_SECRET` (set identically as a GitHub Actions secret and a
+Vercel env var) instead of `requireSession`. **Requires that one-time
+`CRON_SECRET` setup on both sides to actually fire** — see the workflow
+file's header comment.
 
 **Admin** — dashboard KPIs, company+school verification queue
 (`/admin/companies`), user management with delete (hierarchy-protected —
@@ -215,6 +232,13 @@ software, design, engineering, finance, telecoms, and marketing. Run with
   and messaging as of Mobile Phase 5** (`MOBILE_APP.md`), but a new Android
   build + Release upload is needed before an already-installed app picks
   them up — see "Cutting a new Android build" in that doc.
+- **CSV export (`/school/students`) is web-only** — deliberately not built
+  for mobile; downloading and opening a spreadsheet isn't a mobile-native
+  workflow, unlike bulk accept/reject (built for both) and messaging.
+- **The logbook streak reminder cron needs one-time owner setup to actually
+  fire** — `CRON_SECRET` must be set identically in the GitHub Actions repo
+  secrets and Vercel's env vars; until then the scheduled workflow's daily
+  run just 401s against its own request.
 
 ## Environment variables
 
@@ -223,7 +247,10 @@ non-obvious behavior: `ADMIN_EMAILS` / `SUPER_ADMIN_EMAILS` (comma-separated
 allowlists, promote on sign-in), `MONGODB_URI` (must include a database name
 in the path or Mongoose silently falls back to a `test` database),
 `BLOB_READ_WRITE_TOKEN` (auto-injected by Vercel once a Blob store is
-connected — don't set by hand), `RESEND_API_KEY` (forgot-password emails).
+connected — don't set by hand), `RESEND_API_KEY` (forgot-password emails),
+`CRON_SECRET` (gates `POST /api/cron/logbook-streak-reminders` — must be set
+to the same value in both Vercel and the GitHub Actions repo secrets, or the
+daily reminder sweep 401s against itself).
 
 ## Repo conventions worth knowing
 
