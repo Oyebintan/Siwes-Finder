@@ -20,6 +20,20 @@ function fromAddress(): string {
 
 const SITE_URL = process.env.NEXTAUTH_URL || 'https://siwes-finder-eight.vercel.app';
 
+// Every notification email below interpolates user-controlled data (names,
+// job titles, company names) into an HTML string sent verbatim via Resend.
+// Without escaping, e.g. a job title of `<img src=x onerror=...>` would
+// render as live HTML in the recipient's email client -- escape anything
+// that didn't originate as a literal string in this file.
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 async function send(to: string, subject: string, html: string): Promise<void> {
   const resend = getClient();
   const { error } = await resend.emails.send({ from: fromAddress(), to, subject, html });
@@ -71,16 +85,18 @@ export async function sendApplicationDecisionEmail(
   status: 'Accepted' | 'Rejected'
 ): Promise<void> {
   const accepted = status === 'Accepted';
+  const name = escapeHtml(studentName);
+  const title = escapeHtml(jobTitle);
   await send(
     to,
     accepted ? `You got the placement: ${jobTitle} 🎉` : `Update on your application: ${jobTitle}`,
     layout(
       accepted ? 'Congratulations!' : 'Application update',
-      `<p style="color: #555;">Hi ${studentName},</p>
+      `<p style="color: #555;">Hi ${name},</p>
        <p style="color: #555;">${
          accepted
-           ? `Great news — your application for <strong>${jobTitle}</strong> was <strong>accepted</strong>. Once your placement starts, remember to keep your e-Logbook up to date.`
-           : `Your application for <strong>${jobTitle}</strong> was not selected this time. Don't be discouraged — new verified placements open every week.`
+           ? `Great news — your application for <strong>${title}</strong> was <strong>accepted</strong>. Once your placement starts, remember to keep your e-Logbook up to date.`
+           : `Your application for <strong>${title}</strong> was not selected this time. Don't be discouraged — new verified placements open every week.`
        }</p>`,
       accepted
         ? { label: 'View your applications', path: '/student/applications' }
@@ -95,13 +111,15 @@ export async function sendLogbookApprovalEmail(
   weekNumber: number,
   dayOfWeek: string
 ): Promise<void> {
+  const name = escapeHtml(studentName);
+  const day = escapeHtml(dayOfWeek);
   await send(
     to,
     'Logbook entry approved ✓',
     layout(
       'Logbook entry approved',
-      `<p style="color: #555;">Hi ${studentName},</p>
-       <p style="color: #555;">Your logbook entry for <strong>Week ${weekNumber} · ${dayOfWeek}</strong> was approved by your employer.</p>`,
+      `<p style="color: #555;">Hi ${name},</p>
+       <p style="color: #555;">Your logbook entry for <strong>Week ${weekNumber} · ${day}</strong> was approved by your employer.</p>`,
       { label: 'Open your e-Logbook', path: '/student/logbook' }
     )
   );
@@ -114,13 +132,16 @@ export async function sendNewJobAlertEmail(
   jobTitle: string,
   jobId: string
 ): Promise<void> {
+  const name = escapeHtml(studentName);
+  const company = escapeHtml(companyLabel);
+  const title = escapeHtml(jobTitle);
   await send(
     to,
     `${companyLabel} just posted: ${jobTitle}`,
     layout(
       'New opportunity from a company you follow',
-      `<p style="color: #555;">Hi ${studentName},</p>
-       <p style="color: #555;"><strong>${companyLabel}</strong> just posted a new opportunity: <strong>${jobTitle}</strong>.</p>`,
+      `<p style="color: #555;">Hi ${name},</p>
+       <p style="color: #555;"><strong>${company}</strong> just posted a new opportunity: <strong>${title}</strong>.</p>`,
       { label: 'View opportunity', path: `/student/jobs/${jobId}` }
     )
   );
@@ -133,13 +154,16 @@ export async function sendNewMessageEmail(
   jobTitle: string,
   recipientRole: 'student' | 'employer'
 ): Promise<void> {
+  const recipient = escapeHtml(recipientName);
+  const sender = escapeHtml(senderName);
+  const title = escapeHtml(jobTitle);
   await send(
     to,
     `New message from ${senderName}`,
     layout(
       'You have a new message',
-      `<p style="color: #555;">Hi ${recipientName},</p>
-       <p style="color: #555;"><strong>${senderName}</strong> sent you a message about <strong>${jobTitle}</strong>.</p>`,
+      `<p style="color: #555;">Hi ${recipient},</p>
+       <p style="color: #555;"><strong>${sender}</strong> sent you a message about <strong>${title}</strong>.</p>`,
       { label: 'View conversation', path: recipientRole === 'employer' ? '/employer/applications' : '/student/applications' }
     )
   );
@@ -154,18 +178,20 @@ export async function sendVerificationDecisionEmail(
 ): Promise<void> {
   const approved = decision === 'approved';
   const noun = accountRole === 'school' ? 'school' : 'company';
+  const name = escapeHtml(accountName);
+  const reason = rejectionReason ? escapeHtml(rejectionReason) : undefined;
   await send(
     to,
     approved ? 'Your SIWES Finder account is verified ✓' : 'Your SIWES Finder verification needs attention',
     layout(
       approved ? 'Verification approved' : 'Verification not approved',
-      `<p style="color: #555;">Hi ${accountName},</p>
+      `<p style="color: #555;">Hi ${name},</p>
        <p style="color: #555;">${
          approved
            ? accountRole === 'school'
              ? `Your ${noun} account has been verified by our admin team. Your students' records — placements, applications, and logbooks — are now unlocked.`
              : `Your ${noun} account has been verified by our admin team. Your opportunities are now publicly visible to students.`
-           : `Your ${noun} verification was not approved.${rejectionReason ? ` Reason: <strong>${rejectionReason}</strong>.` : ''} You can update your details and resubmit at any time.`
+           : `Your ${noun} verification was not approved.${reason ? ` Reason: <strong>${reason}</strong>.` : ''} You can update your details and resubmit at any time.`
        }</p>`,
       approved
         ? { label: 'Go to your dashboard', path: accountRole === 'school' ? '/school/dashboard' : '/employer/dashboard' }

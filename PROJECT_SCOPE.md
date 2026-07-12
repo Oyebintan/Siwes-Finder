@@ -8,12 +8,13 @@ SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
 seeking SIWES (Students Industrial Work Experience Scheme) placements with
 verified employers, and gives their schools visibility into the process.
 
-**Last synced with:** `0cd5b9b` (main, 2026-07-12) — PRs #19-24 (Android
+**Last synced with:** `cad73f5` (main, 2026-07-12) — PRs #19-27 (Android
 download link, email notifications, web employer logbook page, real
 match-score algorithm + company-follow alerts, per-application messaging,
-and Mobile Phase 5 parity for all three) all merged, plus this PR's bulk
-accept/reject for employers, CSV export for schools, and logbook streak
-push reminders — the last batch of the post-launch feature set.
+Mobile Phase 5 parity, bulk accept/reject + CSV export + logbook streak
+reminders, and a CRON_SECRET whitespace-tolerance fix) all merged — the
+full post-launch feature plan is complete. This PR is a follow-up security
+audit pass (see Feature surface's "Security-relevant fixes" below).
 Recent-change log: see `PROGRESS.md` (auto-appended on every push to main).
 
 ## Roles
@@ -77,7 +78,23 @@ application message (to whichever party didn't send it, from
 `POST /api/applications/[id]/messages`). Mobile push (where a token is
 registered) and email are independent channels — one failing never blocks
 the other, and one recipient's failure never blocks the next recipient's
-(see the followers loop in `POST /api/jobs`).
+(see the followers loop in `POST /api/jobs`). Every value interpolated into
+an email's HTML (names, job titles, company names, rejection reasons) is
+run through `escapeHtml()` first — these all originate as user-supplied
+data (a job title, a display name, a message body) and are sent as raw
+HTML via Resend, so an unescaped `<img onerror=...>` in e.g. a job title
+would otherwise render as live markup in the recipient's email client.
+
+**Security-relevant fixes (this audit pass)** — two stored-injection issues
+found and fixed, both in code that renders user-controlled strings into a
+format a human later opens outside React's own auto-escaping: (1) the email
+HTML injection above, and (2) CSV/formula injection in the school roster
+export (`src/lib/csv.ts`) — a cell starting with `=`, `+`, `-`, `@`, tab, or
+CR is now prefixed with `'` before serializing, since Excel/Sheets treats a
+leading one of those as a live formula when the file is opened (e.g. a
+student name of `=HYPERLINK(...)` could otherwise execute as a link/formula
+for whoever opens the export). Both have dedicated tests
+(`__tests__/lib/email.test.ts`, `__tests__/lib/csv.test.ts`).
 
 **Messaging** (`Message` model, `GET`/`POST /api/applications/[id]/messages`)
 — a lightweight thread per application, restricted to that application's
@@ -211,6 +228,12 @@ software, design, engineering, finance, telecoms, and marketing. Run with
 
 ## Known gaps / not yet built
 
+- **4 moderate `npm audit` findings in transitive dependencies**
+  (`postcss` via `next`, `uuid` via `next-auth`) — both only have a fix via
+  `npm audit fix --force`, which downgrades `next` to a `9.x` canary and
+  `next-auth` to `3.x`: a breaking change to the framework this whole app
+  is built on, not something to force through as a drive-by fix. Needs a
+  deliberate, tested major-version migration in its own PR.
 - **No saved-jobs UI on the school/employer side** — bookmarking is
   student-only (matches the feature's purpose).
 - **No email notification for job moderation/takedown** — application
