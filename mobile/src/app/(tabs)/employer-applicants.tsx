@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -107,6 +107,15 @@ export default function EmployerApplicantsScreen() {
                   {item.student?.email}
                 </ThemedText>
 
+                <Pressable
+                  onPress={() => router.push(`/messages/${item._id}`)}
+                  style={[styles.messageButton, { borderColor: theme.border }]}
+                >
+                  <ThemedText type="small" themeColor="primary">
+                    Message {item.student?.name ?? 'applicant'}
+                  </ThemedText>
+                </Pressable>
+
                 {item.status === 'Pending' ? (
                   <ThemedView style={styles.actionRow}>
                     <Pressable
@@ -187,6 +196,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.half,
     borderRadius: Spacing.two,
+  },
+  messageButton: {
+    alignSelf: 'flex-start',
+    borderWidth: 1.5,
+    borderRadius: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    marginTop: Spacing.half,
   },
   actionRow: {
     flexDirection: 'row',
