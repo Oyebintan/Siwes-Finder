@@ -27,6 +27,7 @@ const EMPLOYER_NAV: NavItem[] = [
   { name: 'Post opportunity', href: '/employer/post-job', icon: Plus },
   { name: 'Manage opportunities', href: '/employer/dashboard', icon: Briefcase },
   { name: 'Applicants', href: '/employer/applications', icon: Users },
+  { name: 'Student logbooks', href: '/employer/logbook', icon: BookOpen },
   { name: 'Company profile', href: '/employer/verification', icon: Building2 },
 ];
 
