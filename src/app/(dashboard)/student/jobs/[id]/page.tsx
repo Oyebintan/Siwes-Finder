@@ -1,11 +1,16 @@
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import Job from "@/models/Job";
+import User from "@/models/User";
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { notFound } from "next/navigation";
 import ApplyButton from "@/components/ApplyButton";
 import SaveJobButton from "@/components/SaveJobButton";
+import FollowCompanyButton from "@/components/FollowCompanyButton";
 import { isJobOpenForApplications } from "@/lib/jobStatus";
+import { computeMatchScore } from "@/lib/match";
 
 const METHOD_LABEL: Record<string, string> = {
   platform: 'In-app',
@@ -56,6 +61,15 @@ export default async function JobDetails({ params }: { params: Promise<{ id: str
   const { job, related } = data;
   const companyName = job.employerId?.companyName || job.employerId?.name || 'Company';
 
+  const session = await getServerSession(authOptions);
+  let matchScore: number | null = null;
+  if (session?.user?.role === 'student') {
+    const student = await User.findById(session.user.id).select('skills preferredState');
+    if (student?.skills && student.skills.length > 0) {
+      matchScore = computeMatchScore(student.skills, job.requirements, student.preferredState, job.location);
+    }
+  }
+
   return (
     <div className="max-w-[1000px] mx-auto space-y-6 animate-fade-in-up">
       <Link href="/student/jobs" className="inline-flex text-[13.5px] font-semibold text-muted">
@@ -76,7 +90,14 @@ export default async function JobDetails({ params }: { params: Promise<{ id: str
             <div className="font-display font-extrabold text-[22px] tracking-[-0.02em]">{job.title}</div>
             <div className="text-sm text-muted mt-1">{companyName} · {job.location} · {job.duration}</div>
           </div>
-          <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-success-bg text-success whitespace-nowrap">● Verified company</span>
+          <div className="flex flex-col items-end gap-1.5">
+            <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-success-bg text-success whitespace-nowrap">● Verified company</span>
+            {matchScore !== null && (
+              <span className="font-mono text-xs font-bold px-3 py-1 rounded-full bg-primary-500/10 dark:bg-primary-400/15 text-primary-500 dark:text-primary-400 whitespace-nowrap">
+                {matchScore}% match
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex gap-3 flex-wrap items-stretch">
           <div className="flex-1 min-w-[200px] max-w-sm">
@@ -89,6 +110,7 @@ export default async function JobDetails({ params }: { params: Promise<{ id: str
             />
           </div>
           <SaveJobButton jobId={job._id} />
+          {job.employerId?._id && <FollowCompanyButton employerId={job.employerId._id} />}
         </div>
       </div>
 

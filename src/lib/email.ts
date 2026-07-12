@@ -107,6 +107,25 @@ export async function sendLogbookApprovalEmail(
   );
 }
 
+export async function sendNewJobAlertEmail(
+  to: string,
+  studentName: string,
+  companyLabel: string,
+  jobTitle: string,
+  jobId: string
+): Promise<void> {
+  await send(
+    to,
+    `${companyLabel} just posted: ${jobTitle}`,
+    layout(
+      'New opportunity from a company you follow',
+      `<p style="color: #555;">Hi ${studentName},</p>
+       <p style="color: #555;"><strong>${companyLabel}</strong> just posted a new opportunity: <strong>${jobTitle}</strong>.</p>`,
+      { label: 'View opportunity', path: `/student/jobs/${jobId}` }
+    )
+  );
+}
+
 export async function sendVerificationDecisionEmail(
   to: string,
   accountName: string,

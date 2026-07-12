@@ -12,6 +12,7 @@ type Job = {
   duration: string;
   requirements?: string[];
   employerId?: { name?: string; companyName?: string; industry?: string; avatarUrl?: string };
+  matchScore?: number;
 };
 
 const TYPE_CHIPS = ['All', 'On-site', 'Remote', 'Hybrid'] as const;
@@ -32,7 +33,7 @@ export default function BrowseOpportunities() {
   const [query, setQuery] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
   const [type, setType] = useState<(typeof TYPE_CHIPS)[number]>('All');
-  const [sort, setSort] = useState<'newest' | 'oldest'>('newest');
+  const [sort, setSort] = useState<'newest' | 'oldest' | 'match'>('newest');
   const [page, setPage] = useState(1);
   const [savedOnly, setSavedOnly] = useState(false);
 
@@ -124,11 +125,12 @@ export default function BrowseOpportunities() {
         </div>
         <select
           value={sort}
-          onChange={(e) => setSort(e.target.value as 'newest' | 'oldest')}
+          onChange={(e) => setSort(e.target.value as 'newest' | 'oldest' | 'match')}
           className="border-[1.5px] border-surface-border rounded-[10px] px-4 text-[16px] font-semibold bg-surface-1 text-foreground"
         >
           <option value="newest">Sort: Newest</option>
           <option value="oldest">Sort: Oldest</option>
+          <option value="match">Sort: Best match</option>
         </select>
       </div>
 
@@ -219,7 +221,14 @@ export default function BrowseOpportunities() {
                 ))}
                 <span className="text-[11.5px] px-2.5 py-1 rounded-full bg-background text-muted">{job.duration}</span>
               </div>
-              <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-success-bg text-success">● Verified</span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-success-bg text-success">● Verified</span>
+                {job.matchScore != null && (
+                  <span className="font-mono text-[11px] font-bold px-2.5 py-1 rounded-full bg-primary-500/10 dark:bg-primary-400/15 text-primary-500 dark:text-primary-400">
+                    {job.matchScore}% match
+                  </span>
+                )}
+              </div>
             </Link>
           ))}
         </div>

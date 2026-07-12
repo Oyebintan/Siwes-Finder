@@ -5,6 +5,14 @@ import { connectToDatabase } from '@/lib/mongodb';
 import Job from '@/models/Job';
 import User from '@/models/User';
 import { requireSession } from '@/lib/mobileAuth';
+import { sendPushNotification } from '@/lib/push';
+import { sendNewJobAlertEmail } from '@/lib/email';
+import { computeMatchScore } from '@/lib/match';
+
+type JobDoc = { toObject?: () => Record<string, unknown> };
+function plainJob(job: JobDoc) {
+  return typeof job.toObject === 'function' ? job.toObject() : (job as Record<string, unknown>);
+}
 
 function escapeRegex(input: string): string {
   return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -96,6 +104,51 @@ export async function POST(req: Request) {
       maxApplicants: parsedMaxApplicants,
     });
 
+    // Best-effort "new opportunity" alert to students following this
+    // company -- never fails the job posting itself. Each recipient's
+    // push/email attempts are isolated so one bad token/address can't stop
+    // the rest of the batch.
+    try {
+      const followers = await User.find({ followedEmployers: session.user.id }).select(
+        'email name expoPushToken'
+      );
+      if (followers.length > 0) {
+        const employerRecord = await User.findById(session.user.id).select('companyName name');
+        const companyLabel = employerRecord?.companyName || employerRecord?.name || 'A company you follow';
+        await Promise.allSettled(
+          followers.map(async (follower) => {
+            try {
+              if (follower.expoPushToken) {
+                await sendPushNotification(
+                  follower.expoPushToken,
+                  'New opportunity posted',
+                  `${companyLabel} posted "${newJob.title}".`,
+                  { type: 'new-job-alert', jobId: newJob._id.toString() }
+                );
+              }
+            } catch (pushError) {
+              console.error('Failed to send new-job alert push:', pushError);
+            }
+            try {
+              if (follower.email) {
+                await sendNewJobAlertEmail(
+                  follower.email,
+                  follower.name || 'there',
+                  companyLabel,
+                  newJob.title,
+                  newJob._id.toString()
+                );
+              }
+            } catch (emailError) {
+              console.error('Failed to send new-job alert email:', emailError);
+            }
+          })
+        );
+      }
+    } catch (followerLookupError) {
+      console.error('Failed to notify followers of new job:', followerLookupError);
+    }
+
     return NextResponse.json({ message: 'Job posted successfully', job: newJob }, { status: 201 });
   } catch (error) {
     console.error('Job posting error:', error);
@@ -120,6 +173,19 @@ export async function GET(req: Request) {
     }
 
     // Public feed (students): only verified employers' active jobs.
+    // A student session also gets a matchScore attached to each job (skill
+    // overlap with the job's requirements, plus a small boost when the job's
+    // location matches their preferred state) -- omitted entirely when the
+    // student hasn't listed any skills yet, since a 0% score there would be
+    // meaningless rather than informative.
+    let matchProfile: { skills?: string[]; preferredState?: string } | null = null;
+    if (session.user.role === 'student') {
+      const studentRecord = await User.findById(session.user.id).select('skills preferredState');
+      if (studentRecord?.skills && studentRecord.skills.length > 0) {
+        matchProfile = { skills: studentRecord.skills, preferredState: studentRecord.preferredState };
+      }
+    }
+
     const { searchParams } = new URL(req.url);
     const q = (searchParams.get('q') || '').trim();
     const type = (searchParams.get('type') || '').trim();
@@ -176,11 +242,41 @@ export async function GET(req: Request) {
     }
 
     const total = await Job.countDocuments(filter);
-    const jobs = await Job.find(filter)
-      .populate('employerId', 'name companyName industry avatarUrl')
-      .sort({ createdAt: sort === 'oldest' ? 1 : -1 })
-      .skip((page - 1) * limit)
-      .limit(limit);
+
+    function withMatchScore(job: JobDoc) {
+      const obj = plainJob(job);
+      if (!matchProfile) return obj;
+      return {
+        ...obj,
+        matchScore: computeMatchScore(
+          matchProfile.skills,
+          obj.requirements as string[] | undefined,
+          matchProfile.preferredState,
+          obj.location as string | undefined
+        ),
+      };
+    }
+
+    let jobs;
+    if (sort === 'match' && matchProfile) {
+      // Best-match sort is derived, not a DB field, so it can't be pushed
+      // down to skip/limit -- score the full filtered set (capped, this is
+      // a small platform) in memory, sort by score, then paginate.
+      const candidates = await Job.find(filter)
+        .populate('employerId', 'name companyName industry avatarUrl')
+        .limit(500);
+      jobs = candidates
+        .map(withMatchScore)
+        .sort((a, b) => (b.matchScore as number) - (a.matchScore as number))
+        .slice((page - 1) * limit, (page - 1) * limit + limit);
+    } else {
+      const raw = await Job.find(filter)
+        .populate('employerId', 'name companyName industry avatarUrl')
+        .sort({ createdAt: sort === 'oldest' ? 1 : -1 })
+        .skip((page - 1) * limit)
+        .limit(limit);
+      jobs = raw.map(withMatchScore);
+    }
 
     return NextResponse.json(
       { jobs, total, page, totalPages: Math.max(1, Math.ceil(total / limit)) },
