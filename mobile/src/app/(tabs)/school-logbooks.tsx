@@ -1,12 +1,19 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Badge } from '@/components/ui/badge';
+import { Card, InitialAvatar } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ErrorBanner } from '@/components/ui/error-banner';
+import { ScreenHeader } from '@/components/ui/screen-header';
+import { SkeletonList } from '@/components/ui/skeleton';
 import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
 import { ApiError, getSchoolLogbooks, type SchoolLogbookEntry } from '@/api/client';
 
 type StatusFilter = 'all' | 'approved' | 'pending';
@@ -16,9 +23,10 @@ const STATUS_FILTERS: { key: StatusFilter; label: string }[] = [
   { key: 'pending', label: 'Pending' },
 ];
 
-export default function SchoolLogbooksScreen() {
-  const theme = useTheme();
+const STAGGER_MS = 55;
+const MAX_STAGGERED = 8;
 
+export default function SchoolLogbooksScreen() {
   const [entries, setEntries] = useState<SchoolLogbookEntry[]>([]);
   const [status, setStatus] = useState<StatusFilter>('all');
   const [loading, setLoading] = useState(true);
@@ -52,10 +60,12 @@ export default function SchoolLogbooksScreen() {
 
   if (pendingApproval) {
     return (
-      <ThemedView style={styles.center}>
-        <ThemedText themeColor="textSecondary" style={styles.centerText}>
-          The logbook feed unlocks once an admin approves your school account.
-        </ThemedText>
+      <ThemedView style={styles.centerFill}>
+        <EmptyState
+          icon="hourglass-outline"
+          title="Awaiting verification"
+          message="The logbook feed unlocks once an admin approves your school account."
+        />
       </ThemedView>
     );
   }
@@ -63,66 +73,55 @@ export default function SchoolLogbooksScreen() {
   return (
     <ThemedView style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={['top']}>
-        <ThemedView style={styles.header}>
-          <ThemedText type="title" style={styles.headerTitle}>
-            Logbooks
-          </ThemedText>
-          <ThemedView style={styles.chipRow}>
-            {STATUS_FILTERS.map((f) => (
-              <Pressable
-                key={f.key}
-                onPress={() => setStatus(f.key)}
-                style={[styles.chip, { borderColor: theme.border, backgroundColor: status === f.key ? theme.primary : theme.backgroundElement }]}
-              >
-                <ThemedText type="small" themeColor={status === f.key ? undefined : 'textSecondary'} style={status === f.key ? styles.chipTextActive : undefined}>
-                  {f.label}
-                </ThemedText>
-              </Pressable>
-            ))}
-          </ThemedView>
-        </ThemedView>
+        <ScreenHeader title="Logbooks" subtitle="Every entry from your registered students" />
+        <View style={styles.chipRow}>
+          {STATUS_FILTERS.map((f) => (
+            <Chip key={f.key} label={f.label} active={status === f.key} onPress={() => setStatus(f.key)} />
+          ))}
+        </View>
 
-        {error ? (
-          <ThemedView type="backgroundElement" style={[styles.errorBanner, { borderColor: theme.error }]}>
-            <ThemedText themeColor="error" type="small">
-              {error}
-            </ThemedText>
-          </ThemedView>
-        ) : null}
+        {error ? <ErrorBanner message={error} style={styles.errorBanner} /> : null}
 
         {loading ? (
-          <ThemedView style={styles.center}>
-            <ActivityIndicator color={theme.primary} />
-          </ThemedView>
+          <SkeletonList />
         ) : (
           <FlatList
             data={entries}
             keyExtractor={(e) => e._id}
             contentContainerStyle={styles.list}
             ListEmptyComponent={
-              <ThemedView style={styles.center}>
-                <ThemedText themeColor="textSecondary">No entries match this filter.</ThemedText>
-              </ThemedView>
+              <EmptyState
+                icon="book-outline"
+                title="No entries here"
+                message="No logbook entries match this filter yet."
+              />
             }
-            renderItem={({ item }) => (
-              <ThemedView type="backgroundElement" style={[styles.card, { borderColor: theme.border }]}>
-                <ThemedView style={styles.cardHeader}>
-                  <ThemedView style={styles.cardHeaderText}>
-                    <ThemedText type="smallBold">{item.studentName}</ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {item.department} · Week {item.weekNumber} · {item.dayOfWeek}
-                    </ThemedText>
-                  </ThemedView>
-                  <ThemedView type="backgroundSelected" style={styles.badge}>
-                    <ThemedText type="small" themeColor={item.isApproved ? 'success' : 'warning'}>
-                      {item.isApproved ? 'Approved' : 'Pending'}
-                    </ThemedText>
-                  </ThemedView>
-                </ThemedView>
-                <ThemedText type="small" themeColor="textSecondary">
-                  {item.activityDescription}
-                </ThemedText>
-              </ThemedView>
+            renderItem={({ item, index }) => (
+              <Animated.View
+                entering={FadeInDown.duration(320).delay(Math.min(index, MAX_STAGGERED) * STAGGER_MS)}
+              >
+                <Card>
+                  <View style={styles.cardHeader}>
+                    <InitialAvatar name={item.studentName} size={40} />
+                    <View style={styles.cardHeaderText}>
+                      <ThemedText type="smallBold" numberOfLines={1}>
+                        {item.studentName}
+                      </ThemedText>
+                      <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+                        {item.department} · Week {item.weekNumber} · {item.dayOfWeek}
+                      </ThemedText>
+                    </View>
+                    <Badge
+                      label={item.isApproved ? 'Approved' : 'Pending'}
+                      tone={item.isApproved ? 'success' : 'warning'}
+                      icon={item.isApproved ? 'checkmark-circle' : 'time-outline'}
+                    />
+                  </View>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {item.activityDescription}
+                  </ThemedText>
+                </Card>
+              </Animated.View>
             )}
           />
         )}
@@ -135,68 +134,32 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  center: {
+  centerFill: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
-    padding: Spacing.four,
-  },
-  centerText: {
-    textAlign: 'center',
-  },
-  header: {
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.two,
-    gap: Spacing.two,
-  },
-  headerTitle: {
-    fontSize: 28,
-    lineHeight: 34,
   },
   chipRow: {
     flexDirection: 'row',
     gap: Spacing.two,
-  },
-  chip: {
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.five,
-    borderWidth: 1.5,
-  },
-  chipTextActive: {
-    color: '#ffffff',
-    fontWeight: '700',
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.two,
   },
   errorBanner: {
     marginHorizontal: Spacing.four,
     marginTop: Spacing.three,
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
-    borderWidth: 1,
   },
   list: {
     padding: Spacing.four,
     gap: Spacing.three,
-  },
-  card: {
-    borderWidth: 1.5,
-    borderRadius: Spacing.three,
-    padding: Spacing.three,
-    gap: Spacing.half,
+    flexGrow: 1,
   },
   cardHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: Spacing.two,
+    alignItems: 'center',
+    gap: Spacing.three,
   },
   cardHeaderText: {
     flex: 1,
     gap: Spacing.half,
-  },
-  badge: {
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.half,
-    borderRadius: Spacing.two,
   },
 });

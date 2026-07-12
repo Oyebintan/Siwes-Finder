@@ -1,29 +1,39 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing, ThemeColor } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { Badge, type BadgeTone } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, InitialAvatar } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ErrorBanner } from '@/components/ui/error-banner';
+import { ScreenHeader } from '@/components/ui/screen-header';
+import { SkeletonList } from '@/components/ui/skeleton';
+import { Spacing } from '@/constants/theme';
 import { ApiError, listApplications, type Application } from '@/api/client';
 
-const STATUS_COPY: Record<Application['status'], { label: string; color: ThemeColor }> = {
-  Pending: { label: 'Under review', color: 'warning' },
-  Accepted: { label: 'Accepted', color: 'success' },
-  Rejected: { label: 'Not selected', color: 'error' },
+const STATUS_COPY: Record<Application['status'], { label: string; tone: BadgeTone }> = {
+  Pending: { label: 'Under review', tone: 'warning' },
+  Accepted: { label: 'Accepted', tone: 'success' },
+  Rejected: { label: 'Not selected', tone: 'error' },
 };
 
-export default function ApplicationsScreen() {
-  const theme = useTheme();
+const STAGGER_MS = 55;
+const MAX_STAGGERED = 8;
 
+export default function ApplicationsScreen() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (asRefresh = false) => {
+    if (asRefresh) setRefreshing(true);
+    else setLoading(true);
     setError('');
     try {
       setApplications(await listApplications());
@@ -31,6 +41,7 @@ export default function ApplicationsScreen() {
       setError(err instanceof ApiError ? err.message : 'Could not load your applications. Check your connection.');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
@@ -45,67 +56,59 @@ export default function ApplicationsScreen() {
   return (
     <ThemedView style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={['top']}>
-        <ThemedText type="title" style={styles.headerTitle}>
-          Applications
-        </ThemedText>
+        <ScreenHeader title="Applications" subtitle="Track every placement you've applied to" />
 
-        {error ? (
-          <ThemedView type="backgroundElement" style={[styles.errorBanner, { borderColor: theme.error }]}>
-            <ThemedText themeColor="error" type="small">
-              {error}
-            </ThemedText>
-          </ThemedView>
-        ) : null}
+        {error ? <ErrorBanner message={error} style={styles.errorBanner} /> : null}
 
         {loading ? (
-          <ThemedView style={styles.center}>
-            <ActivityIndicator color={theme.primary} />
-          </ThemedView>
+          <SkeletonList />
         ) : (
           <FlatList
             data={applications}
             keyExtractor={(app) => app._id}
             contentContainerStyle={styles.list}
+            onRefresh={() => load(true)}
+            refreshing={refreshing}
             ListEmptyComponent={
-              <ThemedView style={styles.center}>
-                <ThemedText themeColor="textSecondary" style={styles.emptyText}>
-                  No applications yet. Browse opportunities and apply to see them here.
-                </ThemedText>
-              </ThemedView>
+              <EmptyState
+                icon="paper-plane-outline"
+                title="No applications yet"
+                message="Browse opportunities and apply — everything you send lands here."
+              />
             }
-            renderItem={({ item }) => {
+            renderItem={({ item, index }) => {
               const status = STATUS_COPY[item.status];
               const companyName = item.job?.employerId?.companyName || 'Company';
               return (
-                <ThemedView style={[styles.card, { borderColor: theme.border, backgroundColor: theme.backgroundElement }]}>
-                  <Pressable
-                    onPress={() => item.job && router.push(`/jobs/${item.job._id}`)}
-                    disabled={!item.job}
-                    style={styles.cardRow}
-                  >
-                    <ThemedView style={styles.cardHeaderText}>
-                      <ThemedText type="smallBold">{item.job?.title ?? 'Opportunity no longer available'}</ThemedText>
-                      {item.job ? (
-                        <ThemedText type="small" themeColor="textSecondary">
-                          {companyName} · {item.job.location}
+                <Animated.View
+                  entering={FadeInDown.duration(320).delay(Math.min(index, MAX_STAGGERED) * STAGGER_MS)}
+                >
+                  <Card onPress={item.job ? () => router.push(`/jobs/${item.job!._id}`) : undefined}>
+                    <View style={styles.cardRow}>
+                      <InitialAvatar name={companyName} />
+                      <View style={styles.cardHeaderText}>
+                        <ThemedText type="smallBold" numberOfLines={1}>
+                          {item.job?.title ?? 'Opportunity no longer available'}
                         </ThemedText>
-                      ) : null}
-                    </ThemedView>
-                    <ThemedView type="backgroundSelected" style={styles.badge}>
-                      <ThemedText type="small" themeColor={status.color}>
-                        {status.label}
-                      </ThemedText>
-                    </ThemedView>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => router.push(`/messages/${item._id}`)}
-                    style={[styles.messageButton, { borderColor: theme.border }]}
-                  >
-                    <ThemedText type="small" themeColor="primary">
-                      Message {companyName}
-                    </ThemedText>
-                  </Pressable>
-                </ThemedView>
+                        {item.job ? (
+                          <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+                            {companyName} · {item.job.location}
+                          </ThemedText>
+                        ) : null}
+                      </View>
+                    </View>
+                    <View style={styles.cardFooter}>
+                      <Badge label={status.label} tone={status.tone} />
+                      <Button
+                        label="Message"
+                        icon="chatbubble-ellipses-outline"
+                        variant="ghost"
+                        small
+                        onPress={() => router.push(`/messages/${item._id}`)}
+                      />
+                    </View>
+                  </Card>
+                </Animated.View>
               );
             }}
           />
@@ -119,59 +122,27 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  headerTitle: {
-    fontSize: 28,
-    lineHeight: 34,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.two,
-  },
   errorBanner: {
     marginHorizontal: Spacing.four,
     marginTop: Spacing.three,
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
-    borderWidth: 1,
-  },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.six,
-    paddingHorizontal: Spacing.four,
-  },
-  emptyText: {
-    textAlign: 'center',
   },
   list: {
     padding: Spacing.four,
     gap: Spacing.three,
-  },
-  card: {
-    borderWidth: 1.5,
-    borderRadius: Spacing.three,
-    padding: Spacing.three,
-    gap: Spacing.two,
+    flexGrow: 1,
   },
   cardRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: Spacing.two,
+    gap: Spacing.three,
   },
   cardHeaderText: {
     flex: 1,
     gap: Spacing.half,
   },
-  messageButton: {
-    alignSelf: 'flex-start',
-    borderWidth: 1.5,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-  },
-  badge: {
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.half,
-    borderRadius: Spacing.two,
+  cardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
 });

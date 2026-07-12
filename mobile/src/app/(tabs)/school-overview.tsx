@@ -1,11 +1,19 @@
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ErrorBanner } from '@/components/ui/error-banner';
+import { ScreenHeader } from '@/components/ui/screen-header';
+import { Skeleton, SkeletonCard } from '@/components/ui/skeleton';
+import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { ApiError, getSchoolStudents, type SchoolStudent } from '@/api/client';
 
@@ -65,22 +73,31 @@ export default function SchoolOverviewScreen() {
 
   if (loading) {
     return (
-      <ThemedView style={styles.center}>
-        <ActivityIndicator color={theme.primary} />
+      <ThemedView style={styles.flex}>
+        <SafeAreaView style={styles.flex} edges={['top']}>
+          <View style={styles.loadingWrap}>
+            <Skeleton width="55%" height={28} />
+            <View style={styles.loadingGrid}>
+              <Skeleton height={90} radius={Radius.lg} width="47%" />
+              <Skeleton height={90} radius={Radius.lg} width="47%" />
+              <Skeleton height={90} radius={Radius.lg} width="47%" />
+              <Skeleton height={90} radius={Radius.lg} width="47%" />
+            </View>
+            <SkeletonCard />
+          </View>
+        </SafeAreaView>
       </ThemedView>
     );
   }
 
   if (pendingApproval) {
     return (
-      <ThemedView style={styles.center}>
-        <ThemedText type="subtitle" style={styles.centerText}>
-          Awaiting verification
-        </ThemedText>
-        <ThemedText type="small" themeColor="textSecondary" style={[styles.centerText, styles.holdingCopy]}>
-          Your school account is in the admin review queue. Student records unlock automatically once an
-          administrator approves your institution.
-        </ThemedText>
+      <ThemedView style={styles.centerFill}>
+        <EmptyState
+          icon="hourglass-outline"
+          title="Awaiting verification"
+          message="Your school account is in the admin review queue. Student records unlock automatically once an administrator approves your institution."
+        />
       </ThemedView>
     );
   }
@@ -89,46 +106,50 @@ export default function SchoolOverviewScreen() {
     <ThemedView style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={['top']}>
         <ScrollView contentContainerStyle={styles.container}>
-          <ThemedText type="title" style={styles.headerTitle}>
-            {schoolName || 'Overview'}
-          </ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            Students who registered with your institution name, and where they stand.
-          </ThemedText>
+          <ScreenHeader
+            title={schoolName || 'Overview'}
+            subtitle="Students who registered with your institution name, and where they stand"
+          />
 
-          {error ? (
-            <ThemedView type="backgroundElement" style={[styles.errorBanner, { borderColor: theme.error }]}>
-              <ThemedText themeColor="error" type="small">
-                {error}
-              </ThemedText>
-            </ThemedView>
-          ) : null}
+          {error ? <ErrorBanner message={error} /> : null}
 
-          <ThemedView style={styles.kpiGrid}>
-            <Kpi label="Registered students" value={students.length} theme={theme} />
-            <Kpi label="Placed" value={stats.placed} theme={theme} color={theme.success} />
-            <Kpi label="Actively applying" value={stats.applying} theme={theme} color={theme.warning} />
-            <Kpi label="Departments" value={stats.departmentNames.length} theme={theme} />
-            <Kpi label="Logbook entries" value={stats.totalLogs} theme={theme} />
-          </ThemedView>
+          <View style={styles.kpiGrid}>
+            <Kpi icon="people" label="Registered students" value={students.length} tone="primary" delay={60} />
+            <Kpi icon="checkmark-done" label="Placed" value={stats.placed} tone="success" delay={120} />
+            <Kpi icon="paper-plane" label="Actively applying" value={stats.applying} tone="warning" delay={180} />
+            <Kpi icon="git-branch" label="Departments" value={stats.departmentNames.length} tone="primary" delay={240} />
+            <Kpi icon="book" label="Logbook entries" value={stats.totalLogs} tone="primary" delay={300} />
+          </View>
 
           {stats.departmentBreakdown.length > 0 ? (
-            <ThemedView style={styles.section}>
+            <Animated.View entering={FadeInDown.duration(350).delay(360)} style={styles.section}>
               <ThemedText type="smallBold">By department</ThemedText>
               {stats.departmentBreakdown.map((d) => (
-                <ThemedView key={d.department} type="backgroundElement" style={[styles.deptRow, { borderColor: theme.border }]}>
-                  <ThemedView style={styles.deptRowText}>
-                    <ThemedText type="small">{d.department}</ThemedText>
+                <Card key={d.department} style={styles.deptRow}>
+                  <View style={styles.deptRowText}>
+                    <ThemedText type="smallBold">{d.department}</ThemedText>
                     <ThemedText type="small" themeColor="textSecondary">
                       {d.placed}/{d.total} placed
                     </ThemedText>
-                  </ThemedView>
-                  <ThemedView type="backgroundSelected" style={styles.badge}>
-                    <ThemedText type="small">{d.placementRate}%</ThemedText>
-                  </ThemedView>
-                </ThemedView>
+                  </View>
+                  {/* Progress bar + rate: color shifts with how far along the department is. */}
+                  <View style={styles.deptProgressCol}>
+                    <View style={[styles.progressTrack, { backgroundColor: theme.backgroundSelected }]}>
+                      <View
+                        style={[
+                          styles.progressFill,
+                          {
+                            width: `${d.placementRate}%`,
+                            backgroundColor: d.placementRate >= 50 ? theme.success : theme.primary,
+                          },
+                        ]}
+                      />
+                    </View>
+                    <Badge label={`${d.placementRate}%`} tone={d.placementRate >= 50 ? 'success' : 'primary'} />
+                  </View>
+                </Card>
               ))}
-            </ThemedView>
+            </Animated.View>
           ) : null}
         </ScrollView>
       </SafeAreaView>
@@ -137,25 +158,37 @@ export default function SchoolOverviewScreen() {
 }
 
 function Kpi({
+  icon,
   label,
   value,
-  theme,
-  color,
+  tone,
+  delay,
 }: {
+  icon: keyof typeof Ionicons.glyphMap;
   label: string;
   value: number;
-  theme: ReturnType<typeof useTheme>;
-  color?: string;
+  tone: 'primary' | 'success' | 'warning';
+  delay: number;
 }) {
+  const theme = useTheme();
+  const palette = {
+    primary: { bg: theme.primarySoft, fg: theme.primary },
+    success: { bg: theme.successSoft, fg: theme.success },
+    warning: { bg: theme.warningSoft, fg: theme.warning },
+  }[tone];
+
   return (
-    <ThemedView type="backgroundElement" style={[styles.kpiCard, { borderColor: theme.border }]}>
-      <ThemedText type="title" style={[styles.kpiValue, { color: color ?? theme.text }]}>
-        {value}
-      </ThemedText>
-      <ThemedText type="small" themeColor="textSecondary">
-        {label}
-      </ThemedText>
-    </ThemedView>
+    <Animated.View entering={FadeInDown.duration(350).delay(delay)} style={styles.kpiSlot}>
+      <Card style={styles.kpiCard}>
+        <View style={[styles.kpiIcon, { backgroundColor: palette.bg }]}>
+          <Ionicons name={icon} size={16} color={palette.fg} />
+        </View>
+        <ThemedText style={styles.kpiValue}>{value}</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+          {label}
+        </ThemedText>
+      </Card>
+    </Animated.View>
   );
 }
 
@@ -163,69 +196,78 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  center: {
+  centerFill: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
+  },
+  loadingWrap: {
+    flex: 1,
     padding: Spacing.four,
     gap: Spacing.three,
   },
-  centerText: {
-    textAlign: 'center',
-  },
-  holdingCopy: {
-    maxWidth: 320,
+  loadingGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
   },
   container: {
-    padding: Spacing.four,
-    gap: Spacing.three,
     paddingBottom: Spacing.six,
-  },
-  headerTitle: {
-    fontSize: 28,
-    lineHeight: 34,
-  },
-  errorBanner: {
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
-    borderWidth: 1,
+    gap: Spacing.three,
   },
   kpiGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
+    paddingHorizontal: Spacing.four,
   },
-  kpiCard: {
+  kpiSlot: {
     flexBasis: '47%',
     flexGrow: 1,
-    borderWidth: 1.5,
-    borderRadius: Spacing.three,
-    padding: Spacing.three,
-    gap: Spacing.half,
+  },
+  kpiCard: {
+    gap: Spacing.one,
+  },
+  kpiIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: Radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.one,
   },
   kpiValue: {
-    fontSize: 24,
-    lineHeight: 28,
+    fontSize: 26,
+    lineHeight: 32,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
   section: {
     gap: Spacing.two,
+    paddingHorizontal: Spacing.four,
   },
   deptRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderRadius: Spacing.three,
-    padding: Spacing.three,
-    gap: Spacing.two,
+    gap: Spacing.three,
   },
   deptRowText: {
     flex: 1,
     gap: Spacing.half,
   },
-  badge: {
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.half,
-    borderRadius: Spacing.two,
+  deptProgressCol: {
+    alignItems: 'flex-end',
+    gap: Spacing.one,
+    width: 96,
+  },
+  progressTrack: {
+    width: '100%',
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 3,
   },
 });

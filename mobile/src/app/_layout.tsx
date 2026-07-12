@@ -11,10 +11,10 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AuthProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="login" />
-          <Stack.Screen name="signup" />
+        <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
+          <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
+          <Stack.Screen name="login" options={{ animation: 'fade' }} />
+          <Stack.Screen name="signup" options={{ animation: 'fade' }} />
           <Stack.Screen name="jobs/[id]" options={{ headerShown: true, title: 'Opportunity' }} />
           <Stack.Screen name="school/students/[id]" options={{ headerShown: true, title: 'Student' }} />
           <Stack.Screen name="messages/[id]" options={{ headerShown: true, title: 'Messages' }} />

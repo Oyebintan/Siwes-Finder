@@ -1,19 +1,36 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, TextInput } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Badge } from '@/components/ui/badge';
+import { Card, InitialAvatar } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ErrorBanner } from '@/components/ui/error-banner';
+import { Field } from '@/components/ui/field';
+import { PressableScale } from '@/components/ui/pressable-scale';
+import { SkeletonList } from '@/components/ui/skeleton';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useAuth } from '@/api/AuthContext';
 import { ApiError, listJobs, listSavedJobs, toggleSavedJob, type Job } from '@/api/client';
 
 type JobType = 'On-site' | 'Remote' | 'Hybrid';
 const TYPE_FILTERS: JobType[] = ['On-site', 'Remote', 'Hybrid'];
 
+// Stagger card entrances, but stop delaying after the first screenful so
+// off-screen rows don't animate in late while scrolling.
+const STAGGER_MS = 55;
+const MAX_STAGGERED = 8;
+
 export default function JobsScreen() {
   const theme = useTheme();
+  const { user } = useAuth();
 
   const [query, setQuery] = useState('');
   const [type, setType] = useState<JobType | null>(null);
@@ -22,31 +39,39 @@ export default function JobsScreen() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      if (savedOnly) {
-        const { jobs: savedJobs, ids } = await listSavedJobs();
-        setJobs(savedJobs);
-        setSavedIds(new Set(ids));
-      } else {
-        const { jobs: feedJobs } = await listJobs({
-          q: query.trim() || undefined,
-          type: type ?? undefined,
-          sort: bestMatch ? 'match' : undefined,
-          limit: 30,
-        });
-        setJobs(feedJobs);
+  const firstName = user?.name?.split(' ')[0];
+
+  const load = useCallback(
+    async (asRefresh = false) => {
+      if (asRefresh) setRefreshing(true);
+      else setLoading(true);
+      setError('');
+      try {
+        if (savedOnly) {
+          const { jobs: savedJobs, ids } = await listSavedJobs();
+          setJobs(savedJobs);
+          setSavedIds(new Set(ids));
+        } else {
+          const { jobs: feedJobs } = await listJobs({
+            q: query.trim() || undefined,
+            type: type ?? undefined,
+            sort: bestMatch ? 'match' : undefined,
+            limit: 30,
+          });
+          setJobs(feedJobs);
+        }
+      } catch (err) {
+        setError(err instanceof ApiError ? err.message : 'Could not load opportunities. Check your connection.');
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not load opportunities. Check your connection.');
-    } finally {
-      setLoading(false);
-    }
-  }, [query, type, savedOnly, bestMatch]);
+    },
+    [query, type, savedOnly, bestMatch]
+  );
 
   // Re-fetch every time the tab regains focus, so a bookmark toggled from the
   // job-detail screen (or an apply that closes a job) is reflected on return.
@@ -85,20 +110,25 @@ export default function JobsScreen() {
   return (
     <ThemedView style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={['top']}>
-        <ThemedView style={styles.header}>
-          <ThemedText type="title" style={styles.headerTitle}>
-            Opportunities
-          </ThemedText>
+        <Animated.View entering={FadeInDown.duration(320)} style={styles.header}>
+          <View style={styles.headerText}>
+            {firstName ? (
+              <ThemedText type="small" themeColor="textSecondary">
+                Hi {firstName} 👋
+              </ThemedText>
+            ) : null}
+            <ThemedText style={styles.headerTitle}>Find your placement</ThemedText>
+          </View>
 
-          <TextInput
+          <Field
+            icon="search-outline"
             value={query}
             onChangeText={(v) => {
               setSavedOnly(false);
               setQuery(v);
             }}
             placeholder="Search title, skill, company, location…"
-            placeholderTextColor={theme.textSecondary}
-            style={[styles.search, { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
+            returnKeyType="search"
           />
 
           <FlatList
@@ -111,122 +141,104 @@ export default function JobsScreen() {
               const isAll = item === 'All';
               const active = isAll ? type === null && !savedOnly : type === item && !savedOnly;
               return (
-                <Pressable
+                <Chip
+                  label={item}
+                  active={active}
                   onPress={() => {
                     setSavedOnly(false);
                     setType(isAll ? null : (item as JobType));
                   }}
-                  style={[
-                    styles.chip,
-                    { borderColor: theme.border, backgroundColor: active ? theme.primary : theme.backgroundElement },
-                  ]}
-                >
-                  <ThemedText type="small" style={active ? styles.chipTextActive : undefined} themeColor={active ? undefined : 'textSecondary'}>
-                    {item}
-                  </ThemedText>
-                </Pressable>
+                />
               );
             }}
             ListFooterComponent={
-              <ThemedView style={styles.filterRowInline}>
-                <Pressable
+              <View style={styles.filterRowInline}>
+                <Chip
+                  label="Best match"
+                  icon="flash"
+                  active={bestMatch && !savedOnly}
                   onPress={() => {
                     setSavedOnly(false);
                     setBestMatch((v) => !v);
                   }}
-                  style={[
-                    styles.chip,
-                    { borderColor: theme.border, backgroundColor: bestMatch && !savedOnly ? theme.primary : theme.backgroundElement },
-                  ]}
-                >
-                  <ThemedText
-                    type="small"
-                    style={bestMatch && !savedOnly ? styles.chipTextActive : undefined}
-                    themeColor={bestMatch && !savedOnly ? undefined : 'textSecondary'}
-                  >
-                    ⚡ Best match
-                  </ThemedText>
-                </Pressable>
-                <Pressable
+                />
+                <Chip
+                  label="Saved"
+                  icon="bookmark"
+                  active={savedOnly}
                   onPress={() => setSavedOnly((v) => !v)}
-                  style={[
-                    styles.chip,
-                    { borderColor: theme.border, backgroundColor: savedOnly ? theme.primary : theme.backgroundElement },
-                  ]}
-                >
-                  <ThemedText type="small" style={savedOnly ? styles.chipTextActive : undefined} themeColor={savedOnly ? undefined : 'textSecondary'}>
-                    ★ Saved
-                  </ThemedText>
-                </Pressable>
-              </ThemedView>
+                />
+              </View>
             }
           />
-        </ThemedView>
+        </Animated.View>
 
-        {error ? (
-          <ThemedView type="backgroundElement" style={[styles.errorBanner, { borderColor: theme.error }]}>
-            <ThemedText themeColor="error" type="small">
-              {error}
-            </ThemedText>
-          </ThemedView>
-        ) : null}
+        {error ? <ErrorBanner message={error} style={styles.errorBanner} /> : null}
 
         {loading ? (
-          <ThemedView style={styles.center}>
-            <ActivityIndicator color={theme.primary} />
-          </ThemedView>
+          <SkeletonList />
         ) : (
           <FlatList
             data={jobs}
             keyExtractor={(job) => job._id}
             contentContainerStyle={styles.list}
+            onRefresh={() => load(true)}
+            refreshing={refreshing}
             ListEmptyComponent={
-              <ThemedView style={styles.center}>
-                <ThemedText themeColor="textSecondary">
-                  {savedOnly ? 'No saved opportunities yet.' : 'No opportunities match your search.'}
-                </ThemedText>
-              </ThemedView>
+              <EmptyState
+                icon={savedOnly ? 'bookmark-outline' : 'search-outline'}
+                title={savedOnly ? 'Nothing saved yet' : 'No matches found'}
+                message={
+                  savedOnly
+                    ? 'Tap the bookmark on any opportunity to keep it here for later.'
+                    : 'Try a different search term or clear your filters.'
+                }
+              />
             }
-            renderItem={({ item }) => (
-              <Pressable
-                onPress={() => router.push(`/jobs/${item._id}`)}
-                style={[styles.card, { borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
-              >
-                <ThemedView style={styles.cardHeader}>
-                  <ThemedView style={styles.cardHeaderText}>
-                    <ThemedText type="smallBold">{item.title}</ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {item.employerId?.companyName || item.employerId?.name} · {item.location}
-                    </ThemedText>
-                  </ThemedView>
-                  <Pressable onPress={() => handleToggleSave(item._id)} hitSlop={8}>
-                    <ThemedText style={{ color: savedIds.has(item._id) ? theme.primary : theme.textSecondary }}>
-                      {savedIds.has(item._id) ? '★' : '☆'}
-                    </ThemedText>
-                  </Pressable>
-                </ThemedView>
-                <ThemedView style={styles.badgeRow}>
-                  <ThemedView type="backgroundSelected" style={styles.badge}>
-                    <ThemedText type="small">{item.type}</ThemedText>
-                  </ThemedView>
-                  <ThemedView type="backgroundSelected" style={styles.badge}>
-                    <ThemedText type="small">{item.duration}</ThemedText>
-                  </ThemedView>
-                  {item.stipend ? (
-                    <ThemedView type="backgroundSelected" style={styles.badge}>
-                      <ThemedText type="small">{item.stipend}</ThemedText>
-                    </ThemedView>
-                  ) : null}
-                  {item.matchScore != null ? (
-                    <ThemedView type="backgroundSelected" style={styles.badge}>
-                      <ThemedText type="small" themeColor="primary">
-                        {item.matchScore}% match
-                      </ThemedText>
-                    </ThemedView>
-                  ) : null}
-                </ThemedView>
-              </Pressable>
-            )}
+            renderItem={({ item, index }) => {
+              const companyName = item.employerId?.companyName || item.employerId?.name || 'Company';
+              const isSaved = savedIds.has(item._id);
+              return (
+                <Animated.View
+                  entering={FadeInDown.duration(320).delay(Math.min(index, MAX_STAGGERED) * STAGGER_MS)}
+                >
+                  <Card onPress={() => router.push(`/jobs/${item._id}`)}>
+                    <View style={styles.cardHeader}>
+                      <InitialAvatar name={companyName} />
+                      <View style={styles.cardHeaderText}>
+                        <ThemedText type="smallBold" numberOfLines={1}>
+                          {item.title}
+                        </ThemedText>
+                        <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+                          {companyName} · {item.location}
+                        </ThemedText>
+                      </View>
+                      <PressableScale
+                        onPress={() => handleToggleSave(item._id)}
+                        hitSlop={8}
+                        accessibilityRole="button"
+                        accessibilityLabel={isSaved ? 'Remove bookmark' : 'Bookmark this opportunity'}
+                        style={styles.bookmark}
+                      >
+                        <Ionicons
+                          name={isSaved ? 'bookmark' : 'bookmark-outline'}
+                          size={21}
+                          color={isSaved ? theme.primary : theme.textSecondary}
+                        />
+                      </PressableScale>
+                    </View>
+                    <View style={styles.badgeRow}>
+                      <Badge label={item.type} tone="neutral" />
+                      <Badge label={item.duration} tone="neutral" icon="time-outline" />
+                      {item.stipend ? <Badge label={item.stipend} tone="success" icon="cash-outline" /> : null}
+                      {item.matchScore != null ? (
+                        <Badge label={`${item.matchScore}% match`} tone="primary" icon="flash" />
+                      ) : null}
+                    </View>
+                  </Card>
+                </Animated.View>
+              );
+            }}
           />
         )}
       </SafeAreaView>
@@ -243,16 +255,14 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.two,
     gap: Spacing.three,
   },
+  headerText: {
+    gap: Spacing.half,
+  },
   headerTitle: {
     fontSize: 28,
     lineHeight: 34,
-  },
-  search: {
-    borderWidth: 1.5,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two + Spacing.half,
-    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
   filterRow: {
     gap: Spacing.two,
@@ -261,57 +271,31 @@ const styles = StyleSheet.create({
   filterRowInline: {
     flexDirection: 'row',
     gap: Spacing.two,
-  },
-  chip: {
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.five,
-    borderWidth: 1.5,
-  },
-  chipTextActive: {
-    color: '#ffffff',
-    fontWeight: '700',
+    marginLeft: Spacing.two,
   },
   errorBanner: {
     marginHorizontal: Spacing.four,
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
-    borderWidth: 1,
-  },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.six,
   },
   list: {
     padding: Spacing.four,
     gap: Spacing.three,
-  },
-  card: {
-    borderWidth: 1.5,
-    borderRadius: Spacing.three,
-    padding: Spacing.three,
-    gap: Spacing.two,
+    flexGrow: 1,
   },
   cardHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: Spacing.two,
+    alignItems: 'center',
+    gap: Spacing.three,
   },
   cardHeaderText: {
     flex: 1,
     gap: Spacing.half,
   },
+  bookmark: {
+    padding: Spacing.one,
+  },
   badgeRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
-  },
-  badge: {
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.half,
-    borderRadius: Spacing.two,
   },
 });

@@ -334,6 +334,40 @@ from the same batch are **not** mobile features — CSV export is
 deliberately web-only (file downloads aren't a mobile-native workflow),
 and the streak reminder is a server-side cron job with no UI at all.
 
+### Phase 7 — Fintech-grade UI/UX overhaul
+Owner feedback after the first real-device test: the app felt "too blank —
+no animations or anything", auth screens floated at the top with dead space
+below, and the overall look needed to be "fintech like and modern". This
+phase rebuilt the presentation layer of **every** screen without touching
+any API logic:
+- [x] Shared UI kit in `mobile/src/components/ui/` — `PressableScale`
+      (spring press feedback + haptic tick on every touchable),
+      `Button` (gradient primary / secondary / ghost / danger), `Field`
+      (animated focus ring, leading icons, show/hide-password toggle),
+      `Badge` (tinted semantic pills), `Card` (elevated surface) +
+      `InitialAvatar`, `Skeleton`/`SkeletonCard`/`SkeletonList` (pulsing
+      loaders that replace every bare spinner), `EmptyState`,
+      `ErrorBanner`, `Chip`, `ScreenHeader`, `BrandLogo` (the two-circle
+      mark drawn natively on a gradient tile).
+- [x] Theme tokens extended (`constants/theme.ts`): soft tints
+      (`primarySoft` etc.), brand gradient pair, `Radius` scale.
+- [x] Auth: login/signup fully redesigned — vertically centered, brand
+      logomark hero, staggered entrance animations, animated segmented
+      role control on signup, KeyboardAvoidingView.
+- [x] Navigation shell: Ionicons on every tab (filled when active), styled
+      tab bar, fade/slide stack transitions, session restore shows a
+      pulsing brand mark instead of a spinner.
+- [x] Every list screen: staggered card entrances (capped so scrolling
+      stays instant), skeleton loading states, icon empty states,
+      pull-to-refresh on Jobs/Applications.
+- [x] Profile/Account: gradient identity header with avatar + camera
+      badge, grouped section cards.
+- [x] New deps (all SDK-57-pinned): `@expo/vector-icons`,
+      `expo-linear-gradient`, `expo-haptics`. Animations use the
+      already-installed `react-native-reanimated` (UI-thread).
+- [ ] Not yet verified on a device — same sandbox caveat as every phase;
+      **needs a new `eas build` to reach installs** (all compiled-in).
+
 ## Cutting a new Android build
 
 Run this whenever mobile-visible code changes (a new screen, a new

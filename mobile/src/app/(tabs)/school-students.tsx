@@ -1,10 +1,19 @@
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Badge } from '@/components/ui/badge';
+import { Card, InitialAvatar } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ErrorBanner } from '@/components/ui/error-banner';
+import { Field } from '@/components/ui/field';
+import { ScreenHeader } from '@/components/ui/screen-header';
+import { SkeletonList } from '@/components/ui/skeleton';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { ApiError, getSchoolStudents, type SchoolStudent } from '@/api/client';
@@ -56,20 +65,14 @@ export default function SchoolStudentsScreen() {
     return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
   }, [students, query]);
 
-  if (loading) {
-    return (
-      <ThemedView style={styles.center}>
-        <ActivityIndicator color={theme.primary} />
-      </ThemedView>
-    );
-  }
-
   if (pendingApproval) {
     return (
-      <ThemedView style={styles.center}>
-        <ThemedText themeColor="textSecondary" style={styles.centerText}>
-          Student records unlock once an admin approves your school account.
-        </ThemedText>
+      <ThemedView style={styles.centerFill}>
+        <EmptyState
+          icon="hourglass-outline"
+          title="Awaiting verification"
+          message="Student records unlock once an admin approves your school account."
+        />
       </ThemedView>
     );
   }
@@ -77,75 +80,71 @@ export default function SchoolStudentsScreen() {
   return (
     <ThemedView style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={['top']}>
-        <ThemedView style={styles.header}>
-          <ThemedText type="title" style={styles.headerTitle}>
-            Students
-          </ThemedText>
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Search name, department, level…"
-            placeholderTextColor={theme.textSecondary}
-            style={[styles.search, { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
-          />
-        </ThemedView>
+        <View style={styles.header}>
+          <ScreenHeader title="Students" />
+          <View style={styles.searchWrap}>
+            <Field
+              icon="search-outline"
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Search name, department, level…"
+            />
+          </View>
+        </View>
 
-        {error ? (
-          <ThemedView type="backgroundElement" style={[styles.errorBanner, { borderColor: theme.error }]}>
-            <ThemedText themeColor="error" type="small">
-              {error}
-            </ThemedText>
-          </ThemedView>
-        ) : null}
+        {error ? <ErrorBanner message={error} style={styles.errorBanner} /> : null}
 
-        <ScrollView contentContainerStyle={styles.list}>
-          {grouped.length === 0 ? (
-            <ThemedView style={styles.center}>
-              <ThemedText themeColor="textSecondary">No students found.</ThemedText>
-            </ThemedView>
-          ) : (
-            grouped.map(([dept, list]) => (
-              <ThemedView key={dept} style={styles.group}>
-                <ThemedText type="smallBold">
-                  {dept} ({list.length})
-                </ThemedText>
-                {list.map((s) => (
-                  <Pressable
-                    key={s._id}
-                    onPress={() => router.push(`/school/students/${s._id}`)}
-                    style={[styles.card, { borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
-                  >
-                    <ThemedView style={styles.cardText}>
-                      <ThemedText type="small">{s.name}</ThemedText>
-                      <ThemedText type="small" themeColor="textSecondary">
-                        {s.level || 'Level not set'} · {s.logbookApproved}/{s.logbookEntries} approved
-                      </ThemedText>
-                    </ThemedView>
-                    {s.placedAt ? (
-                      <ThemedView type="backgroundSelected" style={styles.badge}>
-                        <ThemedText type="small" themeColor="success">
-                          {s.placedAt}
-                        </ThemedText>
-                      </ThemedView>
-                    ) : s.applicationCount > 0 ? (
-                      <ThemedView type="backgroundSelected" style={styles.badge}>
-                        <ThemedText type="small" themeColor="warning">
-                          {s.applicationCount} app{s.applicationCount === 1 ? '' : 's'}
-                        </ThemedText>
-                      </ThemedView>
-                    ) : (
-                      <ThemedView type="backgroundSelected" style={styles.badge}>
-                        <ThemedText type="small" themeColor="textSecondary">
-                          Not applied
-                        </ThemedText>
-                      </ThemedView>
-                    )}
-                  </Pressable>
-                ))}
-              </ThemedView>
-            ))
-          )}
-        </ScrollView>
+        {loading ? (
+          <SkeletonList />
+        ) : (
+          <ScrollView contentContainerStyle={styles.list}>
+            {grouped.length === 0 ? (
+              <EmptyState
+                icon="people-outline"
+                title="No students found"
+                message={query ? 'Try a different search term.' : 'Students who register with your institution name appear here.'}
+              />
+            ) : (
+              grouped.map(([dept, list], groupIndex) => (
+                <Animated.View
+                  key={dept}
+                  entering={FadeInDown.duration(320).delay(Math.min(groupIndex, 5) * 70)}
+                  style={styles.group}
+                >
+                  <View style={styles.groupHeader}>
+                    <Ionicons name="git-branch-outline" size={14} color={theme.textSecondary} />
+                    <ThemedText type="smallBold" style={styles.groupTitle} numberOfLines={1}>
+                      {dept}
+                    </ThemedText>
+                    <Badge label={`${list.length}`} tone="neutral" />
+                  </View>
+                  {list.map((s) => (
+                    <Card key={s._id} onPress={() => router.push(`/school/students/${s._id}`)}>
+                      <View style={styles.cardRow}>
+                        <InitialAvatar name={s.name} size={40} />
+                        <View style={styles.cardText}>
+                          <ThemedText type="smallBold" numberOfLines={1}>
+                            {s.name}
+                          </ThemedText>
+                          <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+                            {s.level || 'Level not set'} · {s.logbookApproved}/{s.logbookEntries} approved
+                          </ThemedText>
+                        </View>
+                        {s.placedAt ? (
+                          <Badge label={s.placedAt} tone="success" icon="checkmark-circle" />
+                        ) : s.applicationCount > 0 ? (
+                          <Badge label={`${s.applicationCount} app${s.applicationCount === 1 ? '' : 's'}`} tone="warning" icon="paper-plane-outline" />
+                        ) : (
+                          <Badge label="Not applied" tone="neutral" />
+                        )}
+                      </View>
+                    </Card>
+                  ))}
+                </Animated.View>
+              ))
+            )}
+          </ScrollView>
+        )}
       </SafeAreaView>
     </ThemedView>
   );
@@ -155,61 +154,43 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  center: {
+  centerFill: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
-    padding: Spacing.four,
-  },
-  centerText: {
-    textAlign: 'center',
   },
   header: {
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.two,
     gap: Spacing.two,
   },
-  headerTitle: {
-    fontSize: 28,
-    lineHeight: 34,
-  },
-  search: {
-    borderWidth: 1.5,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two + Spacing.half,
-    fontSize: 15,
+  searchWrap: {
+    paddingHorizontal: Spacing.four,
   },
   errorBanner: {
     marginHorizontal: Spacing.four,
     marginTop: Spacing.three,
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
-    borderWidth: 1,
   },
   list: {
     padding: Spacing.four,
     gap: Spacing.four,
+    flexGrow: 1,
   },
   group: {
     gap: Spacing.two,
   },
-  card: {
+  groupHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: Spacing.two,
-    borderWidth: 1.5,
-    borderRadius: Spacing.three,
-    padding: Spacing.three,
+    gap: Spacing.one + Spacing.half,
+  },
+  groupTitle: {
+    flexShrink: 1,
+  },
+  cardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
   },
   cardText: {
     flex: 1,
     gap: Spacing.half,
-  },
-  badge: {
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.half,
-    borderRadius: Spacing.two,
   },
 });
