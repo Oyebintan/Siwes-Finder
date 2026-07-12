@@ -2,16 +2,14 @@ import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { ArrowRightCircle, ArrowUpRight, CheckCircle2, Download, Smartphone, Users } from 'lucide-react';
 
-// NEXT_PUBLIC_ANDROID_APK_URL overrides this once the app has a permanent
-// home (e.g. a GitHub Release asset). The fallback below is the first EAS
-// build's own artifact link (expo.dev/artifacts/eas/...) -- Expo's free
-// tier only retains these for a limited time (documented as ~30 days), so
-// this is a temporary stopgap, not the permanent link. Move the .apk to a
-// GitHub Release and set the env var before this expires, then this
-// fallback can be deleted.
+// NEXT_PUBLIC_ANDROID_APK_URL overrides this if the app ever moves hosts
+// again. The default is the v1.0.0-android GitHub Release asset -- a
+// permanent link, unlike the EAS build artifact URL this replaced (Expo's
+// free tier only retains those for a limited time). A new Android version
+// means a new Release + a new default here (or just set the env var).
 const ANDROID_APK_URL =
   process.env.NEXT_PUBLIC_ANDROID_APK_URL ||
-  'https://expo.dev/artifacts/eas/2rzqSd32zCKYQEU_73IBTsO7hQ500aUE_KxqVB84eBc.apk';
+  'https://github.com/Oyebintan/Siwes-Finder/releases/download/v1.0.0-android/application-129d9ddd-ee6e-4e92-9d78-0d8a852f3927.apk';
 
 const companies = ['Paystack', 'Flutterwave', 'Andela', 'MTN Nigeria', 'Interswitch', 'Nigerian Breweries'];
 
