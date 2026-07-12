@@ -7,6 +7,7 @@
 
 | Date | Commit | What landed |
 |---|---|---|
+| 2026-07-12 | `eb02b6e` | Merge pull request #21 from Oyebintan/claude/admin-promotion-and-employer-logbook-ui |
 | 2026-07-12 | `fcf237b` | Merge pull request #20 from Oyebintan/claude/email-notifications |
 | 2026-07-12 | `073fbec` | Merge pull request #19 from Oyebintan/claude/android-apk-permanent-link |
 | 2026-07-12 | `cf37d99` | Merge pull request #18 from Oyebintan/claude/android-apk-download-link |

@@ -8,12 +8,10 @@ SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
 seeking SIWES (Students Industrial Work Experience Scheme) placements with
 verified employers, and gives their schools visibility into the process.
 
-**Last synced with:** `4402eef` (main, 2026-07-12) — PR #19 (Android download
-link) and PR #20 (email notifications) merged, plus this PR's real
-match-score algorithm and company-follow job-posting alerts. A separate,
-still-open PR rebuilds the web employer logbook page and corrects a couple
-of stale "known gaps" below — check `git log` if this file looks out of
-sync with what's actually on `main`.
+**Last synced with:** `31dce2b` (main, 2026-07-12) — PR #19 (Android download
+link), PR #20 (email notifications), and PR #21 (web employer logbook page
++ corrected stale "known gaps") all merged, plus this PR's real match-score
+algorithm and company-follow job-posting alerts.
 Recent-change log: see `PROGRESS.md` (auto-appended on every push to main).
 
 ## Roles
@@ -98,13 +96,12 @@ against.
 **Employers** — post/edit/deactivate jobs (multi-step wizard with
 deadline/cap controls), manage applicants (accept/reject), company
 verification submission (CAC number + document + company logo), approve
-student logbook entries (`PUT /api/logbook/[id]`, scoped to entries tied to
-their own placements). This approval access was removed in an earlier
-commit ("logbooks are now a private student record") and restored during
-mobile Phase 3, at the user's explicit confirmation — see `MOBILE_APP.md`
-Phase 3. **The route and the mobile app's `employer-logbook` screen exist;
-the web employer UI for it (`/employer/logbook`) was not restored** and
-remains web-inaccessible unless a future session rebuilds that page too.
+student logbook entries (`/employer/logbook`, backed by `GET /api/logbook`
+and `PUT /api/logbook/[id]`, scoped to entries tied to their own
+placements). This approval access was removed in an earlier commit
+("logbooks are now a private student record"), then restored — API and
+mobile screen during mobile Phase 3, the web page in a later session — at
+the user's explicit confirmation; see `MOBILE_APP.md` Phase 3.
 
 **Schools** — `/school/dashboard` (KPI overview: registered/placed/applying
 students, department count, logbook volume, plus a by-department breakdown
@@ -123,8 +120,9 @@ employers, badged "School".
 
 **Admin** — dashboard KPIs, company+school verification queue
 (`/admin/companies`), user management with delete (hierarchy-protected —
-plain admin can't delete a super_admin), job moderation/takedown, super-admin
-promotion (`/admin/super-admins` — currently API-only, see gaps below).
+plain admin can't delete a super_admin) and super-admin/admin promotion by
+email (`/admin/users`, form visible to super_admin sessions only, backed by
+`POST /api/admin/super-admins`), job moderation/takedown.
 
 **Uploads** (`/api/upload`) — one endpoint, three kinds: `resume` (student,
 PDF), `verification` (employer, PDF), `avatar` (any role, PNG/JPEG). All
@@ -174,9 +172,6 @@ software, design, engineering, finance, telecoms, and marketing. Run with
 
 ## Known gaps / not yet built
 
-- **No UI for `/api/admin/super-admins`** — promoting a user to admin or
-  super_admin is currently an API-only call; there's no button in
-  `/admin/users` yet.
 - **No saved-jobs UI on the school/employer side** — bookmarking is
   student-only (matches the feature's purpose).
 - **No email notification for job moderation/takedown** — application
@@ -189,11 +184,6 @@ software, design, engineering, finance, telecoms, and marketing. Run with
 - **Community feature** is a directory + implied connection, not a full chat
   — see `021b140`/`55fa53c` history for what actually shipped vs. what was
   scoped early on.
-- **Employer logbook approval has no web UI** — the route (`PUT
-  /api/logbook/[id]`) and the mobile app's `employer-logbook` screen both
-  work; the equivalent web page (`/employer/logbook`) was deleted in an
-  earlier commit and hasn't been rebuilt. An employer without the mobile
-  app currently has no way to approve entries.
 
 ## Environment variables
 
