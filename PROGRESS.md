@@ -7,6 +7,7 @@
 
 | Date | Commit | What landed |
 |---|---|---|
+| 2026-07-12 | `cf37d99` | Merge pull request #18 from Oyebintan/claude/android-apk-download-link |
 | 2026-07-12 | `5115721` | Merge pull request #17 from Oyebintan/claude/mobile-phase-4 |
 | 2026-07-11 | `f1b6e35` | Merge pull request #16 from Oyebintan/claude/mobile-phase-3 |
 | 2026-07-11 | `a013a83` | Merge pull request #15 from Oyebintan/claude/mobile-phase-2 |
