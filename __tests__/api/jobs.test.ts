@@ -53,24 +53,39 @@ describe('POST /api/jobs', () => {
     expect(res.status).toBe(401);
   });
 
-  it('rejects employers who are not verification-approved', async () => {
+  it("rejects employers who haven't verified their email, even if company-approved", async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     (User.findById as any).mockReturnValue({
-      select: vi.fn().mockResolvedValue({ verificationStatus: 'pending' }),
+      select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: false }),
     });
 
     const res = await POST(makePostRequest(validJob));
     const data = await res.json();
 
     expect(res.status).toBe(403);
-    expect(data.error).toMatch(/verified/i);
+    expect(data.error).toMatch(/verify your email/i);
+    expect(data.code).toBe('EMAIL_NOT_VERIFIED');
+    expect(Job.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects employers who are not verification-approved', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (User.findById as any).mockReturnValue({
+      select: vi.fn().mockResolvedValue({ verificationStatus: 'pending', emailVerified: true }),
+    });
+
+    const res = await POST(makePostRequest(validJob));
+    const data = await res.json();
+
+    expect(res.status).toBe(403);
+    expect(data.error).toMatch(/verified by an admin/i);
     expect(Job.create).not.toHaveBeenCalled();
   });
 
   it('rejects missing required fields for an approved employer', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     (User.findById as any).mockReturnValue({
-      select: vi.fn().mockResolvedValue({ verificationStatus: 'approved' }),
+      select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: true }),
     });
 
     const res = await POST(makePostRequest({ title: 'Only a title' }));
@@ -80,7 +95,7 @@ describe('POST /api/jobs', () => {
   it('rejects an email application method without a valid email', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     (User.findById as any).mockReturnValue({
-      select: vi.fn().mockResolvedValue({ verificationStatus: 'approved' }),
+      select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: true }),
     });
 
     const res = await POST(
@@ -92,7 +107,7 @@ describe('POST /api/jobs', () => {
   it('rejects an external application method without a valid URL', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     (User.findById as any).mockReturnValue({
-      select: vi.fn().mockResolvedValue({ verificationStatus: 'approved' }),
+      select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: true }),
     });
 
     const res = await POST(
@@ -104,7 +119,7 @@ describe('POST /api/jobs', () => {
   it('rejects an invalid application deadline', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     (User.findById as any).mockReturnValue({
-      select: vi.fn().mockResolvedValue({ verificationStatus: 'approved' }),
+      select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: true }),
     });
 
     const res = await POST(makePostRequest({ ...validJob, applicationDeadline: 'not-a-date' }));
@@ -118,7 +133,7 @@ describe('POST /api/jobs', () => {
   it('rejects a non-positive maxApplicants', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     (User.findById as any).mockReturnValue({
-      select: vi.fn().mockResolvedValue({ verificationStatus: 'approved' }),
+      select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: true }),
     });
 
     const res = await POST(makePostRequest({ ...validJob, maxApplicants: 0 }));
@@ -132,7 +147,7 @@ describe('POST /api/jobs', () => {
   it('creates the job for an approved employer with valid data', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     (User.findById as any).mockReturnValue({
-      select: vi.fn().mockResolvedValue({ verificationStatus: 'approved' }),
+      select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: true }),
     });
     (User.find as any).mockReturnValue({ select: vi.fn().mockResolvedValue([]) });
     (Job.create as any).mockResolvedValue({ _id: 'job1', ...validJob });
@@ -148,7 +163,7 @@ describe('POST /api/jobs', () => {
   it('creates the job with a valid application deadline and max applicants', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     (User.findById as any).mockReturnValue({
-      select: vi.fn().mockResolvedValue({ verificationStatus: 'approved' }),
+      select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: true }),
     });
     (User.find as any).mockReturnValue({ select: vi.fn().mockResolvedValue([]) });
     (Job.create as any).mockResolvedValue({ _id: 'job1', ...validJob });
@@ -165,7 +180,7 @@ describe('POST /api/jobs', () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     (User.findById as any).mockImplementation((id: string) => ({
       select: vi.fn().mockResolvedValue(
-        id === 'emp1' ? { verificationStatus: 'approved', companyName: 'Acme Ltd' } : null
+        id === 'emp1' ? { verificationStatus: 'approved', emailVerified: true, companyName: 'Acme Ltd' } : null
       ),
     }));
     const followers = [
@@ -194,7 +209,7 @@ describe('POST /api/jobs', () => {
   it('never fails job creation when the follower-alert lookup throws', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     (User.findById as any).mockReturnValue({
-      select: vi.fn().mockResolvedValue({ verificationStatus: 'approved' }),
+      select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: true }),
     });
     (User.find as any).mockImplementation(() => {
       throw new Error('DB unavailable');

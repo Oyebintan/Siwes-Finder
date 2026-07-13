@@ -66,6 +66,7 @@ describe('POST /api/mobile/login', () => {
       name: 'Ada',
       role: 'student',
       password: 'hashed',
+      emailVerified: true,
     };
     (User.findOne as any).mockResolvedValue(user);
     (bcrypt.compare as any).mockResolvedValue(true);
@@ -76,7 +77,13 @@ describe('POST /api/mobile/login', () => {
 
     expect(res.status).toBe(200);
     expect(data.token).toBe('signed-jwt');
-    expect(data.user).toEqual({ id: 'u1', role: 'student', email: 'ada@example.com', name: 'Ada' });
-    expect(issueMobileToken).toHaveBeenCalledWith({ id: 'u1', role: 'student', email: 'ada@example.com', name: 'Ada' });
+    expect(data.user).toEqual({ id: 'u1', role: 'student', email: 'ada@example.com', name: 'Ada', emailVerified: true });
+    expect(issueMobileToken).toHaveBeenCalledWith({
+      id: 'u1',
+      role: 'student',
+      email: 'ada@example.com',
+      name: 'Ada',
+      emailVerified: true,
+    });
   });
 });

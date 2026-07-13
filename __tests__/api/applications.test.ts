@@ -27,7 +27,7 @@ function makeGetRequest() {
   return new Request('http://localhost/api/applications');
 }
 
-const completeStudent = { university: 'UNILAG', courseOfStudy: 'CS', resumeUrl: 'http://x/resume.pdf' };
+const completeStudent = { university: 'UNILAG', courseOfStudy: 'CS', resumeUrl: 'http://x/resume.pdf', emailVerified: true };
 const approvedEmployer = { verificationStatus: 'approved' };
 const visibleJob = { _id: 'job1', employerId: 'emp1', isActive: true, applicationMethod: 'platform' };
 
@@ -50,9 +50,22 @@ describe('POST /api/applications', () => {
     expect(res.status).toBe(400);
   });
 
+  it('rejects a student who has not verified their email', async () => {
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (User.findById as any).mockResolvedValue({ ...completeStudent, emailVerified: false });
+
+    const res = await POST(makePostRequest({ jobId: 'job1' }));
+    const data = await res.json();
+
+    expect(res.status).toBe(403);
+    expect(data.error).toMatch(/verify your email/i);
+    expect(data.code).toBe('EMAIL_NOT_VERIFIED');
+    expect(Application.create).not.toHaveBeenCalled();
+  });
+
   it('rejects an incomplete student profile', async () => {
     (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
-    (User.findById as any).mockResolvedValue({ university: 'UNILAG' });
+    (User.findById as any).mockResolvedValue({ university: 'UNILAG', emailVerified: true });
 
     const res = await POST(makePostRequest({ jobId: 'job1' }));
     const data = await res.json();

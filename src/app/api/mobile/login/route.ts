@@ -37,6 +37,7 @@ export async function POST(req: Request) {
       role: user.role,
       email: user.email,
       name: user.name,
+      emailVerified: user.emailVerified,
     };
     const token = await issueMobileToken(sessionUser);
 

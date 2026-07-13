@@ -8,13 +8,12 @@ SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
 seeking SIWES (Students Industrial Work Experience Scheme) placements with
 verified employers, and gives their schools visibility into the process.
 
-**Last synced with:** `cad73f5` (main, 2026-07-12) — PRs #19-27 (Android
-download link, email notifications, web employer logbook page, real
-match-score algorithm + company-follow alerts, per-application messaging,
-Mobile Phase 5 parity, bulk accept/reject + CSV export + logbook streak
-reminders, and a CRON_SECRET whitespace-tolerance fix) all merged — the
-full post-launch feature plan is complete. This PR is a follow-up security
-audit pass (see Feature surface's "Security-relevant fixes" below).
+**Last synced with:** email-ownership verification (2026-07-12) — every new
+signup now gets an OTP email-verification step (see Feature surface's
+"Email verification" below); backend PRs #19-28 (Android download link,
+email notifications, security audit, and the rest of the post-launch
+feature plan) plus a full mobile UI/UX overhaul and engagement-feature
+batch (see `MOBILE_APP.md` Phases 7-8) landed since the previous sync.
 Recent-change log: see `PROGRESS.md` (auto-appended on every push to main).
 
 ## Roles
@@ -41,8 +40,12 @@ equivalent everywhere except that one deletion-hierarchy check.
   `savedJobs` (student bookmarks), `followedEmployers` (student→employer
   follows, drives new-job-posted alerts), `communityJoined` (opt-in flag),
   `verificationStatus` (`unsubmitted → pending → approved/rejected`, used by
-  both employers and schools), `resetOtpHash`/`resetOtpExpires` (password
-  reset, hash-only — the OTP itself is never stored).
+  both employers and schools — an *admin* reviewing the organization),
+  `resetOtpHash`/`resetOtpExpires` (password reset, hash-only), `emailVerified`
+  + `verifyOtpHash`/`verifyOtpExpires`/`verifyOtpAttempts` (email-ownership
+  verification — confirming the account holder controls the address they
+  signed up with; separate concern from `verificationStatus` above, same
+  hash-only OTP pattern as password reset).
 - **Job** — posted by employers. `applicationMethod` is `platform | email |
   external`. Optional `applicationDeadline` and `maxApplicants` +
   `applicantCount`; a job auto-closes (`isActive: false`) once either limit
@@ -65,6 +68,23 @@ equivalent everywhere except that one deletion-hierarchy check.
 privileged role. OTP-based forgot-password flow (`/api/auth/forgot-password`,
 `/api/auth/reset-password`) via Resend, 10-minute expiry, generic response to
 avoid email enumeration.
+
+**Email verification** — every credentials signup gets a 6-digit OTP emailed
+immediately (`POST /api/auth/register`, best-effort — a failed send doesn't
+block account creation, since `/api/auth/resend-verification` gives a retry
+path). The account is usable right away (both web and mobile auto-login
+after signup unchanged), but two actions are gated on `emailVerified` at the
+route level (fresh DB read, not a trusted session claim) with a 403 +
+`code: 'EMAIL_NOT_VERIFIED'`: a student applying (`POST /api/applications`)
+and an employer posting an opportunity (`POST /api/jobs`). Google-OAuth
+accounts skip this (no password to prove, and Google already confirmed the
+address). `POST /api/auth/verify-email` checks the code (same hash-compare +
+5-attempt-lockout + expiry pattern as password reset); a persistent,
+dismissible banner nudges toward `/verify-email` on both the web dashboard
+layout (`(dashboard)/layout.tsx`) and the mobile student/employer tab shells
+(school is exempt — its mobile screens are all read-only, nothing to
+unlock). Company/school admin verification (`verificationStatus`) is a
+distinct, human-reviewed check and is unaffected by this.
 
 **Email notifications** (`src/lib/email.ts`, Resend) — sent best-effort
 (failures logged, never fail the underlying action) on: application

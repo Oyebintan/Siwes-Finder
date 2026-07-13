@@ -12,6 +12,10 @@ export type SessionUser = {
   role: string;
   email?: string | null;
   name?: string | null;
+  // Snapshot at login time only -- routes that actually gate on this
+  // (POST /api/applications, POST /api/jobs) re-check the DB, they don't
+  // trust the token's copy.
+  emailVerified?: boolean;
 };
 
 // Issues a NextAuth-compatible encrypted JWT for the mobile app to send back

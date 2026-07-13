@@ -13,13 +13,19 @@ export type SessionUser = {
   role: 'student' | 'employer' | 'school' | 'admin' | 'super_admin' | 'unassigned';
   email?: string | null;
   name?: string | null;
+  emailVerified?: boolean;
 };
 
 export class ApiError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+  // Set for a handful of routes that need the client to branch on the
+  // specific rejection, not just show the message -- currently only
+  // 'EMAIL_NOT_VERIFIED' (see POST /api/applications, POST /api/jobs).
+  code?: string;
+  constructor(status: number, message: string, code?: string) {
     super(message);
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -36,7 +42,7 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    throw new ApiError(res.status, data.error || `Request failed (${res.status})`);
+    throw new ApiError(res.status, data.error || `Request failed (${res.status})`, data.code);
   }
   return data as T;
 }
@@ -62,6 +68,16 @@ export async function requestPasswordReset(email: string): Promise<{ message: st
 
 export async function resetPassword(email: string, otp: string, newPassword: string): Promise<{ message: string }> {
   return apiFetch('/api/auth/reset-password', { method: 'POST', body: JSON.stringify({ email, otp, newPassword }) });
+}
+
+// Email-ownership verification -- same OTP pattern as password reset, sent
+// automatically on registration. Both endpoints are unauthenticated.
+export async function verifyEmail(email: string, otp: string): Promise<{ message: string }> {
+  return apiFetch('/api/auth/verify-email', { method: 'POST', body: JSON.stringify({ email, otp }) });
+}
+
+export async function resendVerificationEmail(email: string): Promise<{ message: string }> {
+  return apiFetch('/api/auth/resend-verification', { method: 'POST', body: JSON.stringify({ email }) });
 }
 
 export type Employer = {
@@ -122,6 +138,7 @@ export type Profile = {
   siwesDuration?: string;
   preferredState?: string;
   isProfileComplete?: boolean;
+  emailVerified?: boolean;
 };
 
 export async function getProfile(): Promise<Profile> {

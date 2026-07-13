@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Platform, StyleSheet, type ColorValue } from 'react-native';
+import { Platform, StyleSheet, View, type ColorValue } from 'react-native';
 import { Redirect, router, Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
@@ -14,6 +14,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BrandLogo } from '@/components/ui/brand-logo';
 import { Button } from '@/components/ui/button';
+import { VerifyEmailBanner } from '@/components/ui/verify-email-banner';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/api/AuthContext';
@@ -83,45 +84,56 @@ export default function TabsLayout() {
     },
   };
 
+  // Only the roles whose actions are actually gated on emailVerified
+  // (applying, posting opportunities) show the nudge -- schools' mobile
+  // screens are all read-only, so there's nothing to unlock for them.
+  const showVerifyBanner = !user.emailVerified && (user.role === 'student' || user.role === 'employer');
+
   if (user.role === 'student') {
     return (
-      <Tabs screenOptions={tabBarScreenOptions}>
-        <Tabs.Screen
-          name="index"
-          options={{ title: 'Jobs', tabBarIcon: tabIcon('briefcase', 'briefcase-outline') }}
-        />
-        <Tabs.Screen
-          name="applications"
-          options={{ title: 'Applications', tabBarIcon: tabIcon('paper-plane', 'paper-plane-outline') }}
-        />
-        <Tabs.Screen
-          name="logbook"
-          options={{ title: 'Logbook', tabBarIcon: tabIcon('book', 'book-outline') }}
-        />
-        <Tabs.Screen
-          name="profile"
-          options={{ title: 'Profile', tabBarIcon: tabIcon('person-circle', 'person-circle-outline') }}
-        />
-      </Tabs>
+      <View style={styles.flex}>
+        {showVerifyBanner ? <VerifyEmailBanner /> : null}
+        <Tabs screenOptions={tabBarScreenOptions}>
+          <Tabs.Screen
+            name="index"
+            options={{ title: 'Jobs', tabBarIcon: tabIcon('briefcase', 'briefcase-outline') }}
+          />
+          <Tabs.Screen
+            name="applications"
+            options={{ title: 'Applications', tabBarIcon: tabIcon('paper-plane', 'paper-plane-outline') }}
+          />
+          <Tabs.Screen
+            name="logbook"
+            options={{ title: 'Logbook', tabBarIcon: tabIcon('book', 'book-outline') }}
+          />
+          <Tabs.Screen
+            name="profile"
+            options={{ title: 'Profile', tabBarIcon: tabIcon('person-circle', 'person-circle-outline') }}
+          />
+        </Tabs>
+      </View>
     );
   }
 
   if (user.role === 'employer') {
     return (
-      <Tabs screenOptions={tabBarScreenOptions}>
-        <Tabs.Screen
-          name="employer-applicants"
-          options={{ title: 'Applicants', tabBarIcon: tabIcon('people', 'people-outline') }}
-        />
-        <Tabs.Screen
-          name="employer-logbook"
-          options={{ title: 'Logbook', tabBarIcon: tabIcon('book', 'book-outline') }}
-        />
-        <Tabs.Screen
-          name="account"
-          options={{ title: 'Account', tabBarIcon: tabIcon('person-circle', 'person-circle-outline') }}
-        />
-      </Tabs>
+      <View style={styles.flex}>
+        {showVerifyBanner ? <VerifyEmailBanner /> : null}
+        <Tabs screenOptions={tabBarScreenOptions}>
+          <Tabs.Screen
+            name="employer-applicants"
+            options={{ title: 'Applicants', tabBarIcon: tabIcon('people', 'people-outline') }}
+          />
+          <Tabs.Screen
+            name="employer-logbook"
+            options={{ title: 'Logbook', tabBarIcon: tabIcon('book', 'book-outline') }}
+          />
+          <Tabs.Screen
+            name="account"
+            options={{ title: 'Account', tabBarIcon: tabIcon('person-circle', 'person-circle-outline') }}
+          />
+        </Tabs>
+      </View>
     );
   }
 
@@ -170,6 +182,9 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
   center: {
     flex: 1,
     alignItems: 'center',

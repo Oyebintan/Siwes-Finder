@@ -73,6 +73,21 @@ export async function sendPasswordResetOtpEmail(to: string, otp: string): Promis
   );
 }
 
+export async function sendEmailVerificationOtpEmail(to: string, otp: string): Promise<void> {
+  await send(
+    to,
+    'Verify your SIWES Finder email address',
+    `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+        <h2 style="margin-bottom: 4px;">Confirm it's you</h2>
+        <p style="color: #555;">Use this code to verify your email address. It expires in 10 minutes.</p>
+        <div style="font-size: 32px; font-weight: 700; letter-spacing: 8px; text-align: center; padding: 16px; margin: 20px 0; background: #f4f4f5; border-radius: 12px;">${otp}</div>
+        <p style="color: #888; font-size: 13px;">If you didn't create a SIWES Finder account, you can safely ignore this email.</p>
+      </div>
+    `
+  );
+}
+
 // The notification senders below are called as best-effort side effects of
 // an already-successful state change (see e.g. PUT /api/applications/[id]):
 // callers wrap them in try/catch and swallow failures, same as the push

@@ -37,6 +37,7 @@ export default async function globalSetup() {
     role: 'employer',
     companyName: 'E2E Test Company Ltd',
     verificationStatus: 'approved',
+    emailVerified: true,
   });
 
   await User.create({

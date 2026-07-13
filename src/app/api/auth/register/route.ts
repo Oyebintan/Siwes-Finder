@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
+import { sendEmailVerificationOtpEmail } from '@/lib/email';
+
+const OTP_TTL_MS = 10 * 60 * 1000;
 
 export async function POST(req: Request) {
   try {
@@ -35,17 +39,37 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Every new account gets an email-verification code up front, same
+    // OTP-hash pattern as password reset -- the account is usable
+    // immediately (see auto-login-after-register on both web and mobile),
+    // but applying to placements / posting opportunities is gated on
+    // emailVerified until this code is confirmed via /verify-email.
+    const otp = crypto.randomInt(100000, 1000000).toString();
+    const verifyOtpHash = await bcrypt.hash(otp, 10);
+
     await User.create({
       name,
       email,
       password: hashedPassword,
       role,
+      verifyOtpHash,
+      verifyOtpExpires: new Date(Date.now() + OTP_TTL_MS),
+      verifyOtpAttempts: 0,
       // Schools see student records (logbooks, applications), so they queue
       // for admin verification immediately instead of the default
       // 'unsubmitted' — an unapproved school account can sign in but its
       // student-data endpoints stay locked until an admin approves it.
       ...(role === 'school' ? { verificationStatus: 'pending' } : {}),
     });
+
+    try {
+      await sendEmailVerificationOtpEmail(email, otp);
+    } catch (emailError) {
+      // Best-effort: the account is already created and usable, and the
+      // resend-verification endpoint gives the user a retry path -- a
+      // flaky email provider shouldn't block account creation itself.
+      console.error('Failed to send verification email:', emailError);
+    }
 
     return NextResponse.json({ message: 'User created successfully' }, { status: 201 });
   } catch (error) {

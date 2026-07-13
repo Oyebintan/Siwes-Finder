@@ -396,6 +396,26 @@ Follow-up batch on top of Phase 7, all approved by the owner in one go:
       layout redirect).
 - [ ] Same device-verification caveat; compiled-in → needs a new build.
 
+### Phase 9 — Email-ownership verification
+Owner request: verify a new signup actually controls the email they typed
+(distinct from the existing employer/school admin-approval
+`verificationStatus` check, which is unaffected). Backend is shared with
+the website — see `PROJECT_SCOPE.md`'s "Email verification". Mobile side:
+- [x] `client.ts` — `verifyEmail`/`resendVerificationEmail`; `emailVerified`
+      added to `SessionUser`/`Profile`; `ApiError.code` added so a 403 with
+      `code: 'EMAIL_NOT_VERIFIED'` can be branched on (currently just
+      surfaced as the message text, same as any other error).
+- [x] `AuthContext` gets `refreshUser()` so the banner/gate clears right
+      after verifying, without a fresh login.
+- [x] New `verify-email.tsx` stack screen — same email→OTP shape as
+      `forgot-password.tsx`, plus a resend button.
+- [x] `ui/verify-email-banner.tsx` — shown above the tab bar for
+      student/employer only (school's screens are all read-only, nothing
+      to unlock) when `!user.emailVerified`; taps through to the screen
+      above.
+- [ ] This is OTA-eligible (no native code) — publish with `eas update`,
+      no new build required for existing installs once this merges.
+
 ## Over-the-air updates (EAS Update) — read this before cutting a build
 
 `expo-updates` is configured (`runtimeVersion.policy: "appVersion"`,
