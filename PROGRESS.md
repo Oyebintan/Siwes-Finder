@@ -7,6 +7,7 @@
 
 | Date | Commit | What landed |
 |---|---|---|
+| 2026-07-13 | `560784a` | Merge pull request #40 from Oyebintan/claude/super-admin-email-promotion-uajc07 |
 | 2026-07-13 | `d76f211` | Merge pull request #39 from Oyebintan/claude/super-admin-email-promotion-uajc07 |
 | 2026-07-13 | `d565fe1` | Merge pull request #38 from Oyebintan/claude/super-admin-email-promotion-uajc07 |
 | 2026-07-13 | `1d6ccc7` | Merge pull request #37 from Oyebintan/claude/verify-email-flow-fixes |
