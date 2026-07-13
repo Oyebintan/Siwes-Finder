@@ -430,11 +430,28 @@ and `preview` in `eas.json`). This changes the release workflow:
   cd mobile
   eas update --branch production --message "what changed"
   ```
+  **This now happens automatically.** `.github/workflows/mobile-ota-update.yml`
+  runs `eas update` on every push to `main` that touches `mobile/**` — no
+  manual step for the common case. One-time setup: add an `EXPO_TOKEN`
+  repo secret (Expo dashboard → account settings → Access Tokens → create
+  one → GitHub repo → Settings → Secrets and variables → Actions). Until
+  that secret exists the workflow just fails harmlessly; nothing else is
+  affected.
 - **Native changes still require a full build**: adding/removing a native
   module, changing `app.json` native config or icons, or bumping the Expo
   SDK. Bumping `version` in `app.json` changes the runtime version, which
   cuts existing installs off from newer OTA updates until they install
   the new APK — bump it exactly when you *do* cut a new build, not before.
+  **This is now automatic too**: `.github/workflows/mobile-build-release.yml`
+  runs on every push to `main` that touches `mobile/app.json`,
+  `mobile/eas.json`, `mobile/package.json`, or `mobile/package-lock.json`
+  — it builds the APK, publishes it as a new GitHub Release, and updates
+  the homepage's download link, all with the same `EXPO_TOKEN` secret as
+  the OTA workflow above. The one thing that still can't be automated:
+  installing the new APK on a phone — Android has no silent self-update
+  path for a sideloaded app outside the Play Store, so that's still a
+  manual tap-the-link-and-reinstall step once per device, same as any
+  update to a non-Store Android app.
 - The **first APK that contains expo-updates must itself be a new build**
   — OTA can't reach APKs built before this config existed (that includes
   the current v1.0.0 installs).
