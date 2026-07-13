@@ -408,11 +408,21 @@ the website — see `PROJECT_SCOPE.md`'s "Email verification". Mobile side:
 - [x] `AuthContext` gets `refreshUser()` so the banner/gate clears right
       after verifying, without a fresh login.
 - [x] New `verify-email.tsx` stack screen — same email→OTP shape as
-      `forgot-password.tsx`, plus a resend button.
-- [x] `ui/verify-email-banner.tsx` — shown above the tab bar for
-      student/employer only (school's screens are all read-only, nothing
-      to unlock) when `!user.emailVerified`; taps through to the screen
-      above.
+      `forgot-password.tsx`, plus a resend button and a sign-out escape
+      hatch (for a mistyped email or an inbox the user can't reach).
+- [x] Signup routes straight to `verify-email.tsx` before the tabs —
+      `AuthContext.login()` now returns the fresh `SessionUser` so
+      `signup.tsx` can check `emailVerified` immediately post-login (state
+      updates from `setUser` aren't readable synchronously) and redirect
+      accordingly, instead of going straight into the app.
+- [x] `ui/verify-email-banner.tsx` — role-specific copy (student: "to
+      apply to placements"; employer: "to post opportunities" — was
+      generic copy shown to both, fixed after owner feedback), shown
+      above the tab bar for student/employer only (school's screens are
+      all read-only, nothing to unlock) when `!user.emailVerified`; a
+      second-chance nudge for anyone who signs out of `verify-email.tsx`
+      or otherwise ends up back in the app still unverified. Taps through
+      to the screen above.
 - [ ] This is OTA-eligible (no native code) — publish with `eas update`,
       no new build required for existing installs once this merges.
 

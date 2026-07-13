@@ -209,8 +209,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       <main className="flex-1 px-5 sm:px-8 lg:px-12 pt-20 md:pt-10 pb-12 max-w-[1120px] mx-auto w-full">
-        {!isAdmin && !emailVerified && session.user?.email ? (
-          <EmailVerificationBanner email={session.user.email} />
+        {(role === 'student' || role === 'employer') && !emailVerified && session.user?.email ? (
+          <EmailVerificationBanner email={session.user.email} role={role} />
         ) : null}
         {children}
       </main>
