@@ -1,0 +1,99 @@
+name: Mobile Native Build & Release
+
+# Auto-builds a new Android APK and publishes it as a GitHub Release
+# whenever a merge to main changes something that needs a real build
+# rather than an OTA update (app.json, eas.json, or a dependency bump --
+# see MOBILE_APP.md's "Cutting a new Android build"). The resulting APK
+# still has to be downloaded and installed once per phone -- Android
+# can't silently self-update a sideloaded app the way Play Store does --
+# but nobody has to run `eas build` or touch a terminal to get there.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mobile/app.json'
+      - 'mobile/eas.json'
+      - 'mobile/package.json'
+      - 'mobile/package-lock.json'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install dependencies
+        working-directory: mobile
+        run: npm ci
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      # Same Step 0 as the manual instructions in MOBILE_APP.md -- without
+      # this the build silently falls back to the emulator-only default
+      # and every screen fails with "Could not reach the server."
+      - name: Point the build at the deployed site
+        working-directory: mobile
+        run: echo "EXPO_PUBLIC_API_URL=https://siwes-finder-eight.vercel.app" > .env
+
+      - name: Build the Android APK
+        working-directory: mobile
+        run: eas build --platform android --profile production --non-interactive --wait --json > build-result.json
+
+      - name: Extract the build artifact URL
+        id: build
+        working-directory: mobile
+        run: |
+          URL=$(jq -r '.[0].artifacts.buildUrl // empty' build-result.json)
+          if [ -z "$URL" ]; then
+            echo "::error::Could not find a build artifact URL in EAS's output."
+            cat build-result.json
+            exit 1
+          fi
+          echo "apk_url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Download the APK
+        working-directory: mobile
+        run: curl -fL -o app-release.apk "${{ steps.build.outputs.apk_url }}"
+
+      - name: Determine the release tag
+        id: tag
+        working-directory: mobile
+        run: |
+          VERSION=$(jq -r '.expo.version' app.json)
+          echo "tag=v${VERSION}-android-ci${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: "SIWES Finder Android ${{ steps.tag.outputs.tag }}"
+          body: |
+            Automated build from ${{ github.sha }}.
+
+            ${{ github.event.head_commit.message }}
+          files: mobile/app-release.apk
+
+      - name: Point the website's download link at the new release
+        run: |
+          NEW_URL="https://github.com/${{ github.repository }}/releases/download/${{ steps.tag.outputs.tag }}/app-release.apk"
+          sed -i "s#'https://github.com/${{ github.repository }}/releases/download/[^']*'#'${NEW_URL}'#" src/app/page.tsx
+
+      - name: Commit and push the updated download link
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/app/page.tsx
+          git commit -m "chore(mobile): point Android download link at ${{ steps.tag.outputs.tag }} [skip ci]"
+          git push
