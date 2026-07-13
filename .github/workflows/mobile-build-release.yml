@@ -15,6 +15,15 @@ on:
       - 'mobile/eas.json'
       - 'mobile/package.json'
       - 'mobile/package-lock.json'
+  # Manual re-cut (Actions tab -> Run workflow). Needed to force a fresh
+  # native build without an app.json/eas.json/package.json change -- e.g.
+  # to rule out an OTA runtime-version mismatch (eas.json's
+  # appVersionSource: "remote" means the *actual* version baked into a
+  # build is resolved on EAS's servers and can drift from this file's
+  # static "version" over successive auto-incremented builds, silently
+  # making later `eas update` publishes incompatible with an older
+  # install -- a fresh build guarantees a matching runtimeVersion).
+  workflow_dispatch:
 
 permissions:
   contents: write
