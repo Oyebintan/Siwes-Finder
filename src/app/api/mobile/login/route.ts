@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 import { issueMobileToken } from '@/lib/mobileAuth';
+import { isEmailVerificationRequired } from '@/lib/emailVerification';
 
 // POST: credentials login for the Expo app. Mirrors the web's
 // CredentialsProvider.authorize() (src/lib/auth.ts) -- same bcrypt check,
@@ -37,7 +38,10 @@ export async function POST(req: Request) {
       role: user.role,
       email: user.email,
       name: user.name,
-      emailVerified: user.emailVerified,
+      // With verification switched off (see lib/emailVerification.ts),
+      // report every account as verified so pre-existing unverified
+      // accounts aren't routed to a verify screen that can't get codes.
+      emailVerified: user.emailVerified || !isEmailVerificationRequired(),
     };
     const token = await issueMobileToken(sessionUser);
 

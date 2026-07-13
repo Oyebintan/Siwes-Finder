@@ -50,17 +50,35 @@ describe('POST /api/applications', () => {
     expect(res.status).toBe(400);
   });
 
-  it('rejects a student who has not verified their email', async () => {
+  it('rejects a student who has not verified their email (verification on)', async () => {
+    process.env.REQUIRE_EMAIL_VERIFICATION = 'true';
+    try {
+      (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+      (User.findById as any).mockResolvedValue({ ...completeStudent, emailVerified: false });
+
+      const res = await POST(makePostRequest({ jobId: 'job1' }));
+      const data = await res.json();
+
+      expect(res.status).toBe(403);
+      expect(data.error).toMatch(/verify your email/i);
+      expect(data.code).toBe('EMAIL_NOT_VERIFIED');
+      expect(Application.create).not.toHaveBeenCalled();
+    } finally {
+      delete process.env.REQUIRE_EMAIL_VERIFICATION;
+    }
+  });
+
+  it('skips the email gate when verification is switched off (the default)', async () => {
     (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
-    (User.findById as any).mockResolvedValue({ ...completeStudent, emailVerified: false });
+    // An unverified account sails past the email gate and hits the next
+    // check (incomplete profile) instead of EMAIL_NOT_VERIFIED.
+    (User.findById as any).mockResolvedValue({ university: 'UNILAG', emailVerified: false });
 
     const res = await POST(makePostRequest({ jobId: 'job1' }));
     const data = await res.json();
 
-    expect(res.status).toBe(403);
-    expect(data.error).toMatch(/verify your email/i);
-    expect(data.code).toBe('EMAIL_NOT_VERIFIED');
-    expect(Application.create).not.toHaveBeenCalled();
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/complete your profile/i);
   });
 
   it('rejects an incomplete student profile', async () => {

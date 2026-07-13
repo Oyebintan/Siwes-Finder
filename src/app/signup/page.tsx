@@ -73,19 +73,24 @@ export default function Signup() {
         body: JSON.stringify({ name, email, password, role }),
       });
 
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.error || 'Something went wrong on the server');
       }
 
       const signInRes = await signIn('credentials', { email, password, redirect: false });
       if (signInRes?.error) throw new Error(signInRes.error || 'Failed to auto-login. Please log in manually.');
 
-      // Confirm email ownership before letting a fresh account do anything
-      // else -- lands back here (via `next`) once verified, then continues
-      // to the same destination as before this step existed.
       const next = isStudent ? '/profile-setup' : '/login-redirect';
-      router.push(`/verify-email?email=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}`);
+      if (data.requiresVerification) {
+        // Verification is switched on server-side: confirm email ownership
+        // before letting a fresh account do anything else -- lands back
+        // here (via `next`) once verified, then continues to the same
+        // destination as below.
+        router.push(`/verify-email?email=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}`);
+      } else {
+        router.push(next);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
       setLoading(false);

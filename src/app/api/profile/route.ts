@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
 import { requireSession } from '@/lib/mobileAuth';
+import { isEmailVerificationRequired } from '@/lib/emailVerification';
 
 // Fields safe to return to the client -- excludes password (hash) and other
 // internal-only fields (resetOtpHash/resetOtpExpires). `role` is included so
@@ -27,7 +28,14 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 });
   }
 
-  return NextResponse.json(user);
+  // With verification switched off (see lib/emailVerification.ts), report
+  // every account as verified -- this is what hides the "verify your
+  // email" banners (web dashboard + mobile tabs) for accounts created
+  // while verification was on but never completed.
+  const raw = typeof user.toObject === 'function' ? user.toObject() : user;
+  const profile = isEmailVerificationRequired() ? raw : { ...raw, emailVerified: true };
+
+  return NextResponse.json(profile);
 }
 
 export async function PUT(req: Request) {

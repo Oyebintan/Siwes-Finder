@@ -86,4 +86,51 @@ describe('POST /api/mobile/login', () => {
       emailVerified: true,
     });
   });
+
+  it('reports an unverified account as verified when verification is switched off (the default)', async () => {
+    const user = {
+      _id: { toString: () => 'u1' },
+      email: 'ada@example.com',
+      name: 'Ada',
+      role: 'student',
+      password: 'hashed',
+      emailVerified: false,
+    };
+    (User.findOne as any).mockResolvedValue(user);
+    (bcrypt.compare as any).mockResolvedValue(true);
+    (issueMobileToken as any).mockResolvedValue('signed-jwt');
+
+    const res = await POST(makeRequest({ email: 'ada@example.com', password: 'secret123' }));
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    // Keeps pre-existing unverified accounts out of the verify-email screen
+    // while the flow is off (see lib/emailVerification.ts).
+    expect(data.user.emailVerified).toBe(true);
+  });
+
+  it('reports an unverified account truthfully when verification is on', async () => {
+    process.env.REQUIRE_EMAIL_VERIFICATION = 'true';
+    try {
+      const user = {
+        _id: { toString: () => 'u1' },
+        email: 'ada@example.com',
+        name: 'Ada',
+        role: 'student',
+        password: 'hashed',
+        emailVerified: false,
+      };
+      (User.findOne as any).mockResolvedValue(user);
+      (bcrypt.compare as any).mockResolvedValue(true);
+      (issueMobileToken as any).mockResolvedValue('signed-jwt');
+
+      const res = await POST(makeRequest({ email: 'ada@example.com', password: 'secret123' }));
+      const data = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(data.user.emailVerified).toBe(false);
+    } finally {
+      delete process.env.REQUIRE_EMAIL_VERIFICATION;
+    }
+  });
 });

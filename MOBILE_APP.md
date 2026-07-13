@@ -400,7 +400,16 @@ Follow-up batch on top of Phase 7, all approved by the owner in one go:
 Owner request: verify a new signup actually controls the email they typed
 (distinct from the existing employer/school admin-approval
 `verificationStatus` check, which is unaffected). Backend is shared with
-the website — see `PROJECT_SCOPE.md`'s "Email verification". Mobile side:
+the website — see `PROJECT_SCOPE.md`'s "Email verification".
+
+> **Currently switched OFF server-side** (`REQUIRE_EMAIL_VERIFICATION`
+> unset — see `src/lib/emailVerification.ts`): the Resend sandbox sender
+> can't deliver codes to real users until a custom domain is verified. No
+> mobile code changed for this — the server reports every account as
+> `emailVerified: true` while off, so the screen and banners below simply
+> never trigger. Everything lights back up when the flag is set.
+
+Mobile side:
 - [x] `client.ts` — `verifyEmail`/`resendVerificationEmail`; `emailVerified`
       added to `SessionUser`/`Profile`; `ApiError.code` added so a 403 with
       `code: 'EMAIL_NOT_VERIFIED'` can be branched on (currently just
