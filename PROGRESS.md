@@ -7,6 +7,7 @@
 
 | Date | Commit | What landed |
 |---|---|---|
+| 2026-07-13 | `cf9359c` | Merge pull request #35 from Oyebintan/claude/email-verification |
 | 2026-07-13 | `4a368c1` | fix: land the engagement batch + EAS Update config on main |
 | 2026-07-12 | `977a489` | Merge pull request #33 from Oyebintan/claude/update-android-apk-link-v1-1-0 |
 | 2026-07-12 | `dd6c483` | Merge pull request #30 from Oyebintan/claude/mobile-fintech-ui-overhaul |
