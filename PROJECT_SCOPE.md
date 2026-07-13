@@ -72,19 +72,27 @@ avoid email enumeration.
 **Email verification** — every credentials signup gets a 6-digit OTP emailed
 immediately (`POST /api/auth/register`, best-effort — a failed send doesn't
 block account creation, since `/api/auth/resend-verification` gives a retry
-path). The account is usable right away (both web and mobile auto-login
-after signup unchanged), but two actions are gated on `emailVerified` at the
-route level (fresh DB read, not a trusted session claim) with a 403 +
-`code: 'EMAIL_NOT_VERIFIED'`: a student applying (`POST /api/applications`)
-and an employer posting an opportunity (`POST /api/jobs`). Google-OAuth
-accounts skip this (no password to prove, and Google already confirmed the
-address). `POST /api/auth/verify-email` checks the code (same hash-compare +
-5-attempt-lockout + expiry pattern as password reset); a persistent,
-dismissible banner nudges toward `/verify-email` on both the web dashboard
-layout (`(dashboard)/layout.tsx`) and the mobile student/employer tab shells
-(school is exempt — its mobile screens are all read-only, nothing to
-unlock). Company/school admin verification (`verificationStatus`) is a
-distinct, human-reviewed check and is unaffected by this.
+path). Web and mobile still auto-login right after signup, but both then
+route straight to `/verify-email` (web: `?next=/profile-setup` for students,
+`/login-redirect` for employer/school; mobile: same screen, no `next` since
+there's no separate profile wizard) **before** anything else — a fresh
+account cannot reach the profile-setup wizard or its dashboard until the
+code is entered. `POST /api/auth/verify-email` checks the code (same
+hash-compare + 5-attempt-lockout + expiry pattern as password reset);
+`POST /api/auth/resend-verification` covers a missed/expired code. A "Sign
+out" escape hatch is on both `/verify-email` screens for a mistyped email or
+an inbox the user can't reach right now. Beyond that first-run gate, two
+actions stay gated on `emailVerified` at the route level (fresh DB read,
+never a trusted session claim) with a 403 + `code: 'EMAIL_NOT_VERIFIED'` —
+a student applying (`POST /api/applications`) and an employer posting an
+opportunity (`POST /api/jobs`) — with a persistent, role-specific,
+dismissible banner nudging back to `/verify-email` on the web dashboard
+layout and the mobile student/employer tab shells (school is exempt — its
+mobile screens are all read-only, nothing to unlock) for anyone who somehow
+still isn't verified later. Google-OAuth accounts skip all of this (no
+password to prove, and Google already confirmed the address).
+Company/school admin verification (`verificationStatus`) is a distinct,
+human-reviewed check and is unaffected by this.
 
 **Email notifications** (`src/lib/email.ts`, Resend) — sent best-effort
 (failures logged, never fail the underlying action) on: application

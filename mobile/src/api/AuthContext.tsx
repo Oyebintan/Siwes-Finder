@@ -7,7 +7,11 @@ import { registerForPushNotifications } from './pushNotifications';
 type AuthState = {
   user: SessionUser | null;
   loading: boolean; // true while checking secure-store for an existing token on boot
-  login: (email: string, password: string) => Promise<void>;
+  // Returns the freshly-signed-in user so a caller (e.g. signup, right
+  // after auto-login) can branch on fields like emailVerified without an
+  // extra round trip -- state updates from setUser aren't readable
+  // synchronously in the same tick.
+  login: (email: string, password: string) => Promise<SessionUser>;
   logout: () => Promise<void>;
   // Re-fetches /api/profile and updates the local user snapshot -- used
   // after verifying the email so the "verify your email" banner clears
@@ -63,6 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await authStorage.setToken(token);
         setUser(sessionUser);
         registerForPushNotifications().catch(() => {});
+        return sessionUser;
       },
       logout: async () => {
         await authStorage.clearToken();

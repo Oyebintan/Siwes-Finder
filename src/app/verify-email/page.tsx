@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import { signOut } from 'next-auth/react';
 import { Loader2 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -13,6 +13,15 @@ function VerifyEmailForm() {
   const [email, setEmail] = useState(searchParams.get('email') || '');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'code' | 'done'>('code');
+  // Where "Continue" goes on success -- set by signup right after
+  // register+auto-login, before the app is entered for the first time.
+  // Reached from elsewhere (e.g. the dashboard banner) without this param,
+  // login-redirect is a safe default: it re-derives the right dashboard
+  // from the now-verified session. Only a same-site path is accepted --
+  // this is a URL query param a caller controls, so an absolute or
+  // protocol-relative ("//evil.com") value must never be followed.
+  const rawNext = searchParams.get('next');
+  const next = rawNext && /^\/(?!\/)/.test(rawNext) ? rawNext : '/login-redirect';
 
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
@@ -64,7 +73,12 @@ function VerifyEmailForm() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground px-6 py-10">
       <div className="w-full max-w-[400px]">
         <div className="flex items-center justify-between mb-6">
-          <Link href="/login" className="text-[13.5px] font-semibold text-muted">← Back to login</Link>
+          <button
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            className="text-[13.5px] font-semibold text-muted"
+          >
+            Sign out
+          </button>
           <ThemeToggle />
         </div>
 
@@ -74,7 +88,7 @@ function VerifyEmailForm() {
         <p className="text-[13.5px] text-muted mb-6">
           {step === 'code'
             ? 'Enter the 6-digit code we emailed you when you signed up. It expires 10 minutes after being sent.'
-            : 'Your email address is confirmed. You can now apply to placements and post opportunities.'}
+            : 'Your email address is confirmed.'}
         </p>
 
         {error && (
@@ -132,10 +146,10 @@ function VerifyEmailForm() {
           </form>
         ) : (
           <button
-            onClick={() => router.push('/login-redirect')}
+            onClick={() => router.push(next)}
             className="w-full py-2.5 rounded-lg bg-primary-500 dark:bg-primary-400 text-white font-bold text-[14.5px] shadow-lg shadow-primary-900/20 hover:brightness-110 transition-all"
           >
-            Continue to dashboard
+            Continue
           </button>
         )}
       </div>

@@ -51,8 +51,14 @@ export default function SignupScreen() {
     try {
       await register(name.trim(), email.trim(), password, role);
       // Mirrors the web's auto-login-after-register flow.
-      await login(email.trim(), password);
-      router.replace('/');
+      const sessionUser = await login(email.trim(), password);
+      // A fresh signup is always unverified; confirming ownership of the
+      // email comes before anything else, same as the web flow.
+      if (!sessionUser.emailVerified) {
+        router.replace('/verify-email');
+      } else {
+        router.replace('/');
+      }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not reach the server. Check your connection.');
     } finally {

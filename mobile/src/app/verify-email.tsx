@@ -18,7 +18,7 @@ import { ApiError, resendVerificationEmail, verifyEmail } from '@/api/client';
 
 export default function VerifyEmailScreen() {
   const theme = useTheme();
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, logout } = useAuth();
 
   const [email, setEmail] = useState(user?.email ?? '');
   const [otp, setOtp] = useState('');
@@ -77,7 +77,7 @@ export default function VerifyEmailScreen() {
               <ThemedText style={styles.title}>{done ? "You're verified" : 'Verify your email'}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary" style={styles.subtitle}>
                 {done
-                  ? 'Your email address is confirmed. You can now apply to placements and post opportunities.'
+                  ? 'Your email address is confirmed.'
                   : 'Enter the 6-digit code we emailed you when you signed up. It expires 10 minutes after being sent.'}
               </ThemedText>
             </Animated.View>
@@ -130,6 +130,18 @@ export default function VerifyEmailScreen() {
                   <ThemedText type="small" themeColor="textSecondary">
                     {resending ? 'Sending…' : "Didn't get it? "}
                     {!resending ? <ThemedText type="smallBold" themeColor="primary">Resend code</ThemedText> : null}
+                  </ThemedText>
+                </PressableScale>
+                <PressableScale
+                  onPress={async () => {
+                    await logout();
+                    router.replace('/login');
+                  }}
+                  style={styles.linkRow}
+                  haptic={false}
+                >
+                  <ThemedText type="small" themeColor="textSecondary">
+                    Wrong account or can&apos;t access this inbox? <ThemedText type="smallBold" themeColor="error">Sign out</ThemedText>
                   </ThemedText>
                 </PressableScale>
               </View>

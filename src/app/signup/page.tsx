@@ -81,7 +81,11 @@ export default function Signup() {
       const signInRes = await signIn('credentials', { email, password, redirect: false });
       if (signInRes?.error) throw new Error(signInRes.error || 'Failed to auto-login. Please log in manually.');
 
-      router.push(isStudent ? '/profile-setup' : '/login-redirect');
+      // Confirm email ownership before letting a fresh account do anything
+      // else -- lands back here (via `next`) once verified, then continues
+      // to the same destination as before this step existed.
+      const next = isStudent ? '/profile-setup' : '/login-redirect';
+      router.push(`/verify-email?email=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
       setLoading(false);

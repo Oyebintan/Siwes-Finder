@@ -23,13 +23,22 @@ test('student signs up, completes profile, uploads a resume, and applies to the 
     await page.getByPlaceholder('you@university.edu.ng').fill(studentEmail);
     await page.getByPlaceholder('Create a password').fill(studentPassword);
     await page.getByRole('button', { name: 'Create student account' }).click();
-    await expect(page).toHaveURL(/\/profile-setup/, { timeout: 15_000 });
+    // Signup now routes through /verify-email before profile-setup.
+    await expect(page).toHaveURL(/\/verify-email/, { timeout: 15_000 });
   });
 
   await test.step('verify email (bypasses real inbox delivery for this fixture account)', async () => {
     await mongoose.connect(process.env.MONGODB_URI!);
     await User.updateOne({ email: studentEmail }, { $set: { emailVerified: true } });
     await mongoose.disconnect();
+
+    // The API short-circuits to success once already verified in the DB
+    // above, regardless of the code entered -- no real inbox needed.
+    await page.getByPlaceholder('123456').fill('000000');
+    await page.getByRole('button', { name: 'Verify email' }).click();
+    await expect(page.getByRole('button', { name: 'Continue' })).toBeVisible({ timeout: 10_000 });
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await expect(page).toHaveURL(/\/profile-setup/, { timeout: 15_000 });
   });
 
   await test.step('complete the profile-setup wizard', async () => {

@@ -92,7 +92,7 @@ export default function TabsLayout() {
   if (user.role === 'student') {
     return (
       <View style={styles.flex}>
-        {showVerifyBanner ? <VerifyEmailBanner /> : null}
+        {showVerifyBanner ? <VerifyEmailBanner role="student" /> : null}
         <Tabs screenOptions={tabBarScreenOptions}>
           <Tabs.Screen
             name="index"
@@ -118,7 +118,7 @@ export default function TabsLayout() {
   if (user.role === 'employer') {
     return (
       <View style={styles.flex}>
-        {showVerifyBanner ? <VerifyEmailBanner /> : null}
+        {showVerifyBanner ? <VerifyEmailBanner role="employer" /> : null}
         <Tabs screenOptions={tabBarScreenOptions}>
           <Tabs.Screen
             name="employer-applicants"
