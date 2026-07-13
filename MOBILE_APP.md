@@ -368,6 +368,59 @@ any API logic:
 - [ ] Not yet verified on a device — same sandbox caveat as every phase;
       **needs a new `eas build` to reach installs** (all compiled-in).
 
+### Phase 8 — Engagement features
+Follow-up batch on top of Phase 7, all approved by the owner in one go:
+- [x] **Forgot password** — `forgot-password.tsx` (email → OTP + new
+      password → done), reusing the website's public
+      `/api/auth/forgot-password` + `/api/auth/reset-password` OTP flow;
+      linked from the login screen. This closed a real gap: mobile
+      previously had no reset path at all.
+- [x] **Push deep links** — `src/api/notificationRouting.ts` maps every
+      backend push payload type (`application-status`, `new-message`,
+      `logbook-approval`, `new-job-alert`, `logbook-streak-reminder`) to
+      its screen; handles warm taps and cold starts, validates ids as
+      ObjectIds before routing (payloads are external input). Also sets a
+      foreground notification handler so pushes show as banners in-app.
+- [x] **Share a job** — native Share sheet from the job detail header.
+- [x] **Apply success moment** — spring ZoomIn checkmark + success haptic.
+- [x] **Match ring** — `ui/match-ring.tsx`, animated SVG gauge (new dep:
+      `react-native-svg`, SDK-pinned) on the job detail screen.
+- [x] **Logbook streak card** — `ui/streak-card.tsx`: Mon-Fri dots for the
+      current week + 🔥 consecutive-weekday streak (weekends neither break
+      nor extend, matching the reminder cron's logic).
+- [x] **Swipe actions** — `ui/swipe-row.tsx` (ReanimatedSwipeable):
+      swipe a job card to save/unsave, swipe a pending applicant to
+      accept/reject. Every swipe action also exists as a visible button.
+- [x] **Onboarding carousel** — 3 slides on first launch
+      (`onboarding.tsx`, AsyncStorage seen-flag, gated from the tabs
+      layout redirect).
+- [ ] Same device-verification caveat; compiled-in → needs a new build.
+
+## Over-the-air updates (EAS Update) — read this before cutting a build
+
+`expo-updates` is configured (`runtimeVersion.policy: "appVersion"`,
+update URL `https://u.expo.dev/<projectId>`, build channels `production`
+and `preview` in `eas.json`). This changes the release workflow:
+
+- **JS-only changes** (screens, styling, animations, API-client logic —
+  i.e. nearly everything) no longer need a new APK. Publish them
+  over-the-air; installed apps fetch the update on next launch (the app
+  checks `ON_LOAD` and applies on the following start):
+  ```
+  cd mobile
+  eas update --branch production --message "what changed"
+  ```
+- **Native changes still require a full build**: adding/removing a native
+  module, changing `app.json` native config or icons, or bumping the Expo
+  SDK. Bumping `version` in `app.json` changes the runtime version, which
+  cuts existing installs off from newer OTA updates until they install
+  the new APK — bump it exactly when you *do* cut a new build, not before.
+- The **first APK that contains expo-updates must itself be a new build**
+  — OTA can't reach APKs built before this config existed (that includes
+  the current v1.0.0 installs).
+- Rollback: `eas update:republish` an earlier update group from expo.dev
+  or the CLI if a bad update ships.
+
 ## Cutting a new Android build
 
 Run this whenever mobile-visible code changes (a new screen, a new

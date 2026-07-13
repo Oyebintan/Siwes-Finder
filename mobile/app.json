@@ -7,6 +7,14 @@
     "icon": "./assets/images/icon.png",
     "scheme": "siwesfinder",
     "userInterfaceStyle": "automatic",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/f4d8dee9-8d13-4ead-a3f4-c8bab0f17a3a",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
     "ios": {
       "icon": "./assets/expo.icon"
     },

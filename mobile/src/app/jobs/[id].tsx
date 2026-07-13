@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
+import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -11,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, InitialAvatar } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorBanner } from '@/components/ui/error-banner';
+import { MatchRing } from '@/components/ui/match-ring';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Radius, Spacing } from '@/constants/theme';
@@ -99,10 +101,22 @@ export default function JobDetailScreen() {
     try {
       await applyToJob(id);
       setApplied(true);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     } catch (err) {
       setApplyError(err instanceof ApiError ? err.message : 'Could not submit your application. Check your connection.');
     } finally {
       setApplying(false);
+    }
+  };
+
+  const handleShare = async (jobToShare: Job) => {
+    const company = jobToShare.employerId?.companyName || jobToShare.employerId?.name || 'a company';
+    try {
+      await Share.share({
+        message: `${jobToShare.title} at ${company} (${jobToShare.location}) — found on SIWES Finder. Get the app: https://siwes-finder-eight.vercel.app`,
+      });
+    } catch {
+      // The user dismissing the share sheet isn't an error worth surfacing.
     }
   };
 
@@ -151,6 +165,14 @@ export default function JobDetailScreen() {
             </ThemedText>
           </View>
           <PressableScale
+            onPress={() => handleShare(job)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Share this opportunity"
+          >
+            <Ionicons name="share-social-outline" size={23} color={theme.textSecondary} />
+          </PressableScale>
+          <PressableScale
             onPress={handleToggleSave}
             hitSlop={8}
             accessibilityRole="button"
@@ -164,8 +186,21 @@ export default function JobDetailScreen() {
           <Badge label={job.type} tone="neutral" />
           <Badge label={job.duration} tone="neutral" icon="time-outline" />
           {job.stipend ? <Badge label={job.stipend} tone="success" icon="cash-outline" /> : null}
-          {job.matchScore != null ? <Badge label={`${job.matchScore}% match`} tone="primary" icon="flash" /> : null}
         </Animated.View>
+
+        {job.matchScore != null ? (
+          <Animated.View entering={FadeInDown.duration(320).delay(100)}>
+            <Card style={styles.matchCard}>
+              <MatchRing score={job.matchScore} />
+              <View style={styles.matchText}>
+                <ThemedText type="smallBold">Skill match</ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  Based on the skills on your profile — keep it updated for sharper matches.
+                </ThemedText>
+              </View>
+            </Card>
+          </Animated.View>
+        ) : null}
 
         {job.employerId?._id ? (
           <Animated.View entering={FadeInDown.duration(320).delay(120)}>
@@ -281,9 +316,11 @@ function ApplyAction({
         entering={FadeInDown.duration(300)}
         style={[styles.appliedButton, { backgroundColor: theme.successSoft }]}
       >
-        <Ionicons name="checkmark-circle" size={20} color={theme.success} />
+        <Animated.View entering={ZoomIn.springify().damping(9).delay(120)}>
+          <Ionicons name="checkmark-circle" size={26} color={theme.success} />
+        </Animated.View>
         <ThemedText themeColor="success" type="smallBold">
-          Application submitted
+          Application submitted 🎉
         </ThemedText>
       </Animated.View>
     );
@@ -337,6 +374,15 @@ const styles = StyleSheet.create({
   },
   followButton: {
     alignSelf: 'flex-start',
+  },
+  matchCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+  },
+  matchText: {
+    flex: 1,
+    gap: Spacing.half,
   },
   section: {
     gap: Spacing.two,

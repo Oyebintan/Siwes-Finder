@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, type ColorValue } from 'react-native';
 import { Redirect, router, Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/api/AuthContext';
+import { hasSeenOnboarding } from '@/api/onboardingFlag';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -54,13 +55,20 @@ function BrandedLoading() {
 export default function TabsLayout() {
   const theme = useTheme();
   const { user, loading, logout } = useAuth();
+  const [seenOnboarding, setSeenOnboarding] = useState<boolean | null>(null);
 
-  if (loading) {
+  useEffect(() => {
+    hasSeenOnboarding().then(setSeenOnboarding);
+  }, []);
+
+  if (loading || seenOnboarding === null) {
     return <BrandedLoading />;
   }
 
   if (!user) {
-    return <Redirect href="/login" />;
+    // First launch on this install gets the intro slides; after that,
+    // straight to login.
+    return <Redirect href={seenOnboarding ? '/login' : '/onboarding'} />;
   }
 
   const tabBarScreenOptions = {
