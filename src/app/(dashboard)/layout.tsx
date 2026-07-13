@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { EmailVerificationBanner } from '@/components/EmailVerificationBanner';
 import { isAdminRole } from '@/lib/roles';
 
 type NavItem = { name: string; href: string; icon: LucideIcon };
@@ -57,6 +58,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [subline, setSubline] = useState<string>('');
   const [avatarUrl, setAvatarUrl] = useState<string>('');
+  const [emailVerified, setEmailVerified] = useState<boolean>(true);
 
   const role = session?.user?.role;
 
@@ -76,6 +78,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     fetch('/api/profile').then((r) => (r.ok ? r.json() : null)).then((d) => {
       if (d?.avatarUrl) setAvatarUrl(d.avatarUrl);
       if (role === 'student' && d?.university) setSubline(d.university);
+      if (d && typeof d.emailVerified === 'boolean') setEmailVerified(d.emailVerified);
     }).catch(() => {});
     if (role === 'employer') {
       fetch('/api/companies/verification').then((r) => (r.ok ? r.json() : null)).then((d) => {
@@ -206,6 +209,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       <main className="flex-1 px-5 sm:px-8 lg:px-12 pt-20 md:pt-10 pb-12 max-w-[1120px] mx-auto w-full">
+        {!isAdmin && !emailVerified && session.user?.email ? (
+          <EmailVerificationBanner email={session.user.email} />
+        ) : null}
         {children}
       </main>
     </div>

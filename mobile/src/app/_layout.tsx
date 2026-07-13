@@ -23,6 +23,7 @@ export default function RootLayout() {
             <Stack.Screen name="login" options={{ animation: 'fade' }} />
             <Stack.Screen name="signup" options={{ animation: 'fade' }} />
             <Stack.Screen name="forgot-password" />
+            <Stack.Screen name="verify-email" />
             <Stack.Screen name="jobs/[id]" options={{ headerShown: true, title: 'Opportunity' }} />
             <Stack.Screen name="school/students/[id]" options={{ headerShown: true, title: 'Student' }} />
             <Stack.Screen name="messages/[id]" options={{ headerShown: true, title: 'Messages' }} />

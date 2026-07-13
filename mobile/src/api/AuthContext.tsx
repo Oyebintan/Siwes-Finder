@@ -9,9 +9,23 @@ type AuthState = {
   loading: boolean; // true while checking secure-store for an existing token on boot
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  // Re-fetches /api/profile and updates the local user snapshot -- used
+  // after verifying the email so the "verify your email" banner clears
+  // without requiring a fresh login.
+  refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthState | null>(null);
+
+function toSessionUser(profile: api.Profile): SessionUser {
+  return {
+    id: profile._id,
+    role: profile.role,
+    name: profile.name,
+    email: profile.email,
+    emailVerified: profile.emailVerified,
+  };
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
@@ -29,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       try {
         const profile = await api.getProfile();
-        setUser({ id: profile._id, role: profile.role, name: profile.name, email: profile.email });
+        setUser(toSessionUser(profile));
         registerForPushNotifications().catch(() => {});
       } catch {
         // Token expired or invalid -- clear it so the login screen shows.
@@ -53,6 +67,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout: async () => {
         await authStorage.clearToken();
         setUser(null);
+      },
+      refreshUser: async () => {
+        const profile = await api.getProfile();
+        setUser(toSessionUser(profile));
       },
     }),
     [user, loading]

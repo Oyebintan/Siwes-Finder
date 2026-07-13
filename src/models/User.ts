@@ -51,6 +51,15 @@ export interface IUser extends Document {
   resetOtpHash?: string;
   resetOtpExpires?: Date;
   resetOtpAttempts?: number;
+  // Email-ownership verification, separate from the employer/school
+  // verificationStatus above (that's an admin reviewing the organization;
+  // this is confirming the account holder actually controls the email
+  // address they signed up with). Same OTP-hash pattern as password reset.
+  // See src/app/api/auth/verify-email and resend-verification.
+  emailVerified: boolean;
+  verifyOtpHash?: string;
+  verifyOtpExpires?: Date;
+  verifyOtpAttempts?: number;
   createdAt: Date;
 }
 
@@ -103,6 +112,11 @@ const UserSchema: Schema = new Schema(
     resetOtpHash: { type: String },
     resetOtpExpires: { type: Date },
     resetOtpAttempts: { type: Number, default: 0 },
+
+    emailVerified: { type: Boolean, default: false },
+    verifyOtpHash: { type: String },
+    verifyOtpExpires: { type: Date },
+    verifyOtpAttempts: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

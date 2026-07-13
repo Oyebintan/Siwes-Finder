@@ -20,8 +20,15 @@ export async function POST(req: Request) {
 
     await connectToDatabase();
 
-    // Check if student has completed profile
     const student = await User.findById(session.user.id);
+    if (!student?.emailVerified) {
+      return NextResponse.json(
+        { error: 'Please verify your email address before applying.', code: 'EMAIL_NOT_VERIFIED' },
+        { status: 403 }
+      );
+    }
+
+    // Check if student has completed profile
     if (!student?.university || !student?.courseOfStudy || !student?.resumeUrl) {
       return NextResponse.json({ error: 'Please complete your profile (University, Course, and Resume) before applying.' }, { status: 400 });
     }

@@ -29,8 +29,14 @@ export async function POST(req: Request) {
     await connectToDatabase();
 
     // Only approved companies may publish opportunities.
-    const employer = await User.findById(session.user.id).select('verificationStatus');
-    if (!employer || employer.verificationStatus !== 'approved') {
+    const employer = await User.findById(session.user.id).select('verificationStatus emailVerified');
+    if (!employer?.emailVerified) {
+      return NextResponse.json(
+        { error: 'Please verify your email address before posting opportunities.', code: 'EMAIL_NOT_VERIFIED' },
+        { status: 403 }
+      );
+    }
+    if (employer.verificationStatus !== 'approved') {
       return NextResponse.json(
         { error: 'Your company must be verified by an admin before you can post opportunities.' },
         { status: 403 }

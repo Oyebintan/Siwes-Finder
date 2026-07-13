@@ -8,7 +8,7 @@ import { requireSession } from '@/lib/mobileAuth';
 // the mobile app's AuthContext (which restores its session from this
 // response on boot) can gate features by role without a second request.
 const SAFE_PROFILE_FIELDS =
-  'name email phone avatarUrl university faculty courseOfStudy level skills resumeUrl siwesStartDate siwesDuration preferredState isProfileComplete role';
+  'name email phone avatarUrl university faculty courseOfStudy level skills resumeUrl siwesStartDate siwesDuration preferredState isProfileComplete role emailVerified';
 
 // GET accepts both the web's cookie session and the mobile app's bearer
 // token (requireSession checks cookie first, falls back to

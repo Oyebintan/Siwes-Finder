@@ -1,5 +1,7 @@
 import path from 'path';
+import mongoose from 'mongoose';
 import { expect, test } from '@playwright/test';
+import User from '../src/models/User';
 import {
   SEEDED_EMPLOYER_EMAIL,
   SEEDED_EMPLOYER_PASSWORD,
@@ -22,6 +24,12 @@ test('student signs up, completes profile, uploads a resume, and applies to the 
     await page.getByPlaceholder('Create a password').fill(studentPassword);
     await page.getByRole('button', { name: 'Create student account' }).click();
     await expect(page).toHaveURL(/\/profile-setup/, { timeout: 15_000 });
+  });
+
+  await test.step('verify email (bypasses real inbox delivery for this fixture account)', async () => {
+    await mongoose.connect(process.env.MONGODB_URI!);
+    await User.updateOne({ email: studentEmail }, { $set: { emailVerified: true } });
+    await mongoose.disconnect();
   });
 
   await test.step('complete the profile-setup wizard', async () => {
