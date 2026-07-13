@@ -5,6 +5,7 @@ import Job from '@/models/Job';
 import User from '@/models/User';
 import { isJobOpenForApplications } from '@/lib/jobStatus';
 import { requireSession } from '@/lib/mobileAuth';
+import { isEmailVerificationRequired } from '@/lib/emailVerification';
 
 export async function POST(req: Request) {
   try {
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
     await connectToDatabase();
 
     const student = await User.findById(session.user.id);
-    if (!student?.emailVerified) {
+    if (isEmailVerificationRequired() && !student?.emailVerified) {
       return NextResponse.json(
         { error: 'Please verify your email address before applying.', code: 'EMAIL_NOT_VERIFIED' },
         { status: 403 }

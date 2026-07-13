@@ -8,12 +8,12 @@ SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
 seeking SIWES (Students Industrial Work Experience Scheme) placements with
 verified employers, and gives their schools visibility into the process.
 
-**Last synced with:** email-ownership verification (2026-07-12) — every new
-signup now gets an OTP email-verification step (see Feature surface's
-"Email verification" below); backend PRs #19-28 (Android download link,
-email notifications, security audit, and the rest of the post-launch
-feature plan) plus a full mobile UI/UX overhaul and engagement-feature
-batch (see `MOBILE_APP.md` Phases 7-8) landed since the previous sync.
+**Last synced with:** email verification made opt-in via
+`REQUIRE_EMAIL_VERIFICATION` (2026-07-13) — the whole OTP flow is now
+switched off by default because the Resend sandbox sender can't deliver to
+real users (see Feature surface's "Email verification" below); before that,
+email-ownership verification (2026-07-12) and backend PRs #19-28 plus the
+mobile UI/UX overhaul (see `MOBILE_APP.md` Phases 7-8).
 Recent-change log: see `PROGRESS.md` (auto-appended on every push to main).
 
 ## Roles
@@ -69,7 +69,22 @@ privileged role. OTP-based forgot-password flow (`/api/auth/forgot-password`,
 `/api/auth/reset-password`) via Resend, 10-minute expiry, generic response to
 avoid email enumeration.
 
-**Email verification** — every credentials signup gets a 6-digit OTP emailed
+**Email verification** — **opt-in via `REQUIRE_EMAIL_VERIFICATION=true`,
+and OFF by default** (`src/lib/emailVerification.ts`): the default Resend
+sandbox sender (`onboarding@resend.dev`) only delivers to the Resend account
+owner's own address, so until a custom domain is verified on Resend (and
+`RESEND_FROM_EMAIL` points at it) real users would never receive their
+codes. With the flag off, `POST /api/auth/register` creates accounts with
+`emailVerified: true` (no OTP generated or emailed), returns
+`requiresVerification: false` so the web signup page skips `/verify-email`,
+the apply/post-job gates below are bypassed, and `/api/profile` +
+`/api/mobile/login` report every account as verified so the reminder
+banners stay hidden (including for accounts created while the flag was on
+that never finished verifying). Everything below describes the flag-ON
+behavior, which needs no code changes to restore (the E2E golden path runs
+with the flag on — see `playwright.config.ts` `webServer.env`).
+
+When on: every credentials signup gets a 6-digit OTP emailed
 immediately (`POST /api/auth/register`, best-effort — a failed send doesn't
 block account creation, since `/api/auth/resend-verification` gives a retry
 path). Web and mobile still auto-login right after signup, but both then

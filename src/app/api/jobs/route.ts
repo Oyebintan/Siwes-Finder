@@ -8,6 +8,7 @@ import { requireSession } from '@/lib/mobileAuth';
 import { sendPushNotification } from '@/lib/push';
 import { sendNewJobAlertEmail } from '@/lib/email';
 import { computeMatchScore } from '@/lib/match';
+import { isEmailVerificationRequired } from '@/lib/emailVerification';
 
 type JobDoc = { toObject?: () => Record<string, unknown> };
 function plainJob(job: JobDoc) {
@@ -30,13 +31,13 @@ export async function POST(req: Request) {
 
     // Only approved companies may publish opportunities.
     const employer = await User.findById(session.user.id).select('verificationStatus emailVerified');
-    if (!employer?.emailVerified) {
+    if (isEmailVerificationRequired() && !employer?.emailVerified) {
       return NextResponse.json(
         { error: 'Please verify your email address before posting opportunities.', code: 'EMAIL_NOT_VERIFIED' },
         { status: 403 }
       );
     }
-    if (employer.verificationStatus !== 'approved') {
+    if (employer?.verificationStatus !== 'approved') {
       return NextResponse.json(
         { error: 'Your company must be verified by an admin before you can post opportunities.' },
         { status: 403 }

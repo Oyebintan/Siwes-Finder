@@ -53,19 +53,36 @@ describe('POST /api/jobs', () => {
     expect(res.status).toBe(401);
   });
 
-  it("rejects employers who haven't verified their email, even if company-approved", async () => {
+  it("rejects employers who haven't verified their email, even if company-approved (verification on)", async () => {
+    process.env.REQUIRE_EMAIL_VERIFICATION = 'true';
+    try {
+      (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+      (User.findById as any).mockReturnValue({
+        select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: false }),
+      });
+
+      const res = await POST(makePostRequest(validJob));
+      const data = await res.json();
+
+      expect(res.status).toBe(403);
+      expect(data.error).toMatch(/verify your email/i);
+      expect(data.code).toBe('EMAIL_NOT_VERIFIED');
+      expect(Job.create).not.toHaveBeenCalled();
+    } finally {
+      delete process.env.REQUIRE_EMAIL_VERIFICATION;
+    }
+  });
+
+  it('skips the email gate when verification is switched off (the default)', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    // Email unverified but company-approved: with the gate off this falls
+    // through to field validation (400), not EMAIL_NOT_VERIFIED (403).
     (User.findById as any).mockReturnValue({
       select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: false }),
     });
 
-    const res = await POST(makePostRequest(validJob));
-    const data = await res.json();
-
-    expect(res.status).toBe(403);
-    expect(data.error).toMatch(/verify your email/i);
-    expect(data.code).toBe('EMAIL_NOT_VERIFIED');
-    expect(Job.create).not.toHaveBeenCalled();
+    const res = await POST(makePostRequest({ title: 'Only a title' }));
+    expect(res.status).toBe(400);
   });
 
   it('rejects employers who are not verification-approved', async () => {

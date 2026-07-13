@@ -44,5 +44,13 @@ export default defineConfig({
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,
+    // The golden-path spec walks the signup -> /verify-email -> OTP flow,
+    // which only exists when verification is on (it's off by default; see
+    // src/lib/emailVerification.ts). Playwright merges this over
+    // process.env for the dev server it starts. NOTE: with
+    // reuseExistingServer, a dev server you started yourself without this
+    // flag will fail the signup step -- stop it and let Playwright boot
+    // its own.
+    env: { REQUIRE_EMAIL_VERIFICATION: 'true' },
   },
 });

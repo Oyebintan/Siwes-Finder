@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/mongodb', () => ({ connectToDatabase: vi.fn() }));
 vi.mock('@/models/User', () => ({
@@ -25,6 +25,13 @@ function makeRequest(body: unknown) {
 describe('POST /api/auth/register', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Most of this suite exercises the verification-on path (OTP generated,
+    // code emailed); the "switched off" describe below unsets this again.
+    process.env.REQUIRE_EMAIL_VERIFICATION = 'true';
+  });
+
+  afterEach(() => {
+    delete process.env.REQUIRE_EMAIL_VERIFICATION;
   });
 
   it('rejects a request missing required fields', async () => {
@@ -169,6 +176,46 @@ describe('POST /api/auth/register', () => {
 
     expect(res.status).toBe(201);
     expect(data.message).toMatch(/created successfully/i);
+  });
+
+  describe('with REQUIRE_EMAIL_VERIFICATION switched off (the default)', () => {
+    beforeEach(() => {
+      delete process.env.REQUIRE_EMAIL_VERIFICATION;
+    });
+
+    it('creates the account already verified, with no OTP fields and no email', async () => {
+      (User.findOne as any).mockResolvedValue(null);
+      (bcrypt.hash as any).mockResolvedValue('hashed-password');
+      (User.create as any).mockResolvedValue({ _id: '1' });
+
+      const res = await POST(
+        makeRequest({ name: 'Ada', email: 'ada@example.com', password: 'secret123', role: 'student' })
+      );
+      const data = await res.json();
+
+      expect(res.status).toBe(201);
+      expect(data.requiresVerification).toBe(false);
+      expect(sendEmailVerificationOtpEmail).not.toHaveBeenCalled();
+      const created = (User.create as any).mock.calls[0][0];
+      expect(created.emailVerified).toBe(true);
+      expect(created.verifyOtpHash).toBeUndefined();
+      expect(created.verifyOtpExpires).toBeUndefined();
+    });
+  });
+
+  it('tells the client verification is pending when the flag is on', async () => {
+    (User.findOne as any).mockResolvedValue(null);
+    (bcrypt.hash as any).mockResolvedValue('hashed-password');
+    (User.create as any).mockResolvedValue({ _id: '1' });
+    (sendEmailVerificationOtpEmail as any).mockResolvedValue(undefined);
+
+    const res = await POST(
+      makeRequest({ name: 'Ada', email: 'ada@example.com', password: 'secret123', role: 'student' })
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(201);
+    expect(data.requiresVerification).toBe(true);
   });
 
   it('returns 500 when persisting the user fails', async () => {
