@@ -11,6 +11,10 @@ on:
     branches: [main]
     paths:
       - 'mobile/**'
+  # Manual re-publish (Actions tab -> Run workflow). Needed when the fix
+  # lives outside mobile/ (e.g. in this workflow itself), which the push
+  # paths filter above would never trigger on.
+  workflow_dispatch:
 
 jobs:
   update:
@@ -34,8 +38,23 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
+      # Same Step 0 as mobile-build-release.yml. `eas update` bundles the
+      # JS right here in CI, inlining EXPO_PUBLIC_API_URL at bundle time --
+      # without this the bundle silently falls back to the emulator-only
+      # default and every install that pulls the update loses server access
+      # ("Could not reach the server").
+      - name: Point the bundle at the deployed site
+        working-directory: mobile
+        run: echo "EXPO_PUBLIC_API_URL=https://siwes-finder-eight.vercel.app" > .env
+
       - name: Publish update to the production channel
         working-directory: mobile
+        # The commit message goes through an env var, not inline ${{ }}
+        # interpolation inside `run`, so quotes/backticks in a merge commit
+        # can't break out of the shell command. Empty on workflow_dispatch,
+        # hence the fallback.
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message || 'Manual OTA re-publish' }}
         run: |
           eas update --branch production --non-interactive \
-            --message "${{ github.event.head_commit.message }}"
+            --message "$COMMIT_MESSAGE"
