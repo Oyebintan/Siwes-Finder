@@ -7,6 +7,7 @@
 
 | Date | Commit | What landed |
 |---|---|---|
+| 2026-07-13 | `1d6ccc7` | Merge pull request #37 from Oyebintan/claude/verify-email-flow-fixes |
 | 2026-07-13 | `9299945` | Merge pull request #36 from Oyebintan/claude/mobile-auto-deploy-ci |
 | 2026-07-13 | `cf9359c` | Merge pull request #35 from Oyebintan/claude/email-verification |
 | 2026-07-13 | `4a368c1` | fix: land the engagement batch + EAS Update config on main |
