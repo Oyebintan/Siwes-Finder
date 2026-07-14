@@ -13,9 +13,21 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Server logs carry the real stack via the digest; this client log is
-    // for local development.
     console.error('App error boundary:', error);
+    // Ship the crash to the server (fire-and-forget) so client-only render
+    // errors show up in the Vercel Logs dashboard -- without this they die
+    // silently in the user's browser console.
+    fetch('/api/client-errors', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: error.message,
+        stack: error.stack,
+        digest: error.digest,
+        url: typeof window !== 'undefined' ? window.location.href : undefined,
+      }),
+      keepalive: true,
+    }).catch(() => {});
   }, [error]);
 
   return (

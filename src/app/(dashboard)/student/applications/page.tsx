@@ -6,6 +6,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Building2 } from "lucide-react";
 import ApplicationMessageButton from "@/components/ApplicationMessageButton";
+import { unreadCountsByApplication } from "@/lib/unreadMessages";
 
 function initials(name?: string) {
   if (!name) return '??';
@@ -50,6 +51,7 @@ export default async function StudentApplications() {
   if (!session || session.user.role !== 'student') redirect('/login');
 
   const applications = await getApplications(session.user.id);
+  const unread = await unreadCountsByApplication(applications.map((a) => a._id), 'student');
 
   const total = applications.length;
   const underReview = applications.filter((a) => a.status === 'Pending').length;
@@ -106,7 +108,11 @@ export default async function StudentApplications() {
                 )}
 
                 <div className="mt-4 pt-4 border-t border-surface-border/60">
-                  <ApplicationMessageButton applicationId={app._id} label={`Message ${companyName}`} />
+                  <ApplicationMessageButton
+                    applicationId={app._id}
+                    label={`Message ${companyName}`}
+                    unreadCount={unread[app._id] ?? 0}
+                  />
                 </div>
               </div>
             );

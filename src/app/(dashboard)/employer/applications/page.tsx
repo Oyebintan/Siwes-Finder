@@ -4,15 +4,21 @@ import { connectToDatabase } from "@/lib/mongodb";
 import Application from "@/models/Application";
 import { type EmployerApplication } from "@/components/EmployerApplicationCard";
 import EmployerApplicationsBoard from "@/components/EmployerApplicationsBoard";
+import { unreadCountsByApplication } from "@/lib/unreadMessages";
 import { redirect } from "next/navigation";
 
 async function getEmployerApplications(employerId: string): Promise<EmployerApplication[]> {
   await connectToDatabase();
-  const apps = await Application.find({ employer: employerId })
-    .populate('job', 'title')
-    .populate('student', 'name email university courseOfStudy resumeUrl')
-    .sort({ createdAt: -1 });
-  return JSON.parse(JSON.stringify(apps));
+  const apps: EmployerApplication[] = JSON.parse(
+    JSON.stringify(
+      await Application.find({ employer: employerId })
+        .populate('job', 'title')
+        .populate('student', 'name email university courseOfStudy resumeUrl')
+        .sort({ createdAt: -1 })
+    )
+  );
+  const unread = await unreadCountsByApplication(apps.map((a) => a._id), 'employer');
+  return apps.map((a) => ({ ...a, unreadCount: unread[a._id] ?? 0 }));
 }
 
 export default async function EmployerApplications() {

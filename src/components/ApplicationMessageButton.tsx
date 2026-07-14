@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { MessageCircle, Loader2, X, Send } from 'lucide-react';
 
@@ -18,11 +19,22 @@ type ThreadMessage = {
 export default function ApplicationMessageButton({
   applicationId,
   label = 'Message',
+  unreadCount = 0,
 }: {
   applicationId: string;
   label?: string;
+  // Server-computed at page render (src/lib/unreadMessages.ts). Opening
+  // the thread marks messages read server-side, so closing the modal
+  // refreshes the page data to clear the badge.
+  unreadCount?: number;
 }) {
   const [open, setOpen] = useState(false);
+  const router = useRouter();
+
+  const handleClose = () => {
+    setOpen(false);
+    if (unreadCount > 0) router.refresh();
+  };
 
   return (
     <>
@@ -32,8 +44,16 @@ export default function ApplicationMessageButton({
         className="px-4 py-2.5 rounded-xl bg-primary-500/10 dark:bg-primary-400/15 text-primary-600 dark:text-primary-300 hover:bg-primary-500/20 dark:hover:bg-primary-400/25 text-sm font-bold flex items-center justify-center gap-2 transition-colors"
       >
         <MessageCircle className="w-4 h-4" /> {label}
+        {unreadCount > 0 && (
+          <span
+            aria-label={`${unreadCount} unread ${unreadCount === 1 ? 'message' : 'messages'}`}
+            className="min-w-[20px] h-5 px-1.5 rounded-full bg-primary-500 dark:bg-primary-400 text-white text-[11px] font-bold flex items-center justify-center"
+          >
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
       </button>
-      {open && <MessageThreadModal applicationId={applicationId} onClose={() => setOpen(false)} />}
+      {open && <MessageThreadModal applicationId={applicationId} onClose={handleClose} />}
     </>
   );
 }
