@@ -1,10 +1,12 @@
 import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
 import { requireSession } from '@/lib/mobileAuth';
+import { escapeRegex } from '@/lib/escapeRegex';
 
-export function escapeRegex(input: string): string {
-  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
+// Re-export for existing importers; the implementation moved to
+// lib/escapeRegex.ts so non-school code stops importing school auth
+// helpers just for string escaping.
+export { escapeRegex };
 
 // Schools see student records (logbooks, applications), so a school account
 // must be admin-approved before any of its data endpoints work. Returns the

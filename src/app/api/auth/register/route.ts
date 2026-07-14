@@ -5,16 +5,19 @@ import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 import { sendEmailVerificationOtpEmail } from '@/lib/email';
 import { isEmailVerificationRequired } from '@/lib/emailVerification';
+import { normalizeEmail } from '@/lib/userLookup';
+import { RATE_LIMITS, rateLimitGuard } from '@/lib/rateLimit';
 
 const OTP_TTL_MS = 10 * 60 * 1000;
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password, role } = await req.json();
+    const { name, email: rawEmail, password, role } = await req.json();
 
-    if (!name || !email || !password || !role) {
+    if (!name || !rawEmail || !password || !role || typeof name !== 'string' || typeof rawEmail !== 'string') {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
     }
+    const email = normalizeEmail(rawEmail);
 
     // Public signup can only create student/employer/school accounts. Admin
     // and super_admin are granted exclusively via the ADMIN_EMAILS /
@@ -30,6 +33,9 @@ export async function POST(req: Request) {
     if (typeof password !== 'string' || password.length < 6) {
       return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
     }
+
+    const limited = await rateLimitGuard(req, 'register', RATE_LIMITS.register);
+    if (limited) return limited;
 
     await connectToDatabase();
 
@@ -93,7 +99,9 @@ export async function POST(req: Request) {
     if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
       return NextResponse.json({ error: 'Email already exists' }, { status: 409 });
     }
+    // Full detail stays in the server log only -- a raw driver/Mongoose
+    // message can leak infrastructure details to the caller.
     console.error("Registration error:", error);
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

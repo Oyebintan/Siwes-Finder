@@ -9,15 +9,13 @@ import { sendPushNotification } from '@/lib/push';
 import { sendNewJobAlertEmail } from '@/lib/email';
 import { computeMatchScore } from '@/lib/match';
 import { isEmailVerificationRequired } from '@/lib/emailVerification';
+import { escapeRegex } from '@/lib/escapeRegex';
 
 type JobDoc = { toObject?: () => Record<string, unknown> };
 function plainJob(job: JobDoc) {
   return typeof job.toObject === 'function' ? job.toObject() : (job as Record<string, unknown>);
 }
 
-function escapeRegex(input: string): string {
-  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
 
 // POST: Create a new job placement (verified employers only)
 export async function POST(req: Request) {

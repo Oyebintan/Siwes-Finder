@@ -229,6 +229,7 @@ describe('POST /api/auth/register', () => {
     const data = await res.json();
 
     expect(res.status).toBe(500);
-    expect(data.error).toBe('DB is down');
+    // Generic on purpose: raw driver/Mongoose messages must not leak.
+    expect(data.error).toBe('Server error');
   });
 });

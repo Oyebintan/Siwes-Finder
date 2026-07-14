@@ -37,7 +37,7 @@ describe('POST /api/mobile/login', () => {
     const data = await res.json();
 
     expect(res.status).toBe(401);
-    expect(data.error).toMatch(/no account found/i);
+    expect(data.error).toMatch(/invalid email or password/i);
     expect(issueMobileToken).not.toHaveBeenCalled();
   });
 
@@ -48,7 +48,7 @@ describe('POST /api/mobile/login', () => {
     expect(res.status).toBe(401);
   });
 
-  it('rejects an incorrect password', async () => {
+  it('rejects an incorrect password with the same message as an unknown email', async () => {
     (User.findOne as any).mockResolvedValue({ email: 'ada@example.com', password: 'hashed' });
     (bcrypt.compare as any).mockResolvedValue(false);
 
@@ -56,7 +56,7 @@ describe('POST /api/mobile/login', () => {
     const data = await res.json();
 
     expect(res.status).toBe(401);
-    expect(data.error).toMatch(/incorrect password/i);
+    expect(data.error).toMatch(/invalid email or password/i);
   });
 
   it('issues a bearer token and the user record on success', async () => {

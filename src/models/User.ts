@@ -66,7 +66,12 @@ export interface IUser extends Document {
 const UserSchema: Schema = new Schema(
   {
     name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    // lowercase+trim keep the unique index meaningful: without them
+    // "Ada@x.com" and "ada@x.com" are two different accounts, and exact-
+    // match login lookups miss depending on how the user typed it that
+    // day. Reads go through findUserByEmail (src/lib/userLookup.ts),
+    // which also covers pre-normalization documents.
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String },
     role: { type: String, enum: ['student', 'employer', 'school', 'admin', 'super_admin', 'unassigned'], default: 'unassigned' },
     avatarUrl: { type: String },

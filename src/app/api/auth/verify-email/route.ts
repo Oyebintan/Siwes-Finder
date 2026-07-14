@@ -1,19 +1,26 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { connectToDatabase } from '@/lib/mongodb';
-import User from '@/models/User';
+import { findUserByEmail } from '@/lib/userLookup';
+import { RATE_LIMITS, rateLimitGuard } from '@/lib/rateLimit';
 
 const MAX_ATTEMPTS = 5;
 
 export async function POST(req: Request) {
   try {
     const { email, otp } = await req.json();
-    if (!email || !otp) {
+    // typeof checks matter beyond validation: these values go into a
+    // MongoDB query and bcrypt.compare -- an object like {"$gt":""} in
+    // place of a string must never reach either.
+    if (!email || !otp || typeof email !== 'string' || typeof otp !== 'string') {
       return NextResponse.json({ error: 'Missing fields.' }, { status: 400 });
     }
 
+    const limited = await rateLimitGuard(req, 'verify-email', RATE_LIMITS.otpVerify);
+    if (limited) return limited;
+
     await connectToDatabase();
-    const user = await User.findOne({ email });
+    const user = await findUserByEmail(email);
 
     if (user?.emailVerified) {
       return NextResponse.json({ message: 'Email already verified.' }, { status: 200 });
