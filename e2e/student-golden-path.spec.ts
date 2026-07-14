@@ -64,9 +64,12 @@ test('student signs up, completes profile, uploads a resume, and applies to the 
     // The profile page has two hidden file inputs (avatar image + resume
     // PDF) -- target the PDF one explicitly.
     await page.locator('input[type="file"][accept="application/pdf"]').setInputFiles(RESUME_PATH);
-    await expect(page.getByText(/replace resume/i)).toBeVisible({ timeout: 10_000 });
+    // Picking a file only stages it (its name replaces the placeholder
+    // text); the actual upload happens on Save.
+    await expect(page.getByText('resume.pdf', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Save changes' }).click();
-    await expect(page.getByText('Profile updated successfully.')).toBeVisible();
+    // Save = upload to /api/upload + profile PUT, so give it headroom.
+    await expect(page.getByText('Profile updated successfully.')).toBeVisible({ timeout: 15_000 });
   });
 
   await test.step('apply to the seeded job', async () => {
