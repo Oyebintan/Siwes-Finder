@@ -6,12 +6,16 @@ vi.mock('@/lib/mobileAuth', () => ({ requireSession: vi.fn() }));
 vi.mock('@/lib/mongodb', () => ({ connectToDatabase: vi.fn() }));
 vi.mock('@/models/Job', () => ({ default: { findById: vi.fn(), findOne: vi.fn() } }));
 vi.mock('@/models/Application', () => ({ default: { deleteMany: vi.fn() } }));
+vi.mock('@/models/User', () => ({ default: { findById: vi.fn() } }));
+vi.mock('@/lib/email', () => ({ sendJobTakedownEmail: vi.fn() }));
 
 import { DELETE, GET, PUT } from '@/app/api/jobs/[id]/route';
 import { getServerSession } from 'next-auth/next';
 import { requireSession } from '@/lib/mobileAuth';
 import Job from '@/models/Job';
 import Application from '@/models/Application';
+import User from '@/models/User';
+import { sendJobTakedownEmail } from '@/lib/email';
 
 function makeGetRequest() {
   return new Request('http://localhost/api/jobs/job1');
@@ -251,10 +255,13 @@ describe('DELETE /api/jobs/[id]', () => {
     expect(Job.findOne).toHaveBeenCalledWith({ _id: 'job1', employerId: 'emp1' });
   });
 
-  it('lets an admin delete any job by id alone', async () => {
+  it('lets an admin delete any job by id alone, emailing the employer about the takedown', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'admin1', role: 'admin' } });
-    const jobDoc: any = { _id: 'job1', deleteOne: vi.fn().mockResolvedValue(undefined) };
+    const jobDoc: any = { _id: 'job1', title: 'Frontend Intern', employerId: 'emp1', deleteOne: vi.fn().mockResolvedValue(undefined) };
     (Job.findOne as any).mockResolvedValue(jobDoc);
+    (User.findById as any).mockReturnValue({
+      select: vi.fn().mockResolvedValue({ email: 'hr@acme.com', companyName: 'Acme Ltd', name: 'Acme' }),
+    });
 
     const res = await DELETE(makeDeleteRequest(), p);
 
@@ -262,12 +269,31 @@ describe('DELETE /api/jobs/[id]', () => {
     expect(Job.findOne).toHaveBeenCalledWith({ _id: 'job1' });
     expect(Application.deleteMany).toHaveBeenCalledWith({ job: 'job1' });
     expect(jobDoc.deleteOne).toHaveBeenCalled();
+    expect(sendJobTakedownEmail).toHaveBeenCalledWith('hr@acme.com', 'Acme Ltd', 'Frontend Intern');
+  });
+
+  it('still deletes when the takedown email fails (best-effort)', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'admin1', role: 'admin' } });
+    const jobDoc: any = { _id: 'job1', title: 'Frontend Intern', employerId: 'emp1', deleteOne: vi.fn().mockResolvedValue(undefined) };
+    (Job.findOne as any).mockResolvedValue(jobDoc);
+    (User.findById as any).mockReturnValue({
+      select: vi.fn().mockResolvedValue({ email: 'hr@acme.com', companyName: 'Acme Ltd', name: 'Acme' }),
+    });
+    (sendJobTakedownEmail as any).mockRejectedValue(new Error('Resend down'));
+
+    const res = await DELETE(makeDeleteRequest(), p);
+
+    expect(res.status).toBe(200);
+    expect(jobDoc.deleteOne).toHaveBeenCalled();
   });
 
   it('lets a super_admin delete any job by id alone', async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: 'sa1', role: 'super_admin' } });
-    const jobDoc: any = { _id: 'job1', deleteOne: vi.fn().mockResolvedValue(undefined) };
+    const jobDoc: any = { _id: 'job1', title: 'Frontend Intern', employerId: 'emp1', deleteOne: vi.fn().mockResolvedValue(undefined) };
     (Job.findOne as any).mockResolvedValue(jobDoc);
+    (User.findById as any).mockReturnValue({
+      select: vi.fn().mockResolvedValue({ email: 'hr@acme.com', companyName: 'Acme Ltd', name: 'Acme' }),
+    });
 
     const res = await DELETE(makeDeleteRequest(), p);
 

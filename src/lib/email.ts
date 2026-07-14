@@ -184,6 +184,26 @@ export async function sendNewMessageEmail(
   );
 }
 
+export async function sendJobTakedownEmail(
+  to: string,
+  companyLabel: string,
+  jobTitle: string
+): Promise<void> {
+  const company = escapeHtml(companyLabel);
+  const title = escapeHtml(jobTitle);
+  await send(
+    to,
+    `Your listing was removed: ${jobTitle}`,
+    layout(
+      'Listing removed by our moderation team',
+      `<p style="color: #555;">Hi ${company},</p>
+       <p style="color: #555;">Your opportunity <strong>${title}</strong> was removed from SIWES Finder by our moderation team, along with its pending applications. This usually means the listing didn't meet our posting guidelines.</p>
+       <p style="color: #555;">If you believe this was a mistake, reply to this email and we'll take another look.</p>`,
+      { label: 'Post a new opportunity', path: '/employer/post-job' }
+    )
+  );
+}
+
 export async function sendVerificationDecisionEmail(
   to: string,
   accountName: string,

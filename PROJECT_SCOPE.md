@@ -314,18 +314,15 @@ revocation.
   deliberate, tested major-version migration in its own PR.
 - **No saved-jobs UI on the school/employer side** — bookmarking is
   student-only (matches the feature's purpose).
-- **No email notification for job moderation/takedown** — application
-  decisions, logbook approvals, and verification decisions all email now
-  (see Feature surface), but an admin taking down a job doesn't notify the
-  employer.
 - **Community feature** is a directory + implied connection, not a full chat
   — see `021b140`/`55fa53c` history for what actually shipped vs. what was
   scoped early on.
-- **No unread-message badge on the applications list views** — a new
-  message only becomes visible once you open that application's thread
-  (web: `ApplicationMessageButton`; mobile: `messages/[id].tsx`); neither
-  the employer applicant list nor the student applications list (web or
-  mobile) shows which threads have unread messages.
+- **Unread-message badges are web-only** — both web applications lists
+  (student + employer) now show a count badge on the Message button
+  (`src/lib/unreadMessages.ts`, cleared via router.refresh after the
+  thread marks messages read). The mobile applications/applicant lists
+  still don't surface unread state — needs the same aggregate exposed
+  through the API for the mobile client, then an OTA.
 - **Mobile screens exist for match score/best-match sort, company follow,
   and messaging as of Mobile Phase 5** (`MOBILE_APP.md`), but a new Android
   build + Release upload is needed before an already-installed app picks

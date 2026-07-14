@@ -4,9 +4,11 @@ import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Job from '@/models/Job';
 import Application from '@/models/Application';
+import User from '@/models/User';
 import { isAdminRole } from '@/lib/roles';
 import { isJobOpenForApplications } from '@/lib/jobStatus';
 import { requireSession } from '@/lib/mobileAuth';
+import { sendJobTakedownEmail } from '@/lib/email';
 
 // GET one job. Owners (and admins) always see it; everyone else only sees
 // active jobs from verified employers.
@@ -133,6 +135,21 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     const job = await Job.findOne(query);
     if (!job) {
       return NextResponse.json({ error: 'Job not found or unauthorized' }, { status: 404 });
+    }
+
+    // Admin takedown of someone else's listing: tell the employer, same
+    // best-effort pattern as every other notification email -- a failed
+    // send never blocks the moderation action itself.
+    const isTakedown = isAdmin && String(job.employerId) !== session.user.id;
+    if (isTakedown) {
+      try {
+        const employer = await User.findById(job.employerId).select('name companyName email');
+        if (employer?.email) {
+          await sendJobTakedownEmail(employer.email, employer.companyName || employer.name, job.title);
+        }
+      } catch (emailError) {
+        console.error('Failed to send job takedown email:', emailError);
+      }
     }
 
     await Application.deleteMany({ job: job._id });

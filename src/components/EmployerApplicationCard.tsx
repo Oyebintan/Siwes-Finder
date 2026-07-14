@@ -17,6 +17,9 @@ export type EmployerApplication = {
     courseOfStudy?: string;
     resumeUrl?: string;
   };
+  // Messages from the student not yet opened by this employer -- computed
+  // server-side on the applications page (src/lib/unreadMessages.ts).
+  unreadCount?: number;
 };
 
 export default function EmployerApplicationCard({
@@ -92,7 +95,7 @@ export default function EmployerApplicationCard({
       </div>
 
       <div className="flex items-center gap-4">
-        <ApplicationMessageButton applicationId={app._id} label="Message" />
+        <ApplicationMessageButton applicationId={app._id} label="Message" unreadCount={app.unreadCount ?? 0} />
         {app.student.resumeUrl ? (
           <a href={app.student.resumeUrl} target="_blank" rel="noopener noreferrer"
             className="flex-1 px-4 py-2.5 rounded-xl bg-accent-50 dark:bg-accent-500/10 text-accent-600 dark:text-accent-300 hover:bg-accent-100 dark:hover:bg-accent-500/20 text-sm font-bold flex items-center justify-center gap-2 transition-colors">
