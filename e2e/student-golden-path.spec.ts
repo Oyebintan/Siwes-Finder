@@ -61,7 +61,9 @@ test('student signs up, completes profile, uploads a resume, and applies to the 
 
   await test.step('upload a resume', async () => {
     await page.goto('/student/profile');
-    await page.locator('input[type="file"]').setInputFiles(RESUME_PATH);
+    // The profile page has two hidden file inputs (avatar image + resume
+    // PDF) -- target the PDF one explicitly.
+    await page.locator('input[type="file"][accept="application/pdf"]').setInputFiles(RESUME_PATH);
     await expect(page.getByText(/replace resume/i)).toBeVisible({ timeout: 10_000 });
     await page.getByRole('button', { name: 'Save changes' }).click();
     await expect(page.getByText('Profile updated successfully.')).toBeVisible();

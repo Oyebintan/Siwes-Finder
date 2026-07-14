@@ -43,7 +43,9 @@ test('employer signs up, submits verification, and an admin approves it', async 
     await page.locator('label:text("Company name") + input').fill(companyName);
     await page.locator('label:text("CAC registration number") + input').fill('RC-E2E-12345');
     await page.locator('label:text("Official company email") + input').fill(companyEmail);
-    await page.locator('input[type="file"]').setInputFiles(DOC_PATH);
+    // The page has two hidden file inputs (company-logo image + CAC
+    // document PDF) -- target the PDF one explicitly.
+    await page.locator('input[type="file"][accept="application/pdf"]').setInputFiles(DOC_PATH);
     await expect(page.getByText(/document uploaded/i)).toBeVisible({ timeout: 10_000 });
     await page.getByRole('button', { name: 'Submit for verification' }).click();
     await expect(page.getByText('Verification under review')).toBeVisible({ timeout: 10_000 });
@@ -59,6 +61,8 @@ test('employer signs up, submits verification, and an admin approves it', async 
     await page.goto('/admin/companies');
     const card = page.locator('.rounded-2xl', { hasText: companyName });
     await card.getByRole('button', { name: 'Approve' }).click();
-    await expect(card.getByText('approved', { exact: false })).toBeVisible({ timeout: 10_000 });
+    // The page opens on the 'pending' tab and refetches it after the
+    // action, so success == the company leaving the pending queue.
+    await expect(card).toHaveCount(0, { timeout: 10_000 });
   });
 });
