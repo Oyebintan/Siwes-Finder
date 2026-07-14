@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
-import User from '@/models/User';
 import bcrypt from 'bcryptjs';
+import { findUserByEmail } from '@/lib/userLookup';
 import { issueMobileToken } from '@/lib/mobileAuth';
 import { isEmailVerificationRequired } from '@/lib/emailVerification';
+import { RATE_LIMITS, rateLimitGuard } from '@/lib/rateLimit';
 
 // POST: credentials login for the Expo app. Mirrors the web's
 // CredentialsProvider.authorize() (src/lib/auth.ts) -- same bcrypt check,
@@ -21,16 +22,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Email and password are required.' }, { status: 400 });
     }
 
+    const limited = await rateLimitGuard(req, 'login', RATE_LIMITS.login);
+    if (limited) return limited;
+
     await connectToDatabase();
 
-    const user = await User.findOne({ email });
-    if (!user || !user.password) {
-      return NextResponse.json({ error: 'No account found with this email.' }, { status: 401 });
-    }
-
-    const isPasswordMatch = await bcrypt.compare(password, user.password);
-    if (!isPasswordMatch) {
-      return NextResponse.json({ error: 'Incorrect password.' }, { status: 401 });
+    const user = await findUserByEmail(email);
+    // One message for both failures: distinct "no account" / "wrong
+    // password" responses let anyone probe which emails are registered.
+    if (!user || !user.password || !(await bcrypt.compare(password, user.password))) {
+      return NextResponse.json({ error: 'Invalid email or password.' }, { status: 401 });
     }
 
     const sessionUser = {

@@ -8,12 +8,12 @@ SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
 seeking SIWES (Students Industrial Work Experience Scheme) placements with
 verified employers, and gives their schools visibility into the process.
 
-**Last synced with:** email verification made opt-in via
-`REQUIRE_EMAIL_VERIFICATION` (2026-07-13) — the whole OTP flow is now
-switched off by default because the Resend sandbox sender can't deliver to
-real users (see Feature surface's "Email verification" below); before that,
-email-ownership verification (2026-07-12) and backend PRs #19-28 plus the
-mobile UI/UX overhaul (see `MOBILE_APP.md` Phases 7-8).
+**Last synced with:** full security audit + hardening (2026-07-14) — jwt
+role-escalation fix, rate limiting, security headers, email
+normalization, 404/error pages, robots/sitemap (see "Security hardening"
+below); before that, email verification made opt-in via
+`REQUIRE_EMAIL_VERIFICATION` (2026-07-13) because the Resend sandbox
+sender can't deliver to real users.
 Recent-change log: see `PROGRESS.md` (auto-appended on every push to main).
 
 ## Roles
@@ -268,6 +268,30 @@ software, design, engineering, finance, telecoms, and marketing. Run with
 
 `scripts/create-super-admin.mjs` — one-off script to create/promote a
 `super_admin` account directly in MongoDB with a chosen email/password.
+
+## Security hardening (2026-07 audit)
+
+Landed in the security-audit PR: NextAuth's `jwt` callback re-reads the
+role from the database on session `update()` (the client payload is
+attacker-controlled — previously any signed-in user could escalate their
+token to admin); Mongo-backed fixed-window **rate limiting**
+(`src/lib/rateLimit.ts`, fail-open, TTL-swept `rate_limits` collection)
+on login (web + mobile), register, and all four OTP endpoints, with
+per-inbox AND per-IP budgets on the email-sending ones; baseline
+**security headers** in `next.config.ts` (HSTS, nosniff, frame DENY,
+referrer, permissions); `typeof`-string checks so objects can't reach
+Mongo queries or bcrypt via verify-email/reset-password; **email
+normalization** (schema lowercase+trim + `findUserByEmail` in
+`src/lib/userLookup.ts` with a legacy mixed-case fallback on login
+paths); unified "Invalid email or password" login errors (no email
+enumeration); generic 500 bodies on register.
+
+Still open, deliberately: a nonce-based Content-Security-Policy (Next
+inline scripts + Tailwind need a real nonce setup); resumes/verification
+docs live on public-but-unguessable Vercel Blob URLs (fine at this
+scale — move to authenticated access before real growth); no
+crash/error observability (Sentry or similar) on web or mobile; bearer
+tokens are valid until their 2h expiry with no server-side revocation.
 
 ## Known gaps / not yet built
 

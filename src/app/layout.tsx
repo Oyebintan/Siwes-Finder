@@ -10,9 +10,23 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 const bricolage = Bricolage_Grotesque({ variable: "--font-bricolage", subsets: ["latin"] });
 
+const SITE_URL = process.env.NEXTAUTH_URL || "https://siwes-finder-eight.vercel.app";
+
 export const metadata: Metadata = {
-  title: "SIWES Finder",
-  description: "Connect with top organizations for SIWES placements in Nigeria.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "SIWES Finder — Verified SIWES placements in Nigeria",
+    template: "%s · SIWES Finder",
+  },
+  description:
+    "Find and apply to verified SIWES placements, track applications, and keep your e-logbook — built for Nigerian students, employers, and institutions.",
+  openGraph: {
+    siteName: "SIWES Finder",
+    type: "website",
+    title: "SIWES Finder — Verified SIWES placements in Nigeria",
+    description:
+      "Find and apply to verified SIWES placements, track applications, and keep your e-logbook.",
+  },
 };
 
 export const viewport: Viewport = {

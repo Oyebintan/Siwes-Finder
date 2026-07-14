@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { connectToDatabase } from '@/lib/mongodb';
-import User from '@/models/User';
 import { sendEmailVerificationOtpEmail } from '@/lib/email';
+import { findUserByEmail, normalizeEmail } from '@/lib/userLookup';
+import { RATE_LIMITS, rateLimitGuard } from '@/lib/rateLimit';
 
 const OTP_TTL_MS = 10 * 60 * 1000;
 
@@ -16,8 +17,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Email is required.' }, { status: 400 });
     }
 
+    // Same double budget as forgot-password: per target inbox, per caller IP.
+    const limited =
+      (await rateLimitGuard(req, 'resend-verification', RATE_LIMITS.sendOtpEmail, normalizeEmail(email))) ??
+      (await rateLimitGuard(req, 'resend-verification-ip', RATE_LIMITS.sendOtpEmailPerIp));
+    if (limited) return limited;
+
     await connectToDatabase();
-    const user = await User.findOne({ email });
+    const user = await findUserByEmail(email);
 
     // Same generic response whether the account doesn't exist or is already
     // verified, so this endpoint can't be used to enumerate registered

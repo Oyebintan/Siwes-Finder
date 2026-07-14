@@ -25,4 +25,9 @@ const LogbookSchema = new Schema<ILogbook>(
   { timestamps: true }
 );
 
+// The two hot read paths: a student's own history (newest first) and an
+// employer's approval queue.
+LogbookSchema.index({ studentId: 1, date: -1 });
+LogbookSchema.index({ employerId: 1, date: -1 });
+
 export default mongoose.models.Logbook || mongoose.model<ILogbook>('Logbook', LogbookSchema);

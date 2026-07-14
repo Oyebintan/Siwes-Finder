@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { connectToDatabase } from '@/lib/mongodb';
-import User from '@/models/User';
 import { sendPasswordResetOtpEmail } from '@/lib/email';
+import { findUserByEmail, normalizeEmail } from '@/lib/userLookup';
+import { RATE_LIMITS, rateLimitGuard } from '@/lib/rateLimit';
 
 const OTP_TTL_MS = 10 * 60 * 1000;
 
@@ -16,8 +17,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Email is required.' }, { status: 400 });
     }
 
+    // Every accepted request may send an email: cap per target inbox (so
+    // one address can't be flooded) AND per caller IP (so rotating target
+    // emails doesn't dodge the first cap).
+    const limited =
+      (await rateLimitGuard(req, 'forgot-password', RATE_LIMITS.sendOtpEmail, normalizeEmail(email))) ??
+      (await rateLimitGuard(req, 'forgot-password-ip', RATE_LIMITS.sendOtpEmailPerIp));
+    if (limited) return limited;
+
     await connectToDatabase();
-    const user = await User.findOne({ email });
+    const user = await findUserByEmail(email);
 
     // Password-only accounts: Google-only users have no password to reset.
     // Always return the same generic response either way so this endpoint

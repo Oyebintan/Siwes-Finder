@@ -1,22 +1,29 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { connectToDatabase } from '@/lib/mongodb';
-import User from '@/models/User';
+import { findUserByEmail } from '@/lib/userLookup';
+import { RATE_LIMITS, rateLimitGuard } from '@/lib/rateLimit';
 
 const MAX_ATTEMPTS = 5;
 
 export async function POST(req: Request) {
   try {
     const { email, otp, newPassword } = await req.json();
-    if (!email || !otp || !newPassword) {
+    // typeof checks matter beyond validation: these values go into a
+    // MongoDB query and bcrypt.compare -- an object like {"$gt":""} in
+    // place of a string must never reach either.
+    if (!email || !otp || !newPassword || typeof email !== 'string' || typeof otp !== 'string') {
       return NextResponse.json({ error: 'Missing fields.' }, { status: 400 });
     }
     if (typeof newPassword !== 'string' || newPassword.length < 8) {
       return NextResponse.json({ error: 'Password must be at least 8 characters.' }, { status: 400 });
     }
 
+    const limited = await rateLimitGuard(req, 'reset-password', RATE_LIMITS.otpVerify);
+    if (limited) return limited;
+
     await connectToDatabase();
-    const user = await User.findOne({ email });
+    const user = await findUserByEmail(email);
 
     if (!user || !user.resetOtpHash || !user.resetOtpExpires) {
       return NextResponse.json({ error: 'Invalid or expired code. Please request a new one.' }, { status: 400 });

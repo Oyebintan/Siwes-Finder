@@ -4,6 +4,8 @@ import GoogleProvider from "next-auth/providers/google";
 import { connectToDatabase } from "@/lib/mongodb";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
+import { findUserByEmail } from "@/lib/userLookup";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rateLimit";
 
 // No hardcoded fallback secret — but also no module-scope throw when it's
 // missing: `next build` imports every route module while collecting page
@@ -61,21 +63,29 @@ export const authOptions: AuthOptions = {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials) {
-        await connectToDatabase();
-
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Missing email or password");
         }
 
-        const user = await User.findOne({ email: credentials.email });
-        if (!user || !user.password) {
-          throw new Error("No account found with this email");
+        // NextAuth v4 hands authorize() a plain headers object, not a
+        // fetch Request -- pull the first x-forwarded-for hop directly
+        // (Vercel sets that header itself; clients can't spoof it there).
+        const forwarded = req?.headers?.["x-forwarded-for"];
+        const ip =
+          (typeof forwarded === "string" ? forwarded.split(",")[0]?.trim() : undefined) || "unknown";
+        const limited = await checkRateLimit({ name: "login", key: ip, ...RATE_LIMITS.login });
+        if (!limited.ok) {
+          throw new Error("Too many attempts. Please wait a few minutes and try again.");
         }
 
-        const isPasswordMatch = await bcrypt.compare(credentials.password, user.password);
-        if (!isPasswordMatch) {
-          throw new Error("Incorrect password");
+        await connectToDatabase();
+
+        const user = await findUserByEmail(credentials.email);
+        // One message for both failures -- distinct "no account" / "wrong
+        // password" errors let anyone probe which emails are registered.
+        if (!user || !user.password || !(await bcrypt.compare(credentials.password, user.password))) {
+          throw new Error("Invalid email or password");
         }
 
         // Promote allowlisted emails to admin/super_admin on sign-in.
@@ -115,13 +125,23 @@ export const authOptions: AuthOptions = {
       }
       return true;
     },
-    async jwt({ token, user, trigger, session }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
       }
-      if (trigger === "update" && session?.role) {
-        token.role = session.role;
+      // update() is triggered client-side (see /onboarding after the role
+      // picker) and its payload is attacker-controlled: any signed-in user
+      // can POST arbitrary JSON to the session endpoint. Never copy a role
+      // from that payload into the token — re-read it from the database,
+      // which only /api/auth/role (student/employer, unassigned-only) and
+      // the admin allowlists can change.
+      if (trigger === "update" && token.id) {
+        await connectToDatabase();
+        const dbUser = await User.findById(token.id).select("role");
+        if (dbUser) {
+          token.role = dbUser.role;
+        }
       }
       return token;
     },
