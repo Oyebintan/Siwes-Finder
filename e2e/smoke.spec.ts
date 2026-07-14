@@ -6,7 +6,10 @@ test.describe('smoke', () => {
   test('landing page renders and links to signup/login', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('link', { name: 'Register as a Student' })).toBeVisible();
-    await expect(page.getByRole('link', { name: /get started/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Register as a Company' })).toBeVisible();
+    // Text is hidden on small screens; the aria-label keeps the role query
+    // working at any viewport.
+    await expect(page.getByRole('link', { name: 'Sign in' })).toBeVisible();
   });
 
   test('login page renders the credentials form', async ({ page }) => {

@@ -175,8 +175,11 @@ export default function Home() {
 
       {/* MOBILE APP */}
       <section className="max-w-[1220px] mx-auto px-6 sm:px-10 lg:px-14 pb-6 sm:pb-8">
-        <div className="rounded-2xl bg-surface-1 border border-surface-border px-6 py-5 flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3.5">
+        {/* Stacks cleanly on phones (full-width button under the text)
+            instead of flex-wrap's awkward half-left drop; side-by-side and
+            vertically centered from sm up. */}
+        <div className="rounded-2xl bg-surface-1 border border-surface-border px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+          <div className="flex items-center gap-3.5 flex-1 min-w-0">
             <div className="w-11 h-11 rounded-[12px] bg-primary-500/10 dark:bg-primary-400/15 flex items-center justify-center shrink-0">
               <Smartphone className="w-5 h-5 text-primary-500 dark:text-primary-400" />
             </div>
@@ -188,12 +191,12 @@ export default function Home() {
           {ANDROID_APK_URL ? (
             <a
               href={ANDROID_APK_URL}
-              className="inline-flex items-center gap-2 bg-primary-500 dark:bg-primary-400 text-white px-5 py-2.5 rounded-[9px] text-[14px] font-bold hover:brightness-110 transition-all shrink-0"
+              className="inline-flex items-center justify-center gap-2 w-full sm:w-auto bg-primary-500 dark:bg-primary-400 text-white px-5 py-3 sm:py-2.5 rounded-[9px] text-[14px] font-bold shadow-lg shadow-primary-900/15 hover:brightness-110 transition-all shrink-0"
             >
               <Download className="w-4 h-4" /> Download for Android
             </a>
           ) : (
-            <span className="inline-flex items-center gap-2 bg-surface-2 text-muted px-5 py-2.5 rounded-[9px] text-[14px] font-bold shrink-0 cursor-default">
+            <span className="inline-flex items-center justify-center gap-2 w-full sm:w-auto bg-surface-2 text-muted px-5 py-3 sm:py-2.5 rounded-[9px] text-[14px] font-bold shrink-0 cursor-default">
               <Download className="w-4 h-4" /> Coming soon
             </span>
           )}

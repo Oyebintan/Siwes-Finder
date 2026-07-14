@@ -24,6 +24,11 @@ on:
   # making later `eas update` publishes incompatible with an older
   # install -- a fresh build guarantees a matching runtimeVersion).
   workflow_dispatch:
+    inputs:
+      reuse_latest:
+        description: 'Publish the most recent FINISHED EAS build instead of compiling a new one (no build quota used)'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -31,6 +36,9 @@ permissions:
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
+    # Hard ceiling: the poll loop below already caps the EAS wait at 40
+    # minutes, so anything past this is a genuinely hung runner.
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@v4
 
@@ -56,15 +64,50 @@ jobs:
         working-directory: mobile
         run: echo "EXPO_PUBLIC_API_URL=https://siwes-finder-eight.vercel.app" > .env
 
+      # `eas build --wait` hung indefinitely twice even after the EAS-side
+      # build had FINISHED (runs #1 and #2 of this workflow), so waiting is
+      # done with an explicit bounded poll instead. reuse_latest skips the
+      # compile entirely and re-publishes the newest finished build --
+      # useful when a build succeeded on EAS but this workflow's release
+      # half never ran.
       - name: Build the Android APK
         working-directory: mobile
-        run: eas build --platform android --profile production --non-interactive --wait --json > build-result.json
+        run: |
+          if [ "${{ inputs.reuse_latest }}" = "true" ]; then
+            echo "Reusing the most recent finished EAS build (no new compile)."
+            eas build:list --platform android --status finished --limit 1 --non-interactive --json > build-result.json
+            exit 0
+          fi
+
+          eas build --platform android --profile production --non-interactive --no-wait --json > build-start.json
+          BUILD_ID=$(jq -r 'if type == "array" then .[0].id else .id end // empty' build-start.json)
+          if [ -z "$BUILD_ID" ]; then
+            echo "::error::Could not read a build id from EAS's output."
+            cat build-start.json
+            exit 1
+          fi
+
+          echo "Waiting for EAS build $BUILD_ID (checking every 30s, 40 min cap)..."
+          for i in $(seq 1 80); do
+            sleep 30
+            eas build:view "$BUILD_ID" --json > build-result.json || continue
+            STATUS=$(jq -r '.status // empty' build-result.json)
+            echo "[$i/80] status: $STATUS"
+            case "$STATUS" in
+              FINISHED) exit 0 ;;
+              ERRORED|CANCELED) echo "::error::EAS build ended as $STATUS."; exit 1 ;;
+            esac
+          done
+          echo "::error::Timed out waiting for the EAS build after 40 minutes."
+          exit 1
 
       - name: Extract the build artifact URL
         id: build
         working-directory: mobile
         run: |
-          URL=$(jq -r '.[0].artifacts.buildUrl // empty' build-result.json)
+          # build-result.json is an array from build:list, an object from
+          # build:view -- accept either shape.
+          URL=$(jq -r 'if type == "array" then .[0].artifacts.buildUrl else .artifacts.buildUrl end // empty' build-result.json)
           if [ -z "$URL" ]; then
             echo "::error::Could not find a build artifact URL in EAS's output."
             cat build-result.json

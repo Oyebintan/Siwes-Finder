@@ -46,7 +46,9 @@ test('student signs up, completes profile, uploads a resume, and applies to the 
     await page.getByPlaceholder('Computer Science').fill('Computer Science');
     await page.getByRole('button', { name: 'Continue' }).click();
 
-    await expect(page.getByText('SIWES duration')).toBeVisible();
+    // exact: the wizard also renders a "Step 2 of 4 — SIWES duration"
+    // progress label, which would otherwise trip strict mode.
+    await expect(page.getByText('SIWES duration', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Continue' }).click();
 
     await expect(page.getByText('Skills', { exact: true })).toBeVisible();
