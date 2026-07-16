@@ -1,12 +1,20 @@
 import { getToken } from './authStorage';
 
-// Set in mobile/.env (see .env.example): the deployed API origin. Falls
-// back to a LAN-reachable localhost URL for `expo start` against a local
-// `npm run dev` -- 10.0.2.2 is the Android emulator's alias for the host
-// machine's localhost; iOS Simulator can use localhost directly, so this
-// default only really targets Android. Override via .env for a physical
-// device on the same Wi-Fi (use your machine's LAN IP).
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:3000';
+// The deployed API origin. Release builds get this from eas.json's
+// production profile `env` (which is committed, so it always reaches
+// EAS's build servers -- a CI-written .env does NOT: the root .gitignore
+// excludes .env* and eas build skips gitignored files when uploading).
+// Local dev (`expo start`) reads mobile/.env, falling back to
+// 10.0.2.2:3000 -- the Android emulator's alias for the host machine's
+// localhost; use your machine's LAN IP in .env for a physical device.
+const DEV_FALLBACK_URL = 'http://10.0.2.2:3000';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || DEV_FALLBACK_URL;
+
+// A release build running on the emulator-only fallback is a build
+// misconfiguration, not a network problem -- every request would fail
+// with a misleading "check your connection" otherwise. Say what's
+// actually wrong (this exact silent failure shipped in early builds).
+const misconfiguredBuild = !__DEV__ && API_BASE_URL === DEV_FALLBACK_URL;
 
 export type SessionUser = {
   id: string;
@@ -33,6 +41,12 @@ export class ApiError extends Error {
 // attached consistently -- mirrors the web's single connectToDatabase()/
 // requireSession() choke points: one place to get auth right, everywhere.
 async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  if (misconfiguredBuild) {
+    throw new ApiError(
+      0,
+      'This app version was built without a server address. Please download the latest version from the SIWES Finder website.'
+    );
+  }
   const token = await getToken();
   const headers = new Headers(options.headers);
   headers.set('Content-Type', 'application/json');

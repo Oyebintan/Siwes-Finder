@@ -57,12 +57,13 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      # Same Step 0 as the manual instructions in MOBILE_APP.md -- without
-      # this the build silently falls back to the emulator-only default
-      # and every screen fails with "Could not reach the server."
-      - name: Point the build at the deployed site
-        working-directory: mobile
-        run: echo "EXPO_PUBLIC_API_URL=https://siwes-finder-eight.vercel.app" > .env
+      # The API URL is carried by eas.json's production profile `env`, NOT
+      # a .env file: eas build uploads the project to EAS's servers
+      # respecting .gitignore, and the root .gitignore excludes .env* -- so
+      # a CI-written .env silently never reached the build machine and
+      # every EAS-compiled APK shipped with the emulator-only fallback URL
+      # ("Could not reach the server" on real devices). eas.json is
+      # committed, so it always arrives.
 
       # `eas build --wait` hung indefinitely twice even after the EAS-side
       # build had FINISHED (runs #1 and #2 of this workflow), so waiting is

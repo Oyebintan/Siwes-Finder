@@ -484,25 +484,29 @@ Run this whenever mobile-visible code changes (a new screen, a new
 which every installed app already picks up automatically on its next
 API call.
 
-**Step 0 (do this before every build, or skip it and every screen in the
-app fails with "Could not reach the server"):** confirm `mobile/.env`
-exists and points at the deployed site, not the emulator-only default.
-`mobile/src/api/client.ts` reads `EXPO_PUBLIC_API_URL` at *build* time and
-bakes it into the compiled app — if that file is missing or the variable
-is unset, the build silently falls back to `http://10.0.2.2:3000` (only
-meaningful on an Android emulator; on a real phone it resolves to
-nothing, so login/signup/every API call fails instantly). This bit the
-very first production build — see `mobile/.env.example`.
+**The API URL is baked in by `mobile/eas.json`'s production profile
+`env`, NOT by a `.env` file.** History, because this failure mode is
+sneaky: `mobile/src/api/client.ts` reads `EXPO_PUBLIC_API_URL` at *build*
+time; if it's unset the build silently falls back to `http://10.0.2.2:3000`
+(emulator-only — on a real phone every API call fails with "Could not
+reach the server"). The old advice was "write `mobile/.env` before
+building" — **that never worked for cloud builds**: `eas build` uploads
+the project to EAS's build servers respecting `.gitignore`, and the root
+`.gitignore` excludes `.env*`, so the file never reached the build
+machine. Every EAS-compiled APK shipped broken until the URL moved into
+`eas.json` (committed → always uploaded). A release build that somehow
+still ends up on the fallback now shows an explicit "this app version was
+built without a server address" error instead of the misleading
+connection message.
+
+`.env` still matters for anything bundled *locally*: `expo start` in dev,
+and `eas update` in the OTA workflow (which runs Metro in CI, where the
+workflow writes `.env` first).
 
 ```
 cd mobile
-echo "EXPO_PUBLIC_API_URL=https://siwes-finder-eight.vercel.app" > .env
 eas build --platform android --profile production
 ```
-
-`.env` is gitignored (same as the web app's), so this step doesn't persist
-across machines/clones — it has to be redone once per machine you build
-from, not once ever.
 
 This uploads the build to expo.dev and prints a download link when it
 finishes (10-20 min). Then, to publish it:
