@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -22,10 +23,17 @@ interface VerifyEmailBannerProps {
 // is the visible explanation for why those actions might get rejected.
 export function VerifyEmailBanner({ role }: VerifyEmailBannerProps) {
   const theme = useTheme();
+  // The banner is the topmost element on screen (above the tab navigator),
+  // so it has to absorb the status-bar inset itself -- the screens' own
+  // SafeAreaViews sit below it and adjust automatically.
+  const insets = useSafeAreaInsets();
   return (
     <PressableScale
       onPress={() => router.push('/verify-email')}
-      style={[styles.banner, { backgroundColor: theme.warningSoft }]}
+      style={[
+        styles.banner,
+        { backgroundColor: theme.warningSoft, paddingTop: insets.top + Spacing.two + Spacing.half },
+      ]}
       accessibilityRole="button"
       accessibilityLabel="Verify your email"
     >
@@ -46,7 +54,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.two,
     paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.two + Spacing.half,
+    paddingBottom: Spacing.two + Spacing.half,
   },
   text: {
     flex: 1,

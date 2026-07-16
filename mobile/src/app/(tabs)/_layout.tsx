@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View, type ColorValue } from 'react-native';
 import { Redirect, router, Tabs } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useAnimatedStyle,
@@ -53,8 +54,21 @@ function BrandedLoading() {
 // web-only by design; unassigned is a transient just-signed-up-via-Google
 // state) -- they get the same holding screen employer/school used to fall
 // back to before Phase 3.
+//
+// IMPORTANT expo-router rule this layout is built around: every file in
+// this directory becomes a route whether or not it is declared below, and
+// any route the layout doesn't mention still gets a default tab button
+// (raw filename, no icon). Conditionally *omitting* <Tabs.Screen> entries
+// therefore leaks every other role's screens into the tab bar -- exactly
+// the "all dashboards merged" bug in the v1.0.0-android-ci5 build. So:
+// every screen is always declared; the other roles' screens are removed
+// with <Tabs.Protected guard={...}> (unroutable, not just hidden), and
+// `index` -- the '/' anchor that login/verify-email land on -- stays
+// routable for every role but is hidden from non-students, who get
+// redirected to their own dashboard by index.tsx.
 export default function TabsLayout() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { user, loading, logout } = useAuth();
   const [seenOnboarding, setSeenOnboarding] = useState<boolean | null>(null);
 
@@ -72,32 +86,73 @@ export default function TabsLayout() {
     return <Redirect href={seenOnboarding ? '/login' : '/onboarding'} />;
   }
 
+  const isStudent = user.role === 'student';
+  const isEmployer = user.role === 'employer';
+  const isSchool = user.role === 'school';
+
+  if (!isStudent && !isEmployer && !isSchool) {
+    return (
+      <ThemedView style={styles.center}>
+        <ThemedText type="subtitle" style={styles.centerText}>
+          Coming soon for {user.role} accounts
+        </ThemedText>
+        <ThemedText type="small" themeColor="textSecondary" style={[styles.centerText, styles.holdingCopy]}>
+          The SIWES Finder app doesn&apos;t support this account type yet. Use the website instead.
+        </ThemedText>
+        <Button
+          label="Sign out"
+          variant="secondary"
+          icon="log-out-outline"
+          onPress={async () => {
+            await logout();
+            router.replace('/login');
+          }}
+        />
+      </ThemedView>
+    );
+  }
+
   const tabBarScreenOptions = {
     headerShown: false,
+    // Subtle horizontal shift between tab scenes instead of a hard cut.
+    animation: 'shift' as const,
     tabBarActiveTintColor: theme.primary,
     tabBarInactiveTintColor: theme.textSecondary,
     tabBarLabelStyle: styles.tabLabel,
     tabBarStyle: {
       backgroundColor: theme.backgroundElement,
       borderTopColor: theme.border,
-      ...(Platform.OS === 'android' ? { height: 62, paddingTop: 6, paddingBottom: 8 } : {}),
+      // On Android the bar sits flush with the screen edge, so gesture-nav
+      // insets have to be added by hand or the bar hides behind the system
+      // pill on edge-to-edge devices.
+      ...(Platform.OS === 'android'
+        ? { height: 62 + insets.bottom, paddingTop: 6, paddingBottom: 8 + insets.bottom }
+        : {}),
     },
   };
 
   // Only the roles whose actions are actually gated on emailVerified
   // (applying, posting opportunities) show the nudge -- schools' mobile
   // screens are all read-only, so there's nothing to unlock for them.
-  const showVerifyBanner = !user.emailVerified && (user.role === 'student' || user.role === 'employer');
+  const showVerifyBanner = !user.emailVerified && (isStudent || isEmployer);
 
-  if (user.role === 'student') {
-    return (
-      <View style={styles.flex}>
-        {showVerifyBanner ? <VerifyEmailBanner role="student" /> : null}
-        <Tabs screenOptions={tabBarScreenOptions}>
-          <Tabs.Screen
-            name="index"
-            options={{ title: 'Jobs', tabBarIcon: tabIcon('briefcase', 'briefcase-outline') }}
-          />
+  return (
+    <View style={styles.flex}>
+      {showVerifyBanner ? <VerifyEmailBanner role={isStudent ? 'student' : 'employer'} /> : null}
+      <Tabs screenOptions={tabBarScreenOptions}>
+        {/* '/' must stay routable for every role (login and verify-email
+            replace to it), so it is hidden rather than guarded away for
+            non-students; index.tsx redirects them to their dashboard. */}
+        <Tabs.Screen
+          name="index"
+          options={
+            isStudent
+              ? { title: 'Jobs', tabBarIcon: tabIcon('briefcase', 'briefcase-outline') }
+              : { href: null }
+          }
+        />
+
+        <Tabs.Protected guard={isStudent}>
           <Tabs.Screen
             name="applications"
             options={{ title: 'Applications', tabBarIcon: tabIcon('paper-plane', 'paper-plane-outline') }}
@@ -110,16 +165,9 @@ export default function TabsLayout() {
             name="profile"
             options={{ title: 'Profile', tabBarIcon: tabIcon('person-circle', 'person-circle-outline') }}
           />
-        </Tabs>
-      </View>
-    );
-  }
+        </Tabs.Protected>
 
-  if (user.role === 'employer') {
-    return (
-      <View style={styles.flex}>
-        {showVerifyBanner ? <VerifyEmailBanner role="employer" /> : null}
-        <Tabs screenOptions={tabBarScreenOptions}>
+        <Tabs.Protected guard={isEmployer}>
           <Tabs.Screen
             name="employer-applicants"
             options={{ title: 'Applicants', tabBarIcon: tabIcon('people', 'people-outline') }}
@@ -128,56 +176,31 @@ export default function TabsLayout() {
             name="employer-logbook"
             options={{ title: 'Logbook', tabBarIcon: tabIcon('book', 'book-outline') }}
           />
+        </Tabs.Protected>
+
+        <Tabs.Protected guard={isSchool}>
+          <Tabs.Screen
+            name="school-overview"
+            options={{ title: 'Overview', tabBarIcon: tabIcon('stats-chart', 'stats-chart-outline') }}
+          />
+          <Tabs.Screen
+            name="school-students"
+            options={{ title: 'Students', tabBarIcon: tabIcon('people', 'people-outline') }}
+          />
+          <Tabs.Screen
+            name="school-logbooks"
+            options={{ title: 'Logbooks', tabBarIcon: tabIcon('book', 'book-outline') }}
+          />
+        </Tabs.Protected>
+
+        <Tabs.Protected guard={isEmployer || isSchool}>
           <Tabs.Screen
             name="account"
             options={{ title: 'Account', tabBarIcon: tabIcon('person-circle', 'person-circle-outline') }}
           />
-        </Tabs>
-      </View>
-    );
-  }
-
-  if (user.role === 'school') {
-    return (
-      <Tabs screenOptions={tabBarScreenOptions}>
-        <Tabs.Screen
-          name="school-overview"
-          options={{ title: 'Overview', tabBarIcon: tabIcon('stats-chart', 'stats-chart-outline') }}
-        />
-        <Tabs.Screen
-          name="school-students"
-          options={{ title: 'Students', tabBarIcon: tabIcon('people', 'people-outline') }}
-        />
-        <Tabs.Screen
-          name="school-logbooks"
-          options={{ title: 'Logbooks', tabBarIcon: tabIcon('book', 'book-outline') }}
-        />
-        <Tabs.Screen
-          name="account"
-          options={{ title: 'Account', tabBarIcon: tabIcon('person-circle', 'person-circle-outline') }}
-        />
+        </Tabs.Protected>
       </Tabs>
-    );
-  }
-
-  return (
-    <ThemedView style={styles.center}>
-      <ThemedText type="subtitle" style={styles.centerText}>
-        Coming soon for {user.role} accounts
-      </ThemedText>
-      <ThemedText type="small" themeColor="textSecondary" style={[styles.centerText, styles.holdingCopy]}>
-        The SIWES Finder app doesn&apos;t support this account type yet. Use the website instead.
-      </ThemedText>
-      <Button
-        label="Sign out"
-        variant="secondary"
-        icon="log-out-outline"
-        onPress={async () => {
-          await logout();
-          router.replace('/login');
-        }}
-      />
-    </ThemedView>
+    </View>
   );
 }
 

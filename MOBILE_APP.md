@@ -225,8 +225,26 @@ can be minted in this sandboxed environment.
       institution accreditation, etc.) stays web-only; not in this phase's
       scope.
 
-**Not yet verified on an actual device/emulator** — same caveat as every
-prior phase.
+- [x] **Fix (2026-07-16, from the first real on-device run):** the
+      role-gated tab bar leaked every role's screens into everyone's tab
+      bar. expo-router registers *every* file in `(tabs)/` as a route
+      whether or not the layout declares it, and undeclared routes still
+      get a default tab button (raw filename, no icon) — so conditionally
+      *omitting* `<Tabs.Screen>` entries per role never actually hid
+      anything. `(tabs)/_layout.tsx` now declares all ten screens
+      unconditionally: other roles' screens are removed with
+      `<Tabs.Protected guard={...}>` (unroutable, not just hidden), and
+      `index` — the `/` anchor login/verify-email land on — stays routable
+      for every role but is hidden from non-students, whom `index.tsx`
+      redirects to their own dashboard (employer → Applicants, school →
+      Overview), mirroring the web's role-scoped dashboards. Same PR:
+      safe-area-aware Android tab bar (gesture-nav pill no longer overlaps
+      it), status-bar inset on the verify-email banner, and a `shift`
+      animation between tab scenes.
+
+**On-device status:** first verified on a physical Android phone
+2026-07-16 (v1.0.0-android-ci5) — install, login, and API connectivity
+confirmed working; the tab-bar leak above was found and fixed in that run.
 
 ### Phase 4 — Release (Android)
 - [x] App icon + splash from the existing logomark (`src/app/icon.svg`'s
