@@ -43,7 +43,8 @@ test('student signs up, completes profile, uploads a resume, and applies to the 
 
   await test.step('complete the profile-setup wizard', async () => {
     await page.getByPlaceholder('University of Lagos').fill('University of Lagos');
-    await page.getByPlaceholder('Computer Science').fill('Computer Science');
+    // Department is a <select> (was free text) -- see src/lib/departments.ts.
+    await page.getByLabel('Department / course of study').selectOption('Computer Science');
     await page.getByRole('button', { name: 'Continue' }).click();
 
     // exact: the wizard also renders a "Step 2 of 4 — SIWES duration"

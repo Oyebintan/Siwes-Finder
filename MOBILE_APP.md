@@ -599,6 +599,33 @@ Owner feedback batch spanning both web and mobile (see `PROJECT_SCOPE.md`'s
       `mobile-ota-update.yml` on merge to `main`, reaching any install
       already on runtime 1.2.0 without a new APK.
 
+### Phase 11 — Visible version/OTA sync + livelier first screens (2026-07-17)
+Owner feedback: wanted a way to visually confirm an OTA update actually
+landed (without digging into settings), and for the cold-start/onboarding
+screens to feel less static. Both OTA-eligible (no native deps):
+- [x] **Version + OTA sync indicator** — `(tabs)/_layout.tsx`'s
+      `BrandedLoading` (the full-screen logo state shown on every cold
+      start while the auth/onboarding flags resolve, before routing
+      anywhere) now shows `v{Constants.expoConfig.version}` near the
+      bottom of the screen, and — only when this launch is running an
+      OTA-fetched update rather than the build's embedded bundle
+      (`!Updates.isEmbeddedLaunch`) — `· Synced {date}` from
+      `Updates.createdAt`. Read once at module scope (can't change without
+      a fresh launch), not on every render.
+- [x] **Livelier branded loading** — the same screen's logo now pulses
+      inside an expanding/fading "ping" ring (`Easing.out`, looped),
+      instead of the pulse alone.
+- [x] **Onboarding illustrations** — `ui/onboarding-illustration.tsx`: a
+      hand-drawn (react-native-svg primitives, not an external asset —
+      keeps this OTA-eligible and avoids attribution/licensing questions
+      that come with pulling real Storyset art) flat-design scene per
+      slide (student-at-laptop / paper-airplane-and-checklist /
+      open-logbook-and-pencil), each floating + subtly rotating on a
+      loop, plus an independent re-pulsing accent dot. `onboarding.tsx`
+      restructured (brand row pinned top, illustration centered, copy
+      anchored bottom) to fit it in.
+- [ ] Not yet verified on a device — same caveat as every phase.
+
 ## Over-the-air updates (EAS Update) — read this before cutting a build
 
 `expo-updates` is configured (`runtimeVersion.policy: "appVersion"`,
