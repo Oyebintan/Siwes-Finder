@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Linking, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -15,6 +16,7 @@ import { ErrorBanner } from '@/components/ui/error-banner';
 import { MatchRing } from '@/components/ui/match-ring';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/toast';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import {
@@ -36,6 +38,8 @@ const METHOD_LABEL: Record<Job['applicationMethod'], string> = {
 
 export default function JobDetailScreen() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  const toast = useToast();
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [job, setJob] = useState<Job | null>(null);
@@ -77,8 +81,9 @@ export default function JobDetailScreen() {
     try {
       const { saved: nowSaved } = await toggleSavedJob(id);
       setSaved(nowSaved);
+      toast(nowSaved ? 'Saved for later' : 'Removed from saved');
     } catch {
-      // Best-effort, same as the Jobs list -- leave the bookmark unchanged.
+      toast("Couldn't update the bookmark — try again.", 'error');
     }
   };
 
@@ -88,8 +93,9 @@ export default function JobDetailScreen() {
     try {
       const { following: nowFollowing } = await toggleFollowCompany(job.employerId._id);
       setFollowing(nowFollowing);
+      toast(nowFollowing ? "Following — you'll hear about new posts" : 'Unfollowed');
     } catch {
-      // Best-effort -- leave the button state unchanged, the user can retry.
+      toast("Couldn't update the follow — try again.", 'error');
     } finally {
       setFollowBusy(false);
     }
@@ -259,7 +265,13 @@ export default function JobDetailScreen() {
         ) : null}
       </ScrollView>
 
-      <ThemedView type="backgroundElement" style={[styles.applyBar, { borderColor: theme.border }]}>
+      <ThemedView
+        type="backgroundElement"
+        // The bar hugs the screen's bottom edge, so it absorbs the
+        // gesture-nav inset itself -- otherwise the Apply button sits
+        // under the system pill on edge-to-edge devices.
+        style={[styles.applyBar, { borderColor: theme.border, paddingBottom: Spacing.three + insets.bottom }]}
+      >
         {applyError ? <ErrorBanner message={applyError} /> : null}
         <ApplyAction job={job} applying={applying} applied={applied} onApply={handleApply} />
       </ThemedView>

@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorBanner } from '@/components/ui/error-banner';
+import { BrandRefreshControl } from '@/components/ui/refresh-control';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { Skeleton, SkeletonCard } from '@/components/ui/skeleton';
 import { Radius, Spacing } from '@/constants/theme';
@@ -23,11 +24,13 @@ export default function SchoolOverviewScreen() {
   const [students, setStudents] = useState<SchoolStudent[]>([]);
   const [schoolName, setSchoolName] = useState('');
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [pendingApproval, setPendingApproval] = useState(false);
   const [error, setError] = useState('');
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (asRefresh = false) => {
+    if (asRefresh) setRefreshing(true);
+    else setLoading(true);
     setError('');
     setPendingApproval(false);
     try {
@@ -42,6 +45,7 @@ export default function SchoolOverviewScreen() {
       }
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
@@ -105,7 +109,10 @@ export default function SchoolOverviewScreen() {
   return (
     <ThemedView style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={['top']}>
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView
+          contentContainerStyle={styles.container}
+          refreshControl={<BrandRefreshControl refreshing={refreshing} onRefresh={() => load(true)} />}
+        >
           <ScreenHeader
             title={schoolName || 'Overview'}
             subtitle="Students who registered with your institution name, and where they stand"

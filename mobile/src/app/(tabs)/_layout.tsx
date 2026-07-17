@@ -3,6 +3,7 @@ import { Platform, StyleSheet, View, type ColorValue } from 'react-native';
 import { Redirect, router, Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -121,7 +122,13 @@ export default function TabsLayout() {
     tabBarLabelStyle: styles.tabLabel,
     tabBarStyle: {
       backgroundColor: theme.backgroundElement,
-      borderTopColor: theme.border,
+      // Floating-surface look: no hairline, a soft upward shadow instead.
+      borderTopWidth: 0,
+      shadowColor: '#0b1220',
+      shadowOffset: { width: 0, height: -4 },
+      shadowOpacity: 0.08,
+      shadowRadius: 12,
+      elevation: 12,
       // On Android the bar sits flush with the screen edge, so gesture-nav
       // insets have to be added by hand or the bar hides behind the system
       // pill on edge-to-edge devices.
@@ -139,7 +146,16 @@ export default function TabsLayout() {
   return (
     <View style={styles.flex}>
       {showVerifyBanner ? <VerifyEmailBanner role={isStudent ? 'student' : 'employer'} /> : null}
-      <Tabs screenOptions={tabBarScreenOptions}>
+      <Tabs
+        screenOptions={tabBarScreenOptions}
+        screenListeners={{
+          // A light tick on every tab switch -- the same "everything
+          // responds to touch" feel PressableScale gives buttons.
+          tabPress: () => {
+            Haptics.selectionAsync().catch(() => {});
+          },
+        }}
+      >
         {/* '/' must stay routable for every role (login and verify-email
             replace to it), so it is hidden rather than guarded away for
             non-students; index.tsx redirects them to their dashboard. */}

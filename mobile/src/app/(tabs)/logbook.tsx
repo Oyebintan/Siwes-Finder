@@ -15,9 +15,11 @@ import { Chip } from '@/components/ui/chip';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorBanner } from '@/components/ui/error-banner';
 import { Field } from '@/components/ui/field';
+import { BrandRefreshControl } from '@/components/ui/refresh-control';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { SkeletonCard } from '@/components/ui/skeleton';
 import { StreakCard } from '@/components/ui/streak-card';
+import { useToast } from '@/components/ui/toast';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { ApiError, createLogbookEntry, listLogbookEntries, type LogbookEntry } from '@/api/client';
@@ -33,10 +35,12 @@ type WeekGroup = {
 
 export default function LogbookScreen() {
   const theme = useTheme();
+  const toast = useToast();
 
   const [entries, setEntries] = useState<LogbookEntry[]>([]);
   const [drafts, setDrafts] = useState<QueuedDraft[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [syncNotice, setSyncNotice] = useState('');
 
@@ -47,8 +51,9 @@ export default function LogbookScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (asRefresh = false) => {
+    if (asRefresh) setRefreshing(true);
+    else setLoading(true);
     setError('');
     try {
       const [entryList, draftList] = await Promise.all([listLogbookEntries(), getQueuedDrafts()]);
@@ -58,6 +63,7 @@ export default function LogbookScreen() {
       setError(err instanceof ApiError ? err.message : 'Could not load your logbook. Check your connection.');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
@@ -111,6 +117,7 @@ export default function LogbookScreen() {
     try {
       await createLogbookEntry(draft);
       setActivity('');
+      toast('Entry logged — nice work today 💪');
       await load();
     } catch (err) {
       if (err instanceof ApiError) {
@@ -149,7 +156,11 @@ export default function LogbookScreen() {
   return (
     <ThemedView style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={['top']}>
-        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={<BrandRefreshControl refreshing={refreshing} onRefresh={() => load(true)} />}
+        >
           <ScreenHeader title="e-Logbook" subtitle="Your daily record, synced to your school" />
 
           {!loading && entries.length > 0 ? (

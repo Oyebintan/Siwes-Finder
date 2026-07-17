@@ -11,8 +11,10 @@ import { Button } from '@/components/ui/button';
 import { Card, InitialAvatar } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorBanner } from '@/components/ui/error-banner';
+import { BrandRefreshControl } from '@/components/ui/refresh-control';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { SkeletonList } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/toast';
 import { Spacing } from '@/constants/theme';
 import { ApiError, approveLogbookEntry, listEmployerLogbookEntries, type EmployerLogbookEntry } from '@/api/client';
 
@@ -20,13 +22,16 @@ const STAGGER_MS = 55;
 const MAX_STAGGERED = 8;
 
 export default function EmployerLogbookScreen() {
+  const toast = useToast();
   const [entries, setEntries] = useState<EmployerLogbookEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [approvingId, setApprovingId] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (asRefresh = false) => {
+    if (asRefresh) setRefreshing(true);
+    else setLoading(true);
     setError('');
     try {
       setEntries(await listEmployerLogbookEntries());
@@ -34,6 +39,7 @@ export default function EmployerLogbookScreen() {
       setError(err instanceof ApiError ? err.message : 'Could not load logbook entries. Check your connection.');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
@@ -48,6 +54,7 @@ export default function EmployerLogbookScreen() {
     try {
       await approveLogbookEntry(id);
       setEntries((prev) => prev.map((e) => (e._id === id ? { ...e, isApproved: true } : e)));
+      toast('Entry approved');
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not approve this entry. Check your connection.');
     } finally {
@@ -69,6 +76,7 @@ export default function EmployerLogbookScreen() {
             data={entries}
             keyExtractor={(e) => e._id}
             contentContainerStyle={styles.list}
+            refreshControl={<BrandRefreshControl refreshing={refreshing} onRefresh={() => load(true)} />}
             ListEmptyComponent={
               <EmptyState
                 icon="book-outline"
