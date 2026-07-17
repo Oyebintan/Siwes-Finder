@@ -152,6 +152,7 @@ export default async function JobDetails({ params }: { params: Promise<{ id: str
             <div className="font-display font-bold text-sm mb-4">Overview</div>
             <div className="flex flex-col gap-3.5 text-[13.5px]">
               {job.employerId?.industry && <OverviewRow label="Industry" value={job.employerId.industry} />}
+              {job.department && <OverviewRow label="Department" value={job.department} />}
               <OverviewRow label="Location" value={job.location} />
               <OverviewRow label="Duration" value={job.duration} />
               <OverviewRow label="Application method" value={METHOD_LABEL[job.applicationMethod] || 'In-app'} />

@@ -99,7 +99,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const accentActive = isEmployer ? 'text-accent-500' : isAdmin ? 'text-white' : 'text-primary-500 dark:text-primary-400';
   const accentActiveBg = isEmployer ? 'bg-accent-500/10' : isAdmin ? 'bg-primary-500' : 'bg-primary-500/10 dark:bg-primary-400/15';
 
-  const SidebarContent = (
+  const buildSidebarContent = (showThemeToggle: boolean) => (
     <div className={`flex flex-col h-full px-4 py-6 ${isAdmin ? 'bg-[#0B1220]' : 'bg-surface-1'}`}>
       <div className="flex items-center justify-between px-2 mb-8">
         <Link href="/" className="flex items-center gap-2">
@@ -111,7 +111,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             SIWES Finder{isAdmin && <span className="text-[#8B93A3] font-semibold"> Admin</span>}
           </span>
         </Link>
-        <ThemeToggle />
+        {/* Hidden in the mobile drawer: the drawer already has its own
+            close button right beside this row, and the two controls sat
+            too close together there. Desktop sidebar keeps its toggle. */}
+        {showThemeToggle && <ThemeToggle />}
       </div>
 
       <nav className="flex flex-col gap-0.5">
@@ -179,7 +182,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen flex bg-background bg-dots text-foreground">
       {/* DESKTOP SIDEBAR */}
       <aside className="hidden md:flex w-[240px] shrink-0 border-r border-surface-border sticky top-0 h-screen">
-        {SidebarContent}
+        {buildSidebarContent(true)}
       </aside>
 
       {/* MOBILE TOP BAR */}
@@ -202,7 +205,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <button onClick={() => setDrawerOpen(false)} className={`absolute top-6 right-3 w-7 h-7 rounded-lg flex items-center justify-center ${isAdmin ? 'text-white' : 'text-foreground'}`}>
                 <X className="w-4 h-4" />
               </button>
-              {SidebarContent}
+              {buildSidebarContent(false)}
             </div>
           </div>
         </>

@@ -20,6 +20,7 @@ import { PressableScale } from '@/components/ui/pressable-scale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
 import { FontFamily, Radius, Spacing } from '@/constants/theme';
+import { DEPARTMENTS } from '@/constants/departments';
 import { useTabBarInset } from '@/hooks/use-tab-bar-inset';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/api/AuthContext';
@@ -174,6 +175,15 @@ export default function ProfileScreen() {
               end={{ x: 1, y: 1 }}
               style={styles.hero}
             >
+              <PressableScale
+                onPress={() => router.push('/settings')}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel="Settings"
+                style={styles.settingsButton}
+              >
+                <Ionicons name="settings-outline" size={19} color="#ffffff" />
+              </PressableScale>
               <PressableScale onPress={handlePickAvatar} disabled={uploadingAvatar} style={styles.avatarWrap}>
                 {avatarUrl ? (
                   <Image source={{ uri: avatarUrl }} style={styles.avatar} transition={150} />
@@ -220,7 +230,14 @@ export default function ProfileScreen() {
               <SectionTitle icon="school-outline" title="Academic" />
               <Field label="University / Institution" value={university} onChangeText={setUniversity} placeholder="University of Lagos" />
               <Field label="Faculty" value={faculty} onChangeText={setFaculty} placeholder="Faculty of Science" />
-              <Field label="Course of study" value={course} onChangeText={setCourse} placeholder="Computer Science" />
+              <ThemedText type="smallBold" themeColor="textSecondary">
+                Department / course of study
+              </ThemedText>
+              <View style={styles.chipRow}>
+                {DEPARTMENTS.map((d) => (
+                  <Chip key={d} label={d} active={course === d} onPress={() => setCourse(d)} />
+                ))}
+              </View>
               <ThemedText type="smallBold" themeColor="textSecondary">
                 Level
               </ThemedText>
@@ -333,6 +350,17 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
     padding: Spacing.four,
     borderRadius: Radius.xl,
+  },
+  settingsButton: {
+    position: 'absolute',
+    top: Spacing.three,
+    right: Spacing.three,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.18)',
   },
   avatarWrap: {
     width: 84,

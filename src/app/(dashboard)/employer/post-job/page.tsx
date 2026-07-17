@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Loader2, X, Plus } from 'lucide-react';
+import { DEPARTMENTS } from '@/lib/departments';
 
 const DURATIONS = ['4 months', '6 months', '12 months'];
 const STEP_TITLES = ['Basics', 'Role details', 'Application & publish'];
@@ -21,6 +22,7 @@ export default function EmployerPostJob() {
   const [location, setLocation] = useState('');
   const [type, setType] = useState<'On-site' | 'Remote' | 'Hybrid'>('On-site');
   const [duration, setDuration] = useState('6 months');
+  const [department, setDepartment] = useState('');
   const [stipend, setStipend] = useState('');
   const [description, setDescription] = useState('');
   const [skills, setSkills] = useState<string[]>([]);
@@ -41,15 +43,15 @@ export default function EmployerPostJob() {
     setSkillInput('');
   };
 
-  const canContinueStep1 = title.trim() && location.trim();
-  const canContinueStep2 = description.trim();
+  const canContinueStep1 = title.trim() && location.trim() && department;
+  const canContinueStep2 = description.trim() && skills.length > 0;
 
   const handleBack = () => setStep((s) => Math.max(1, s - 1));
 
   const handleContinue = () => {
     setError('');
-    if (step === 1 && !canContinueStep1) { setError('Please fill in the opportunity title and location.'); return; }
-    if (step === 2 && !canContinueStep2) { setError('Please add a description.'); return; }
+    if (step === 1 && !canContinueStep1) { setError('Please fill in the opportunity title, location, and department.'); return; }
+    if (step === 2 && !canContinueStep2) { setError('Please add a description and at least one required skill.'); return; }
     setStep((s) => Math.min(3, s + 1));
   };
 
@@ -64,7 +66,7 @@ export default function EmployerPostJob() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title, location, type, duration,
+          title, location, type, duration, department,
           stipend: stipend || 'Unpaid',
           description,
           requirements: skills,
@@ -135,6 +137,13 @@ export default function EmployerPostJob() {
                   <input value={stipend} onChange={(e) => setStipend(e.target.value)} placeholder="₦50,000" className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-accent-500 transition-all" />
                 </Field>
               </div>
+              <Field label="Department">
+                <select value={department} onChange={(e) => setDepartment(e.target.value)} className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-accent-500 transition-all">
+                  <option value="" disabled>Select the department this opportunity is for</option>
+                  {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+                <p className="text-[12.5px] text-muted mt-1.5">e.g. &ldquo;Computer Science&rdquo; for a Software Engineering role. Students mainly see opportunities from their own department by default.</p>
+              </Field>
             </div>
           )}
 
@@ -201,6 +210,7 @@ export default function EmployerPostJob() {
               <div className="bg-background rounded-xl p-4 space-y-1.5 text-[13px]">
                 <div className="font-bold text-sm mb-1">{title || 'Untitled opportunity'}</div>
                 <div className="text-muted">{location} · {type} · {duration}</div>
+                {department && <div className="text-muted">Department: {department}</div>}
                 {skills.length > 0 && <div className="text-muted">Skills: {skills.join(', ')}</div>}
               </div>
             </div>

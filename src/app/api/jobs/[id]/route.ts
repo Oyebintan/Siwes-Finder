@@ -64,7 +64,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       return NextResponse.json({ error: 'Job not found or unauthorized' }, { status: 404 });
     }
 
-    const editable = ['title', 'location', 'type', 'duration', 'requirements', 'description', 'stipend', 'isActive'] as const;
+    const editable = ['title', 'location', 'type', 'duration', 'department', 'requirements', 'description', 'stipend', 'isActive'] as const;
     for (const field of editable) {
       if (body[field] !== undefined) job.set(field, body[field]);
     }

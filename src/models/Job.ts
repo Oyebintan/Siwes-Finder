@@ -8,6 +8,10 @@ export interface IJob extends Document {
   location: string;
   type: 'On-site' | 'Remote' | 'Hybrid';
   duration: string; // e.g., '6 Months'
+  // The academic department this placement is aimed at (e.g. "Computer
+  // Science" for a Software Engineering role) -- see src/lib/departments.ts.
+  // Drives the default department/skill scoping of the student feed.
+  department: string;
   requirements: string[];
   description: string;
   stipend?: string;
@@ -35,6 +39,7 @@ const JobSchema: Schema = new Schema(
     location: { type: String, required: true },
     type: { type: String, enum: ['On-site', 'Remote', 'Hybrid'], required: true },
     duration: { type: String, required: true },
+    department: { type: String, required: true },
     requirements: { type: [String], required: true },
     description: { type: String, required: true },
     stipend: { type: String },
@@ -58,5 +63,8 @@ const JobSchema: Schema = new Schema(
 // Employer dashboard (own jobs, newest first) and the public listing feed.
 JobSchema.index({ employerId: 1, createdAt: -1 });
 JobSchema.index({ isActive: 1, createdAt: -1 });
+// The default (unsearched) student feed scopes by department -- see
+// GET /api/jobs.
+JobSchema.index({ isActive: 1, department: 1 });
 
 export default mongoose.models.Job || mongoose.model<IJob>('Job', JobSchema);

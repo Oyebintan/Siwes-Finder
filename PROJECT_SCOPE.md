@@ -8,8 +8,15 @@ SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
 seeking SIWES (Students Industrial Work Experience Scheme) placements with
 verified employers, and gives their schools visibility into the process.
 
-**Last synced with:** full security audit + hardening (2026-07-14) — jwt
-role-escalation fix, rate limiting, security headers, email
+**Last synced with:** UI/UX + feed-relevance batch (2026-07-17) — mobile
+Dashboard landing tab (Jobs demoted to a secondary "browse-jobs" tab),
+mobile post-signup profile-setup wizard, manual light/dark theme override
++ Settings screen, swipe-to-save auto-close, mobile idle-timeout auto-lock,
+`Job.department` (required, canonical list) + compulsory skills on
+posting, default department/skill feed scoping (search stays universal),
+mobile Jobs feed pagination (see "Default feed scoping" and Mobile app
+section below). Before that: full security audit + hardening (2026-07-14)
+— jwt role-escalation fix, rate limiting, security headers, email
 normalization, 404/error pages, robots/sitemap (see "Security hardening"
 below); before that, email verification made opt-in via
 `REQUIRE_EMAIL_VERIFICATION` (2026-07-13) because the Resend sandbox
@@ -47,10 +54,14 @@ equivalent everywhere except that one deletion-hierarchy check.
   signed up with; separate concern from `verificationStatus` above, same
   hash-only OTP pattern as password reset).
 - **Job** — posted by employers. `applicationMethod` is `platform | email |
-  external`. Optional `applicationDeadline` and `maxApplicants` +
-  `applicantCount`; a job auto-closes (`isActive: false`) once either limit
-  is hit, checked lazily by `src/lib/jobStatus.ts` (no cron — evaluated on
-  read/apply).
+  external`. `department` (required, one of `src/lib/departments.ts`'s
+  canonical list — e.g. "Computer Science" for a Software Engineering role)
+  and at least one `requirements` skill are compulsory on every new posting
+  (`POST /api/jobs` rejects a missing/unrecognized department or an empty
+  skills list); both drive the default feed scoping below. Optional
+  `applicationDeadline` and `maxApplicants` + `applicantCount`; a job
+  auto-closes (`isActive: false`) once either limit is hit, checked lazily
+  by `src/lib/jobStatus.ts` (no cron — evaluated on read/apply).
 - **Application** — links a student, job, and employer. Unique index on
   `(job, student)` prevents duplicate applications. Status:
   `Pending | Accepted | Rejected`.
@@ -159,6 +170,20 @@ message the employer on any of their own applications, e-Logbook, profile
 Community directory (peers who also joined, grouped implicitly by shared
 placement visibility).
 
+**Default feed scoping** — `GET /api/jobs`'s student branch, when called
+with no `q` search term, additionally restricts results to jobs whose
+`department` matches the student's `courseOfStudy` (now selected from the
+same canonical `departments.ts` list — see the Job model above) and/or
+whose `requirements` overlap the student's `skills` (`$or`, case-insensitive
+substring). A student with neither set yet sees the unscoped feed. Typing
+into the search bar (`q` present) always searches everything, unrestricted
+— the scoping only shapes the *default* (empty-search) view, both on the
+web browse page and the mobile Jobs tab. `student/profile` and
+`profile-setup` (web + mobile) both now render "Course of study" as a
+select from that same list rather than free text, so new/updated profiles
+match exactly; profiles saved before this change keep whatever free-text
+value they had until re-saved.
+
 **Match score** (`src/lib/match.ts`, `computeMatchScore`) — a genuine (not
 decorative) 0-100% overlap between a student's `skills` and a job's
 `requirements` (case-insensitive substring match either direction), plus a
@@ -258,6 +283,26 @@ get these screens; see `MOBILE_APP.md`'s "Cutting a new Android build".
 architecture, the phase-by-phase checklist (kept current in each PR), and
 the release/store setup steps.
 
+**v1.2 UI/UX follow-ups (post-release, OTA-eligible)** — the student tab
+set now opens on a `dashboard` tab (progress banner, KPI snapshot, quick
+actions, recommended jobs, recent applications — mirrors the web's
+`/student/dashboard`), with the job-search feed demoted to a secondary
+`browse-jobs` tab (paginated via infinite scroll, `PAGE_SIZE = 12`, instead
+of one long fetch); a new `profile-setup.tsx` wizard runs right after a
+student's first signup (matching the web flow, previously mobile skipped
+straight to the dashboard); manual light/dark theme override
+(`ThemeModeContext` + a new Settings screen, reachable from the
+profile/account gear icon) alongside the existing system-follow default;
+swipe-left on a job card now auto-saves it (single-action rows only —
+multi-action employer rows still require an explicit tap); and an
+idle-timeout auto-lock (`autoLockSettings.ts` + `useIdleAutoLock`,
+configurable in Settings, persisted-timestamp based so it survives a full
+app kill) signs the user out after the chosen period of backgrounding.
+All of the above (including the new `dashboard`/`profile-setup`/`settings`
+route files -- Expo Router resolves routes from the JS bundle at runtime,
+not at native build time) ship over OTA, same as the rest of Phase 5 --
+no new native dependency, no fresh `eas build` required.
+
 ## Demo/seed data
 
 `scripts/seed-companies.mjs` — idempotent script that creates 5 pre-verified
@@ -334,6 +379,18 @@ revocation.
   fire** — `CRON_SECRET` must be set identically in the GitHub Actions repo
   secrets and Vercel's env vars; until then the scheduled workflow's daily
   run just 401s against its own request.
+- **Mobile biometric/PIN unlock is not built** — the idle-timeout auto-lock
+  (configurable in mobile Settings) signs the user out and requires their
+  password again; a biometric/PIN quick-unlock needs `expo-local-authentication`
+  (a new native dependency, which triggers its own EAS native build + version
+  bump under this project's release workflow), deliberately deferred to a
+  dedicated follow-up PR rather than bundled into a larger batch.
+- **Job.department backfill** — jobs created before this field existed have
+  no `department` value in the DB (Mongoose's `required: true` only
+  validates new saves, not existing documents) and are excluded from the
+  default department-scoped feed view for students until an employer edits
+  and re-saves them; they still appear for anyone searching or with
+  matching skills.
 
 ## Environment variables
 

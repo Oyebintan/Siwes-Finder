@@ -147,7 +147,14 @@ export default function VerifyEmailScreen() {
               </View>
             ) : (
               <Animated.View entering={FadeInDown.duration(350)} style={styles.form}>
-                <Button label="Continue" icon="arrow-forward" onPress={() => router.replace('/')} />
+                <Button
+                  label="Continue"
+                  icon="arrow-forward"
+                  // Same one-time wizard gate as signup.tsx's verified-
+                  // immediately branch: a student who verifies from here
+                  // (rather than being auto-verified) still needs it.
+                  onPress={() => router.replace(user?.role === 'student' ? '/profile-setup' : '/')}
+                />
               </Animated.View>
             )}
           </ScrollView>

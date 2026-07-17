@@ -4,11 +4,9 @@
  */
 
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useThemeMode } from '@/api/ThemeModeContext';
 
 export function useTheme() {
-  const scheme = useColorScheme();
-  const theme = scheme === 'unspecified' ? 'light' : scheme;
-
-  return Colors[theme];
+  const { effectiveScheme } = useThemeMode();
+  return Colors[effectiveScheme];
 }

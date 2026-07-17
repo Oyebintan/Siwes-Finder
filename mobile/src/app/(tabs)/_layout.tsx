@@ -23,6 +23,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/api/AuthContext';
 import { confirmSignOut } from '@/api/confirmSignOut';
 import { hasSeenOnboarding } from '@/api/onboardingFlag';
+import { useIdleAutoLock } from '@/api/useIdleAutoLock';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -66,9 +67,9 @@ function BrandedLoading() {
 // the "all dashboards merged" bug in the v1.0.0-android-ci5 build. So:
 // every screen is always declared; the other roles' screens are removed
 // with <Tabs.Protected guard={...}> (unroutable, not just hidden), and
-// `index` -- the '/' anchor that login/verify-email land on -- stays
-// routable for every role but is hidden from non-students, who get
-// redirected to their own dashboard by index.tsx.
+// `index` -- the '/' anchor that login/verify-email/profile-setup land on --
+// stays routable for every role (options: { href: null }, always hidden)
+// and immediately redirects each role to its real landing tab.
 export default function TabsLayout() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -78,6 +79,8 @@ export default function TabsLayout() {
   useEffect(() => {
     hasSeenOnboarding().then(setSeenOnboarding);
   }, []);
+
+  useIdleAutoLock({ user, logout });
 
   if (loading || seenOnboarding === null) {
     return <BrandedLoading />;
@@ -165,19 +168,21 @@ export default function TabsLayout() {
           },
         }}
       >
-        {/* '/' must stay routable for every role (login and verify-email
-            replace to it), so it is hidden rather than guarded away for
-            non-students; index.tsx redirects them to their dashboard. */}
-        <Tabs.Screen
-          name="index"
-          options={
-            isStudent
-              ? { title: 'Jobs', tabBarIcon: tabIcon('briefcase', 'briefcase-outline') }
-              : { href: null }
-          }
-        />
+        {/* '/' must stay routable for every role (login, verify-email, and
+            profile-setup all replace to it), so it is declared unconditionally
+            -- but it never renders its own screen (index.tsx immediately
+            redirects to the role's real landing tab), so it's always hidden. */}
+        <Tabs.Screen name="index" options={{ href: null }} />
 
         <Tabs.Protected guard={isStudent}>
+          <Tabs.Screen
+            name="dashboard"
+            options={{ title: 'Home', tabBarIcon: tabIcon('home', 'home-outline') }}
+          />
+          <Tabs.Screen
+            name="browse-jobs"
+            options={{ title: 'Jobs', tabBarIcon: tabIcon('briefcase', 'briefcase-outline') }}
+          />
           <Tabs.Screen
             name="applications"
             options={{ title: 'Applications', tabBarIcon: tabIcon('paper-plane', 'paper-plane-outline') }}

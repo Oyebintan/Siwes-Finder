@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { clearBackgroundedMark, hasAutoLockTimedOut } from './autoLockSettings';
 import * as authStorage from './authStorage';
 import * as api from './client';
 import type { SessionUser } from './client';
@@ -45,6 +46,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
         return;
       }
+      // The app was killed/reopened after the configured auto-lock window
+      // elapsed while backgrounded -- treat it the same as a normal
+      // timeout instead of silently restoring the session (this is the
+      // path a full OS kill takes; the in-memory resume path is
+      // useIdleAutoLock).
+      if (await hasAutoLockTimedOut()) {
+        await authStorage.clearToken();
+        await clearBackgroundedMark();
+        setLoading(false);
+        return;
+      }
       try {
         const profile = await api.getProfile();
         setUser(toSessionUser(profile));
@@ -71,6 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
       logout: async () => {
         await authStorage.clearToken();
+        await clearBackgroundedMark();
         setUser(null);
       },
       refreshUser: async () => {

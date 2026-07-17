@@ -38,6 +38,7 @@ const validJob = {
   location: 'Lagos',
   type: 'Remote',
   duration: '6 Months',
+  department: 'Computer Science',
   requirements: ['React'],
   description: 'Build things.',
 };
@@ -107,6 +108,46 @@ describe('POST /api/jobs', () => {
 
     const res = await POST(makePostRequest({ title: 'Only a title' }));
     expect(res.status).toBe(400);
+  });
+
+  it('rejects a job posting with no department', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (User.findById as any).mockReturnValue({
+      select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: true }),
+    });
+
+    const { department, ...withoutDepartment } = validJob;
+    const res = await POST(makePostRequest(withoutDepartment));
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/department/i);
+    expect(Job.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects an unrecognized department', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (User.findById as any).mockReturnValue({
+      select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: true }),
+    });
+
+    const res = await POST(makePostRequest({ ...validJob, department: 'Astrology' }));
+    expect(res.status).toBe(400);
+    expect(Job.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects a job posting with no required skills', async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (User.findById as any).mockReturnValue({
+      select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: true }),
+    });
+
+    const res = await POST(makePostRequest({ ...validJob, requirements: [] }));
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/skill/i);
+    expect(Job.create).not.toHaveBeenCalled();
   });
 
   it('rejects an email application method without a valid email', async () => {
@@ -381,6 +422,69 @@ describe('GET /api/jobs', () => {
     const data = await res.json();
 
     expect(data.jobs[0].matchScore).toBeUndefined();
+  });
+
+  it('scopes the default (no-query) feed to the student\'s department and skills', async () => {
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (User.findById as any).mockReturnValue({
+      select: vi.fn().mockResolvedValue({ skills: ['React'], courseOfStudy: 'Computer Science' }),
+    });
+    (User.find as any).mockReturnValue({ distinct: vi.fn().mockResolvedValue(['emp1']) });
+    (Job.countDocuments as any).mockResolvedValue(0);
+
+    const populate = vi.fn().mockReturnThis();
+    const sort = vi.fn().mockReturnThis();
+    const skip = vi.fn().mockReturnThis();
+    const limit = vi.fn().mockResolvedValue([]);
+    (Job.find as any).mockReturnValue({ populate, sort, skip, limit });
+
+    await GET(makeGetRequest());
+
+    const filterArg = (Job.find as any).mock.calls[0][0];
+    const scopeCondition = filterArg.$and.find((c: any) => c.$or?.[0]?.department);
+    expect(scopeCondition).toBeTruthy();
+    expect(scopeCondition.$or[0].department.source).toContain('Computer Science');
+    expect(scopeCondition.$or[1].requirements.$in[0].source).toContain('React');
+  });
+
+  it('does not scope the feed when a search query is present', async () => {
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (User.findById as any).mockReturnValue({
+      select: vi.fn().mockResolvedValue({ skills: ['React'], courseOfStudy: 'Computer Science' }),
+    });
+    (User.find as any).mockReturnValue({ distinct: vi.fn().mockResolvedValue(['emp1']) });
+    (Job.countDocuments as any).mockResolvedValue(0);
+
+    const populate = vi.fn().mockReturnThis();
+    const sort = vi.fn().mockReturnThis();
+    const skip = vi.fn().mockReturnThis();
+    const limit = vi.fn().mockResolvedValue([]);
+    (Job.find as any).mockReturnValue({ populate, sort, skip, limit });
+
+    await GET(makeGetRequest('?q=marketing'));
+
+    const filterArg = (Job.find as any).mock.calls[0][0];
+    const scopeCondition = filterArg.$and.find((c: any) => c.$or?.[0]?.department);
+    expect(scopeCondition).toBeUndefined();
+  });
+
+  it('does not scope the feed when the student has no department or skills set', async () => {
+    (requireSession as any).mockResolvedValue({ user: { id: 'stu1', role: 'student' } });
+    (User.findById as any).mockReturnValue({ select: vi.fn().mockResolvedValue({}) });
+    (User.find as any).mockReturnValue({ distinct: vi.fn().mockResolvedValue(['emp1']) });
+    (Job.countDocuments as any).mockResolvedValue(0);
+
+    const populate = vi.fn().mockReturnThis();
+    const sort = vi.fn().mockReturnThis();
+    const skip = vi.fn().mockReturnThis();
+    const limit = vi.fn().mockResolvedValue([]);
+    (Job.find as any).mockReturnValue({ populate, sort, skip, limit });
+
+    await GET(makeGetRequest());
+
+    const filterArg = (Job.find as any).mock.calls[0][0];
+    const scopeCondition = filterArg.$and.find((c: any) => c.$or?.[0]?.department);
+    expect(scopeCondition).toBeUndefined();
   });
 
   it('sorts by matchScore descending when sort=match', async () => {
