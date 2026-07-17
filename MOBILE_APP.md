@@ -446,8 +446,20 @@ receiving updates).
       "Clear filters"; profile avatar renders through `expo-image`
       (cached, fade-in); button labels cap font scaling at 1.3× so fixed
       heights never clip.
-- [ ] v1.2.0 release PR (version bump + workflow poll-cap raise) — after
-      the owner reviews this phase on device.
+- [x] **OTA delivery root-cause fix (PR #47):** every `eas update` publish
+      since day one targeted the *branch* `production`, but installs
+      request updates by *channel* — and the channel was never linked to
+      the branch, so no OTA had ever reached a device. The workflow now
+      publishes with `--channel production` (creates/repairs the link) and
+      prints `eas channel:view` after each publish. Confirmed delivered
+      on the owner's phone 2026-07-17.
+- [x] v1.2.0 release: `app.json` version bumped 1.0.0 → 1.2.0 (cuts a
+      fresh APK via the build workflow so new downloads start current;
+      existing installs already have everything via OTA). From this point
+      OTA publishes target runtime 1.2.0 — pre-bump installs keep working
+      but stop receiving further updates until reinstalled. Same PR
+      raised the build workflow's EAS wait cap 40 → 75 minutes (run #4
+      timed out on a healthy build stuck in the free-tier queue).
 
 ### Phase 8 — Engagement features
 Follow-up batch on top of Phase 7, all approved by the owner in one go:

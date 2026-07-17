@@ -36,9 +36,9 @@ permissions:
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
-    # Hard ceiling: the poll loop below already caps the EAS wait at 40
+    # Hard ceiling: the poll loop below already caps the EAS wait at 75
     # minutes, so anything past this is a genuinely hung runner.
-    timeout-minutes: 50
+    timeout-minutes: 85
     steps:
       - uses: actions/checkout@v4
 
@@ -88,18 +88,21 @@ jobs:
             exit 1
           fi
 
-          echo "Waiting for EAS build $BUILD_ID (checking every 30s, 40 min cap)..."
-          for i in $(seq 1 80); do
+          # 75-minute cap: run #4 proved a healthy build can sit in EAS's
+          # free-tier queue well past the old 40-minute limit before the
+          # compile even starts.
+          echo "Waiting for EAS build $BUILD_ID (checking every 30s, 75 min cap)..."
+          for i in $(seq 1 150); do
             sleep 30
             eas build:view "$BUILD_ID" --json > build-result.json || continue
             STATUS=$(jq -r '.status // empty' build-result.json)
-            echo "[$i/80] status: $STATUS"
+            echo "[$i/150] status: $STATUS"
             case "$STATUS" in
               FINISHED) exit 0 ;;
               ERRORED|CANCELED) echo "::error::EAS build ended as $STATUS."; exit 1 ;;
             esac
           done
-          echo "::error::Timed out waiting for the EAS build after 40 minutes."
+          echo "::error::Timed out waiting for the EAS build after 75 minutes."
           exit 1
 
       - name: Extract the build artifact URL
