@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect, router, useFocusEffect } from 'expo-router';
@@ -14,8 +14,10 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorBanner } from '@/components/ui/error-banner';
 import { Field } from '@/components/ui/field';
 import { PressableScale } from '@/components/ui/pressable-scale';
+import { BrandRefreshControl } from '@/components/ui/refresh-control';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { SwipeRow } from '@/components/ui/swipe-row';
+import { useToast } from '@/components/ui/toast';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/api/AuthContext';
@@ -45,6 +47,7 @@ export default function HomeTab() {
 function JobsScreen() {
   const theme = useTheme();
   const { user } = useAuth();
+  const toast = useToast();
 
   const [query, setQuery] = useState('');
   const [type, setType] = useState<JobType | null>(null);
@@ -96,7 +99,15 @@ function JobsScreen() {
   );
 
   // Debounce free-text search so we don't fire a request per keystroke.
+  // Skipped on the first render: the focus effect above already loads on
+  // mount, and without the guard every mount fired a second, redundant
+  // request 350ms later.
+  const isFirstQueryRun = useRef(true);
   useEffect(() => {
+    if (isFirstQueryRun.current) {
+      isFirstQueryRun.current = false;
+      return;
+    }
     if (savedOnly) return;
     const timeout = setTimeout(load, 350);
     return () => clearTimeout(timeout);
@@ -115,9 +126,9 @@ function JobsScreen() {
       if (savedOnly && !saved) {
         setJobs((prev) => prev.filter((j) => j._id !== jobId));
       }
+      toast(saved ? 'Saved for later' : 'Removed from saved');
     } catch {
-      // Bookmark toggling is best-effort; a failed request just leaves the
-      // icon state unchanged, no need for a blocking error banner.
+      toast("Couldn't update the bookmark — try again.", 'error');
     }
   };
 
@@ -196,8 +207,7 @@ function JobsScreen() {
             data={jobs}
             keyExtractor={(job) => job._id}
             contentContainerStyle={styles.list}
-            onRefresh={() => load(true)}
-            refreshing={refreshing}
+            refreshControl={<BrandRefreshControl refreshing={refreshing} onRefresh={() => load(true)} />}
             ListEmptyComponent={
               <EmptyState
                 icon={savedOnly ? 'bookmark-outline' : 'search-outline'}

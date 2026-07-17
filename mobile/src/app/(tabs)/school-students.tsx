@@ -12,6 +12,7 @@ import { Card, InitialAvatar } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorBanner } from '@/components/ui/error-banner';
 import { Field } from '@/components/ui/field';
+import { BrandRefreshControl } from '@/components/ui/refresh-control';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { Spacing } from '@/constants/theme';
@@ -24,11 +25,13 @@ export default function SchoolStudentsScreen() {
   const [students, setStudents] = useState<SchoolStudent[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [pendingApproval, setPendingApproval] = useState(false);
   const [error, setError] = useState('');
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (asRefresh = false) => {
+    if (asRefresh) setRefreshing(true);
+    else setLoading(true);
     setError('');
     setPendingApproval(false);
     try {
@@ -42,6 +45,7 @@ export default function SchoolStudentsScreen() {
       }
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
@@ -97,7 +101,10 @@ export default function SchoolStudentsScreen() {
         {loading ? (
           <SkeletonList />
         ) : (
-          <ScrollView contentContainerStyle={styles.list}>
+          <ScrollView
+            contentContainerStyle={styles.list}
+            refreshControl={<BrandRefreshControl refreshing={refreshing} onRefresh={() => load(true)} />}
+          >
             {grouped.length === 0 ? (
               <EmptyState
                 icon="people-outline"

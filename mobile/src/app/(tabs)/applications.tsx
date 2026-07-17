@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, InitialAvatar } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorBanner } from '@/components/ui/error-banner';
+import { BrandRefreshControl } from '@/components/ui/refresh-control';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { Spacing } from '@/constants/theme';
@@ -67,8 +68,7 @@ export default function ApplicationsScreen() {
             data={applications}
             keyExtractor={(app) => app._id}
             contentContainerStyle={styles.list}
-            onRefresh={() => load(true)}
-            refreshing={refreshing}
+            refreshControl={<BrandRefreshControl refreshing={refreshing} onRefresh={() => load(true)} />}
             ListEmptyComponent={
               <EmptyState
                 icon="paper-plane-outline"

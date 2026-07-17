@@ -385,6 +385,29 @@ any API logic:
       already-installed `react-native-reanimated` (UI-thread).
 - [ ] Not yet verified on a device — same sandbox caveat as every phase;
       **needs a new `eas build` to reach installs** (all compiled-in).
+- [x] **Round 2 (2026-07-17, owner: "make it feel like a real mobile
+      app"):** global chrome + feedback layer, all JS-only (OTA-deliverable,
+      no new native deps):
+      - `components/ui/toast.tsx` — app-wide `ToastProvider`/`useToast()`:
+        pill toasts under the status bar with tone icons, success/error
+        notification haptics, auto-dismiss, tap to dismiss. Wired into
+        bookmark save/unsave (feed + job detail, which previously failed
+        *silently*), follow/unfollow, apply-decision + bulk decisions
+        (employer), logbook entry logged + entry approved, profile/photo/
+        resume saves (replacing the inline success banner).
+      - `components/ui/refresh-control.tsx` — `BrandRefreshControl`;
+        pull-to-refresh now exists on **all** list/scroll screens (it was
+        missing on logbook, both employer tabs, and all three school tabs)
+        and is brand-tinted everywhere instead of stock gray.
+      - Navigation chrome: detail-screen stack headers restyled (surface
+        color, no hairline/shadow, bold title, unlabeled back arrow),
+        tab bar floats (no top border, soft shadow), haptic tick on tab
+        switch, `expo-status-bar` mounted with `style="auto"`.
+      - Safe-area bug fixes: the job screen's Apply bar and the message
+        thread's composer sat under the gesture-nav pill on edge-to-edge
+        Androids — both now absorb `insets.bottom`.
+      - Perf fix: the jobs feed fired a redundant second fetch 350ms after
+        every mount (search-debounce effect running on first render).
 
 ### Phase 8 — Engagement features
 Follow-up batch on top of Phase 7, all approved by the owner in one go:

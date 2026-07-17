@@ -17,6 +17,7 @@ import { ErrorBanner } from '@/components/ui/error-banner';
 import { Field } from '@/components/ui/field';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/toast';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/api/AuthContext';
@@ -32,6 +33,7 @@ function initials(name: string) {
 
 export default function ProfileScreen() {
   const theme = useTheme();
+  const toast = useToast();
   const { user, logout } = useAuth();
 
   const [loading, setLoading] = useState(true);
@@ -49,7 +51,6 @@ export default function ProfileScreen() {
   const [savingText, setSavingText] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingResume, setUploadingResume] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -99,6 +100,7 @@ export default function ProfileScreen() {
       );
       await updateProfile({ avatarUrl: url });
       setAvatarUrl(url);
+      toast('Profile photo updated');
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not upload your photo.');
     } finally {
@@ -117,6 +119,7 @@ export default function ProfileScreen() {
       const { url } = await uploadFile({ uri: asset.uri, name: asset.name, type: asset.mimeType || 'application/pdf' }, 'resume');
       await updateProfile({ resumeLink: url });
       setResumeUrl(url);
+      toast('Resume uploaded');
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not upload your resume.');
     } finally {
@@ -127,10 +130,9 @@ export default function ProfileScreen() {
   const handleSave = async () => {
     setSavingText(true);
     setError('');
-    setSuccess(false);
     try {
       await updateProfile({ name, phone, university, faculty, course, level, preferredState, skills });
-      setSuccess(true);
+      toast('Profile updated');
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not save your profile. Check your connection.');
     } finally {
@@ -190,14 +192,6 @@ export default function ProfileScreen() {
             </LinearGradient>
           </Animated.View>
 
-          {success ? (
-            <Animated.View entering={FadeInDown.duration(250)} style={[styles.successBanner, { backgroundColor: theme.successSoft }]}>
-              <Ionicons name="checkmark-circle" size={18} color={theme.success} />
-              <ThemedText themeColor="success" type="small">
-                Profile updated successfully.
-              </ThemedText>
-            </Animated.View>
-          ) : null}
           {error ? <ErrorBanner message={error} /> : null}
 
           <Animated.View entering={FadeInDown.duration(350).delay(80)}>

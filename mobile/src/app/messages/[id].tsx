@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, StyleSheet, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
@@ -19,6 +20,7 @@ const POLL_INTERVAL_MS = 8000;
 
 export default function MessageThreadScreen() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
 
@@ -123,7 +125,16 @@ export default function MessageThreadScreen() {
 
         <Animated.View
           entering={FadeInUp.duration(300)}
-          style={[styles.inputRow, { borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
+          // The composer hugs the bottom edge, so it absorbs the gesture-nav
+          // inset itself -- same treatment as the job screen's apply bar.
+          style={[
+            styles.inputRow,
+            {
+              borderColor: theme.border,
+              backgroundColor: theme.backgroundElement,
+              paddingBottom: Spacing.three + insets.bottom,
+            },
+          ]}
         >
           <TextInput
             value={draft}

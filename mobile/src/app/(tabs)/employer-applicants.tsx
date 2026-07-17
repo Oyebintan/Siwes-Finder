@@ -13,9 +13,11 @@ import { Card, InitialAvatar } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorBanner } from '@/components/ui/error-banner';
 import { PressableScale } from '@/components/ui/pressable-scale';
+import { BrandRefreshControl } from '@/components/ui/refresh-control';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { SwipeRow } from '@/components/ui/swipe-row';
+import { useToast } from '@/components/ui/toast';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import {
@@ -37,17 +39,20 @@ const MAX_STAGGERED = 8;
 
 export default function EmployerApplicantsScreen() {
   const theme = useTheme();
+  const toast = useToast();
 
   const [applications, setApplications] = useState<EmployerApplication[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [actioningId, setActioningId] = useState<string | null>(null);
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkActing, setBulkActing] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (asRefresh = false) => {
+    if (asRefresh) setRefreshing(true);
+    else setLoading(true);
     setError('');
     try {
       setApplications(await listEmployerApplications());
@@ -55,6 +60,7 @@ export default function EmployerApplicantsScreen() {
       setError(err instanceof ApiError ? err.message : 'Could not load applicants. Check your connection.');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
@@ -69,6 +75,7 @@ export default function EmployerApplicantsScreen() {
     try {
       await updateApplicationStatus(id, status);
       setApplications((prev) => prev.map((a) => (a._id === id ? { ...a, status } : a)));
+      toast(status === 'Accepted' ? 'Applicant accepted 🎉' : 'Applicant marked as not selected');
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not update this application. Check your connection.');
     } finally {
@@ -93,6 +100,7 @@ export default function EmployerApplicantsScreen() {
       const ids = Array.from(selected);
       await bulkUpdateApplications(ids, status);
       setApplications((prev) => prev.map((a) => (ids.includes(a._id) ? { ...a, status } : a)));
+      toast(`${ids.length} application${ids.length === 1 ? '' : 's'} ${status === 'Accepted' ? 'accepted' : 'updated'}`);
       setSelected(new Set());
       setSelectMode(false);
     } catch (err) {
@@ -133,6 +141,7 @@ export default function EmployerApplicantsScreen() {
             data={applications}
             keyExtractor={(a) => a._id}
             contentContainerStyle={styles.list}
+            refreshControl={<BrandRefreshControl refreshing={refreshing} onRefresh={() => load(true)} />}
             ListEmptyComponent={
               <EmptyState
                 icon="people-outline"
