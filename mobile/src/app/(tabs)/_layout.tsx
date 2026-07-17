@@ -114,14 +114,14 @@ function BrandedLoading() {
 export default function TabsLayout() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, lock } = useAuth();
   const [seenOnboarding, setSeenOnboarding] = useState<boolean | null>(null);
 
   useEffect(() => {
     hasSeenOnboarding().then(setSeenOnboarding);
   }, []);
 
-  useIdleAutoLock({ user, logout });
+  useIdleAutoLock({ user, logout, lock });
 
   if (loading || seenOnboarding === null) {
     return <BrandedLoading />;

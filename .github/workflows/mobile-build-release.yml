@@ -152,4 +152,19 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/app/page.tsx
           git commit -m "chore(mobile): point Android download link at ${{ steps.tag.outputs.tag }} [skip ci]"
-          git push
+          # main moves fast (the PROGRESS.md bot commits on every push), so a
+          # plain `git push` here can lose a race and fail outright. Rebase
+          # onto whatever landed in between and retry a few times before
+          # giving up -- our own commit only touches the download-link line,
+          # so a rebase here is never going to produce a real conflict.
+          for attempt in 1 2 3 4 5; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push rejected (attempt $attempt) -- fetching and rebasing before retrying."
+            git fetch origin main
+            git rebase origin/main
+            sleep $((attempt * 2))
+          done
+          echo "::error::Could not push the download-link update after 5 attempts."
+          exit 1

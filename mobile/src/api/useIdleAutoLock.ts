@@ -1,23 +1,29 @@
 import { useEffect } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
+import { getBiometricEnabled, isBiometricHardwareReady } from './biometricSettings';
 import { clearBackgroundedMark, hasAutoLockTimedOut, markBackgrounded } from './autoLockSettings';
 import type { SessionUser } from './client';
 
 interface UseIdleAutoLockParams {
   user: SessionUser | null;
   logout: () => Promise<void>;
+  lock: () => void;
 }
 
 /**
- * Signs the user out once the app has sat backgrounded past their
- * configured auto-lock timeout (Settings -> Auto-lock, default 5 min).
+ * Once the app has sat backgrounded past the configured auto-lock timeout
+ * (Settings -> Auto-lock, default 5 min): if the user has biometric
+ * unlock enabled and the device still has a usable biometric/PIN
+ * credential, the app is *locked* (session kept, LockScreen overlay shown
+ * -- see app/_layout.tsx) rather than signed out. Otherwise it falls back
+ * to signing out entirely, same as before biometric unlock existed.
  * Elapsed time is checked on resume against a persisted timestamp rather
  * than a running timer, so it survives the JS thread being fully
  * suspended while backgrounded. The matching cold-boot check lives in
  * AuthContext, so a full app kill can't bypass this either.
  */
-export function useIdleAutoLock({ user, logout }: UseIdleAutoLockParams) {
+export function useIdleAutoLock({ user, logout, lock }: UseIdleAutoLockParams) {
   useEffect(() => {
     if (!user) return;
 
@@ -29,13 +35,24 @@ export function useIdleAutoLock({ user, logout }: UseIdleAutoLockParams) {
       if (next !== 'active') return;
 
       const timedOut = await hasAutoLockTimedOut();
+      if (!timedOut) {
+        await clearBackgroundedMark();
+        return;
+      }
+
+      const [biometricEnabled, hardwareReady] = await Promise.all([
+        getBiometricEnabled(),
+        isBiometricHardwareReady(),
+      ]);
       await clearBackgroundedMark();
-      if (timedOut) {
+      if (biometricEnabled && hardwareReady) {
+        lock();
+      } else {
         await logout();
       }
     };
 
     const subscription = AppState.addEventListener('change', handleChange);
     return () => subscription.remove();
-  }, [user, logout]);
+  }, [user, logout, lock]);
 }

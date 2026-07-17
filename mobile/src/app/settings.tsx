@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -11,6 +11,12 @@ import { Chip } from '@/components/ui/chip';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { AUTO_LOCK_OPTIONS, getAutoLockMinutes, setAutoLockMinutes, type AutoLockMinutes } from '@/api/autoLockSettings';
+import {
+  authenticateWithBiometrics,
+  getBiometricEnabled,
+  isBiometricHardwareReady,
+  setBiometricEnabled,
+} from '@/api/biometricSettings';
 import { useThemeMode } from '@/api/ThemeModeContext';
 import { useToast } from '@/components/ui/toast';
 
@@ -55,19 +61,51 @@ function SectionCard({
 }
 
 export default function SettingsScreen() {
+  const theme = useTheme();
   const { mode, setMode } = useThemeMode();
   const toast = useToast();
 
   const [autoLockMinutes, setAutoLockMinutesState] = useState<AutoLockMinutes | null>(null);
+  const [biometricSupported, setBiometricSupported] = useState<boolean | null>(null);
+  const [biometricEnabled, setBiometricEnabledState] = useState(false);
+  const [biometricBusy, setBiometricBusy] = useState(false);
 
   useEffect(() => {
     getAutoLockMinutes().then(setAutoLockMinutesState);
+    isBiometricHardwareReady().then(setBiometricSupported);
+    getBiometricEnabled().then(setBiometricEnabledState);
   }, []);
 
   const handleAutoLockChange = async (minutes: AutoLockMinutes) => {
     setAutoLockMinutesState(minutes);
     await setAutoLockMinutes(minutes);
     toast(minutes === 0 ? 'Auto-lock turned off' : `Auto-lock set to ${minutes} min`);
+  };
+
+  const handleBiometricToggle = async (next: boolean) => {
+    if (!next) {
+      setBiometricEnabledState(false);
+      await setBiometricEnabled(false);
+      toast('Biometric unlock turned off');
+      return;
+    }
+
+    // Confirm biometrics actually work on this device before turning it
+    // on -- otherwise a stale enrollment/permission would lock the user
+    // out with no way to unlock except "use password instead" every time.
+    setBiometricBusy(true);
+    try {
+      const verified = await authenticateWithBiometrics();
+      if (verified) {
+        setBiometricEnabledState(true);
+        await setBiometricEnabled(true);
+        toast('Biometric unlock turned on');
+      } else {
+        toast("Couldn't verify it's you — biometric unlock stays off.", 'error');
+      }
+    } finally {
+      setBiometricBusy(false);
+    }
   };
 
   return (
@@ -105,10 +143,42 @@ export default function SettingsScreen() {
               ))}
             </View>
             <ThemedText type="small" themeColor="textSecondary" style={styles.footnote}>
-              You&apos;ll sign back in with your password. Face ID / fingerprint unlock is coming in a future
-              update.
+              {biometricEnabled
+                ? 'Unlock with Face ID, fingerprint, or your device PIN when this triggers.'
+                : "You'll sign back in with your password when this triggers."}
             </ThemedText>
           </SectionCard>
+
+          {biometricSupported ? (
+            <SectionCard
+              icon="finger-print-outline"
+              title="Biometric unlock"
+              description="Skip re-typing your password after an auto-lock -- use Face ID, fingerprint, or your device PIN instead."
+              delay={180}
+            >
+              <View style={styles.toggleRow}>
+                <ThemedText type="small">Unlock with Face ID / fingerprint</ThemedText>
+                <Switch
+                  value={biometricEnabled}
+                  onValueChange={handleBiometricToggle}
+                  disabled={biometricBusy}
+                  trackColor={{ true: theme.primary, false: theme.backgroundSelected }}
+                  thumbColor="#ffffff"
+                />
+              </View>
+            </SectionCard>
+          ) : biometricSupported === false ? (
+            <SectionCard
+              icon="finger-print-outline"
+              title="Biometric unlock"
+              description="Not available -- this device has no Face ID, fingerprint, or PIN set up yet."
+              delay={180}
+            >
+              <ThemedText type="small" themeColor="textSecondary">
+                Set up a screen lock (PIN, pattern, or biometric) in your device settings to enable this.
+              </ThemedText>
+            </SectionCard>
+          ) : null}
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -149,5 +219,10 @@ const styles = StyleSheet.create({
   },
   footnote: {
     lineHeight: 18,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
 });
