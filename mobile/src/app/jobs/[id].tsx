@@ -191,6 +191,7 @@ export default function JobDetailScreen() {
         <Animated.View entering={FadeInDown.duration(320).delay(70)} style={styles.badgeRow}>
           <Badge label={job.type} tone="neutral" />
           <Badge label={job.duration} tone="neutral" icon="time-outline" />
+          {job.department ? <Badge label={job.department} tone="primary" icon="school-outline" /> : null}
           {job.stipend ? <Badge label={job.stipend} tone="success" icon="cash-outline" /> : null}
         </Animated.View>
 

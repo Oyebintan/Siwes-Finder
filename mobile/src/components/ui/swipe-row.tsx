@@ -1,8 +1,8 @@
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import Swipeable, { type SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
+import Swipeable, { SwipeDirection, type SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
 
 import { ThemedText } from '@/components/themed-text';
 import { FontFamily, Radius, Spacing } from '@/constants/theme';
@@ -25,14 +25,25 @@ const ACTION_WIDTH = 84;
 
 /**
  * List row with swipe-to-reveal actions (swipe left → buttons on the
- * right). Tapping an action fires it, ticks a haptic, and snaps the row
- * shut. Every action is also expected to be reachable by a visible
- * button elsewhere — swiping is a shortcut, never the only path.
+ * right). Tapping a revealed action fires it, ticks a haptic, and snaps
+ * the row shut. Every action is also expected to be reachable by a
+ * visible button elsewhere — swiping is a shortcut, never the only path.
+ *
+ * When there's exactly one action (e.g. the jobs feed's bookmark toggle),
+ * completing the swipe itself fires that action immediately -- no extra
+ * tap on the revealed button needed -- and the row springs back closed
+ * right after, the same "swipe to archive" feel as Mail apps. Rows with
+ * multiple actions (e.g. employer accept/reject) keep the safer
+ * reveal-then-tap flow, since auto-firing would be ambiguous there.
  */
 export function SwipeRow({ children, actions }: SwipeRowProps) {
+  const ref = useRef<SwipeableMethods>(null);
+
   if (actions.length === 0) {
     return <>{children}</>;
   }
+
+  const singleAction = actions.length === 1 ? actions[0] : null;
 
   const renderRightActions = (_progress: unknown, _translation: unknown, methods: SwipeableMethods) => (
     <View style={styles.actionsRow}>
@@ -58,7 +69,19 @@ export function SwipeRow({ children, actions }: SwipeRowProps) {
   );
 
   return (
-    <Swipeable friction={2} rightThreshold={36} overshootRight={false} renderRightActions={renderRightActions}>
+    <Swipeable
+      ref={ref}
+      friction={2}
+      rightThreshold={36}
+      overshootRight={false}
+      renderRightActions={renderRightActions}
+      onSwipeableOpen={(direction) => {
+        if (!singleAction || direction !== SwipeDirection.RIGHT) return;
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+        singleAction.onPress();
+        ref.current?.close();
+      }}
+    >
       {children}
     </Swipeable>
   );

@@ -10,6 +10,7 @@ import { sendNewJobAlertEmail } from '@/lib/email';
 import { computeMatchScore } from '@/lib/match';
 import { isEmailVerificationRequired } from '@/lib/emailVerification';
 import { escapeRegex } from '@/lib/escapeRegex';
+import { DEPARTMENTS } from '@/lib/departments';
 
 type JobDoc = { toObject?: () => Record<string, unknown> };
 function plainJob(job: JobDoc) {
@@ -48,6 +49,7 @@ export async function POST(req: Request) {
       location,
       type,
       duration,
+      department,
       requirements,
       description,
       stipend,
@@ -60,6 +62,15 @@ export async function POST(req: Request) {
 
     if (!title || !location || !type || !duration || !description) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
+    }
+
+    // The department drives the default (unsearched) student feed scoping,
+    // so it -- like at least one required skill -- is compulsory, not optional.
+    if (!department || !DEPARTMENTS.includes(department)) {
+      return NextResponse.json({ error: 'Please choose a valid department for this opportunity.' }, { status: 400 });
+    }
+    if (!Array.isArray(requirements) || requirements.filter((r: unknown) => typeof r === 'string' && r.trim()).length === 0) {
+      return NextResponse.json({ error: 'Please list at least one required skill.' }, { status: 400 });
     }
 
     // Validate the chosen application method has the data it needs.
@@ -99,6 +110,7 @@ export async function POST(req: Request) {
       location,
       type,
       duration,
+      department,
       requirements: Array.isArray(requirements) ? requirements : [],
       description,
       stipend,
@@ -184,8 +196,13 @@ export async function GET(req: Request) {
     // student hasn't listed any skills yet, since a 0% score there would be
     // meaningless rather than informative.
     let matchProfile: { skills?: string[]; preferredState?: string } | null = null;
+    let studentRecord: { skills?: string[]; preferredState?: string; courseOfStudy?: string } | null = null;
     if (session.user.role === 'student') {
-      const studentRecord = await User.findById(session.user.id).select('skills preferredState');
+      studentRecord = (await User.findById(session.user.id).select('skills preferredState courseOfStudy')) as {
+        skills?: string[];
+        preferredState?: string;
+        courseOfStudy?: string;
+      } | null;
       if (studentRecord?.skills && studentRecord.skills.length > 0) {
         matchProfile = { skills: studentRecord.skills, preferredState: studentRecord.preferredState };
       }
@@ -232,6 +249,22 @@ export async function GET(req: Request) {
           { employerId: { $in: matchingEmployerIds } },
         ],
       });
+    } else if (studentRecord) {
+      // No search query: the default feed scopes to opportunities relevant
+      // to this student -- their department, or a job whose required
+      // skills overlap with theirs -- rather than every open placement on
+      // the platform. Typing in the search bar (the `q` branch above)
+      // intentionally bypasses this and searches everything. A student who
+      // hasn't set a department or any skills yet sees the unscoped feed,
+      // same as before this filter existed.
+      const department = (studentRecord.courseOfStudy || '').trim();
+      const skills = (studentRecord.skills || []).map((s) => s.trim()).filter(Boolean);
+      const scopeOr: Record<string, unknown>[] = [];
+      if (department) scopeOr.push({ department: new RegExp(`^${escapeRegex(department)}$`, 'i') });
+      if (skills.length > 0) {
+        scopeOr.push({ requirements: { $in: skills.map((s) => new RegExp(escapeRegex(s), 'i')) } });
+      }
+      if (scopeOr.length > 0) conditions.push({ $or: scopeOr });
     }
 
     const filter: Record<string, unknown> = {

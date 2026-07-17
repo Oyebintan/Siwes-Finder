@@ -10,6 +10,7 @@ type Job = {
   location: string;
   type: string;
   duration: string;
+  department?: string;
   requirements?: string[];
   employerId?: { name?: string; companyName?: string; industry?: string; avatarUrl?: string };
   matchScore?: number;
@@ -111,7 +112,14 @@ export default function BrowseOpportunities() {
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-      <h1 className="font-display font-extrabold text-[26px] tracking-[-0.02em]">Browse opportunities</h1>
+      <div>
+        <h1 className="font-display font-extrabold text-[26px] tracking-[-0.02em]">Browse opportunities</h1>
+        {!debouncedQ && !savedOnly && (
+          <div className="text-sm text-muted mt-1">
+            Showing opportunities from your department and skills by default — search above for everything.
+          </div>
+        )}
+      </div>
 
       <div className="flex gap-3 flex-wrap">
         <div className="flex-1 min-w-[220px] flex items-center gap-2.5 bg-surface-1 border-[1.5px] border-surface-border rounded-[10px] px-4 py-3">
@@ -216,6 +224,9 @@ export default function BrowseOpportunities() {
                 </button>
               </div>
               <div className="flex gap-2 flex-wrap mb-3.5">
+                {job.department && (
+                  <span className="text-[11.5px] px-2.5 py-1 rounded-full bg-background text-muted">{job.department}</span>
+                )}
                 {(job.requirements || []).slice(0, 1).map((r) => (
                   <span key={r} className="text-[11.5px] px-2.5 py-1 rounded-full bg-background text-muted">{r}</span>
                 ))}

@@ -1,0 +1,45 @@
+// Canonical list of academic departments, shared by employers posting a
+// job and students setting up their profile. Exact string matches between
+// a job's `department` and a student's `courseOfStudy` drive the default
+// (unsearched) feed scoping in GET /api/jobs -- see src/app/api/jobs/route.ts.
+export const DEPARTMENTS = [
+  'Computer Science',
+  'Software Engineering',
+  'Information Technology',
+  'Cybersecurity',
+  'Electrical/Electronic Engineering',
+  'Mechanical Engineering',
+  'Civil Engineering',
+  'Chemical Engineering',
+  'Petroleum Engineering',
+  'Mechatronics Engineering',
+  'Architecture',
+  'Estate Management',
+  'Quantity Surveying',
+  'Building Technology',
+  'Urban and Regional Planning',
+  'Accounting',
+  'Banking and Finance',
+  'Business Administration',
+  'Marketing',
+  'Economics',
+  'Actuarial Science',
+  'Mass Communication',
+  'Law',
+  'Medicine and Surgery',
+  'Nursing Science',
+  'Pharmacy',
+  'Public Health',
+  'Biochemistry',
+  'Microbiology',
+  'Industrial Chemistry',
+  'Statistics',
+  'Mathematics',
+  'Physics',
+  'Agricultural Science',
+  'Food Science and Technology',
+  'Human Resource Management',
+  'Other',
+] as const;
+
+export type Department = (typeof DEPARTMENTS)[number];

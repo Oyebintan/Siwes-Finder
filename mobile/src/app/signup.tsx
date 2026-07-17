@@ -57,7 +57,11 @@ export default function SignupScreen() {
       if (!sessionUser.emailVerified) {
         router.replace('/verify-email');
       } else {
-        router.replace('/');
+        // Only students get the academic-details wizard right after
+        // signup, same as the web (employer/school go straight to their
+        // dashboard -- their onboarding is company/institution
+        // verification, handled separately on the website).
+        router.replace(sessionUser.role === 'student' ? '/profile-setup' : '/');
       }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not reach the server. Check your connection.');

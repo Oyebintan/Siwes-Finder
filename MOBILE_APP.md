@@ -460,6 +460,15 @@ receiving updates).
       but stop receiving further updates until reinstalled. Same PR
       raised the build workflow's EAS wait cap 40 → 75 minutes (run #4
       timed out on a healthy build stuck in the free-tier queue).
+      **Build run #6 succeeded** (APK built, `v1.2.0-android-ci6` GitHub
+      Release published) but its last step — auto-committing the
+      website's updated download link — lost a `git push` race against
+      the unrelated `PROGRESS.md` bot commit landing on `main` at the same
+      moment, so the site kept pointing at the old `v1.0.0-android-ci5`
+      asset. Fixed by hand with the same one-line `sed` the workflow
+      itself runs. The workflow step is otherwise unchanged and will
+      likely race again occasionally — worth a follow-up (e.g. `git pull
+      --rebase` before the commit, or a retry loop) if it keeps happening.
 
 ### Phase 8 — Engagement features
 Follow-up batch on top of Phase 7, all approved by the owner in one go:
@@ -527,6 +536,68 @@ Mobile side:
       to the screen above.
 - [ ] This is OTA-eligible (no native code) — publish with `eas update`,
       no new build required for existing installs once this merges.
+
+### Phase 10 — Dashboard, department-aware feed, idle-lock (2026-07-17)
+Owner feedback batch spanning both web and mobile (see `PROJECT_SCOPE.md`'s
+"Default feed scoping" for the shared backend half). Mobile-specific parts:
+- [x] **Student Dashboard landing tab** — new `(tabs)/dashboard.tsx`
+      (progress banner, KPI row, quick actions, recommended jobs, recent
+      applications — mirrors the web's `/student/dashboard`), now the
+      first student tab (title "Home"). The old `(tabs)/index.tsx` job feed
+      moved verbatim to a new `(tabs)/browse-jobs.tsx` (second tab, title
+      "Jobs"); `index.tsx` itself is now a pure role dispatcher (`/` →
+      `/dashboard` for students, unchanged employer/school redirects),
+      always hidden from the tab bar (`options: { href: null }`)
+      regardless of role, simplifying the old per-role conditional.
+- [x] **Post-signup profile-setup wizard** — new `profile-setup.tsx`,
+      a 4-step flow (academic details incl. department, SIWES duration,
+      skills, preferred location) ported from the web's `/profile-setup`.
+      `signup.tsx` and `verify-email.tsx` now route students here after
+      signup/verification instead of straight into the tabs (mirrors the
+      web; employer/school still go straight in — their onboarding is
+      company/institution verification, web-only).
+- [x] **Manual light/dark theme override** — `ThemeModeContext` (wraps
+      `useColorScheme()`, persisted via AsyncStorage) plus a new
+      `settings.tsx` screen (Appearance: System/Light/Dark chips) reachable
+      from a gear icon on the Profile/Account hero. `useTheme()` now reads
+      from the context instead of the raw system value — every existing
+      call site unchanged.
+- [x] **Swipe-to-save auto-fires** — `ui/swipe-row.tsx`: a single-action
+      row (the Jobs feed's save/unsave swipe) now fires on
+      `onSwipeableOpen` and auto-closes, instead of requiring a second tap
+      on the revealed button. Multi-action rows (employer accept/reject)
+      are unchanged — auto-firing there would be ambiguous.
+- [x] **Idle-timeout auto-lock** — `autoLockSettings.ts` (Never/1/5/15/30
+      min, chip picker in the same Settings screen) + `useIdleAutoLock`
+      (`AppState`-driven). Persisted-timestamp based rather than an
+      in-memory timer, specifically so it survives a full OS-level app
+      kill: `markBackgrounded()`/`hasAutoLockTimedOut()` are checked both
+      on `AppState` resume and on `AuthContext`'s cold-boot token-restore
+      effect. **Biometric/PIN quick-unlock was explicitly deferred** — it
+      needs `expo-local-authentication` (a new native dependency), which
+      would trigger a second concurrent EAS build via
+      `mobile-build-release.yml`'s path filter (`mobile/package.json`
+      changing) while build run #6 was still in flight; scope for a
+      dedicated follow-up PR once native deps are safe to add again.
+- [x] **Jobs feed pagination** — `browse-jobs.tsx` now fetches
+      `PAGE_SIZE = 12` at a time via `onEndReached` (infinite scroll, with
+      a footer spinner) instead of one flat `limit: 30` fetch — the same
+      underlying `GET /api/jobs?page=&limit=` the web's numbered
+      pagination already used.
+- [x] Job cards (feed, detail, dashboard) show a department badge
+      (`Ionicons school-outline`) when the job has one; the feed header
+      shows a one-line note when the default department/skill scoping is
+      active (hidden once the user searches or is viewing Saved).
+- [x] Full profile screen and the wizard above both render "Department /
+      course of study" as a `Chip` list from `constants/departments.ts`
+      (kept in exact sync with the web's `src/lib/departments.ts`) instead
+      of a free-text field, so new/edited profiles match the department
+      scoping exactly.
+- [ ] Not yet verified on a device — same sandbox caveat as every phase.
+      **All of the above is OTA-eligible** (no new native dependency, no
+      `app.json`/`eas.json` change) — publishes automatically via
+      `mobile-ota-update.yml` on merge to `main`, reaching any install
+      already on runtime 1.2.0 without a new APK.
 
 ## Over-the-air updates (EAS Update) — read this before cutting a build
 

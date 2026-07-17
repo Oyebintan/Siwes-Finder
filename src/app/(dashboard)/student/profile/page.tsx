@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { Loader2, FileText, UploadCloud, X, Plus } from 'lucide-react';
 import AvatarUpload from '@/components/AvatarUpload';
+import { DEPARTMENTS } from '@/lib/departments';
 
 const SKILL_OPTIONS = ['React', 'Python', 'SQL', 'Figma', 'Excel', 'Node.js', 'Data Analysis', 'Networking'];
 const STATES = ['Lagos', 'Abuja (FCT)', 'Rivers', 'Oyo', 'Kano', 'Any state'];
@@ -166,8 +167,11 @@ export default function StudentProfile() {
           <FieldGroup label="Faculty">
             <input value={faculty} onChange={(e) => setFaculty(e.target.value)} placeholder="Faculty of Science" className="w-full px-3.5 py-[11px] rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-primary-500" />
           </FieldGroup>
-          <FieldGroup label="Course of study">
-            <input value={course} onChange={(e) => setCourse(e.target.value)} placeholder="Computer Science" className="w-full px-3.5 py-[11px] rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-primary-500" />
+          <FieldGroup label="Department / course of study">
+            <select value={course} onChange={(e) => setCourse(e.target.value)} className="w-full px-3.5 py-[11px] rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-primary-500">
+              <option value="" disabled>Select your department</option>
+              {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+            </select>
           </FieldGroup>
         </div>
       </div>

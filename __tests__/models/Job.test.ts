@@ -17,6 +17,7 @@ describe('Job model', () => {
         location: expect.anything(),
         type: expect.anything(),
         duration: expect.anything(),
+        department: expect.anything(),
         description: expect.anything(),
       },
     });
@@ -29,6 +30,7 @@ describe('Job model', () => {
       location: 'Lagos',
       type: 'Remote',
       duration: '6 Months',
+      department: 'Computer Science',
       requirements: ['React'],
       description: 'Build things.',
     });
@@ -44,6 +46,7 @@ describe('Job model', () => {
       location: 'Lagos',
       type: 'Space',
       duration: '6 Months',
+      department: 'Computer Science',
       requirements: [],
       description: 'desc',
     });
@@ -59,6 +62,7 @@ describe('Job model', () => {
       location: 'Lagos',
       type: 'On-site',
       duration: '6 Months',
+      department: 'Computer Science',
       requirements: [],
       description: 'desc',
       applicationMethod: 'carrier-pigeon',

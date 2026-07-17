@@ -109,6 +109,9 @@ export type Job = {
   location: string;
   type: 'On-site' | 'Remote' | 'Hybrid';
   duration: string;
+  // Optional in the type even though new postings require it server-side --
+  // jobs created before this field existed may still lack it in the DB.
+  department?: string;
   requirements: string[];
   description: string;
   stipend?: string;

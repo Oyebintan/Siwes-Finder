@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { DEPARTMENTS } from '@/lib/departments';
 
 const LEVELS = ['300 Level', '400 Level', 'HND II'];
 const DURATIONS = ['4 months', '6 months', '12 months'];
@@ -138,8 +139,12 @@ export default function ProfileSetup() {
               <Field label="School">
                 <input value={university} onChange={(e) => setUniversity(e.target.value)} placeholder="University of Lagos" className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all" />
               </Field>
-              <Field label="Course of study">
-                <input value={course} onChange={(e) => setCourse(e.target.value)} placeholder="Computer Science" className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all" />
+              <Field label="Department / course of study">
+                <select value={course} onChange={(e) => setCourse(e.target.value)} className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/10 transition-all">
+                  <option value="" disabled>Select your department</option>
+                  {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+                <p className="text-[12.5px] text-muted mt-1.5">We use this to show you opportunities from your own department by default.</p>
               </Field>
               <Field label="Level">
                 <select value={level} onChange={(e) => setLevel(e.target.value)} className="w-full px-3.5 py-3 rounded-lg border-[1.5px] border-surface-border bg-surface-1 text-[16px] focus:outline-none focus:border-primary-500 transition-all">

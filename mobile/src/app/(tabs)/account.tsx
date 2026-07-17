@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -9,6 +10,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FontFamily, Radius, Spacing } from '@/constants/theme';
@@ -62,6 +64,15 @@ export default function AccountScreen() {
               end={{ x: 1, y: 1 }}
               style={styles.hero}
             >
+              <PressableScale
+                onPress={() => router.push('/settings')}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel="Settings"
+                style={styles.settingsButton}
+              >
+                <Ionicons name="settings-outline" size={19} color="#ffffff" />
+              </PressableScale>
               <View style={styles.heroAvatar}>
                 <ThemedText style={styles.heroInitials}>{initials(user?.name || '?')}</ThemedText>
               </View>
@@ -114,6 +125,17 @@ const styles = StyleSheet.create({
     padding: Spacing.five,
     borderRadius: Radius.xl,
     marginHorizontal: Spacing.four,
+  },
+  settingsButton: {
+    position: 'absolute',
+    top: Spacing.three,
+    right: Spacing.three,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.18)',
   },
   heroAvatar: {
     width: 72,
