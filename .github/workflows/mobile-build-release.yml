@@ -152,4 +152,17 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/app/page.tsx
           git commit -m "chore(mobile): point Android download link at ${{ steps.tag.outputs.tag }} [skip ci]"
-          git push
+
+          # The build above can take well over an hour, so main has often
+          # moved (e.g. the progress-log workflow) by the time we get here --
+          # a plain `git push` was seeing non-fast-forward rejections
+          # (run #6). Rebase onto the latest main and retry a few times to
+          # absorb any further pushes that land during the rebase+push race.
+          for i in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main && git push origin HEAD:main && exit 0
+            git rebase --abort 2>/dev/null || true
+            sleep $((i * 5))
+          done
+          echo "::error::Could not push the download-link update after 5 attempts."
+          exit 1
