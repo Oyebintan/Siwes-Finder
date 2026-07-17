@@ -1,7 +1,7 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useScrollToTop } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
@@ -15,6 +15,7 @@ import { BrandRefreshControl } from '@/components/ui/refresh-control';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { Spacing } from '@/constants/theme';
+import { useTabBarInset } from '@/hooks/use-tab-bar-inset';
 import { ApiError, listApplications, type Application } from '@/api/client';
 
 const STATUS_COPY: Record<Application['status'], { label: string; tone: BadgeTone }> = {
@@ -27,6 +28,10 @@ const STAGGER_MS = 55;
 const MAX_STAGGERED = 8;
 
 export default function ApplicationsScreen() {
+  const tabBarInset = useTabBarInset();
+  // Re-pressing the active tab scrolls this screen back to the top.
+  const scrollTopRef = useRef<FlatList<Application>>(null);
+  useScrollToTop(scrollTopRef);
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -59,7 +64,7 @@ export default function ApplicationsScreen() {
       <SafeAreaView style={styles.flex} edges={['top']}>
         <ScreenHeader title="Applications" subtitle="Track every placement you've applied to" />
 
-        {error ? <ErrorBanner message={error} style={styles.errorBanner} /> : null}
+        {error ? <ErrorBanner message={error} onRetry={() => load()} style={styles.errorBanner} /> : null}
 
         {loading ? (
           <SkeletonList />
@@ -67,7 +72,8 @@ export default function ApplicationsScreen() {
           <FlatList
             data={applications}
             keyExtractor={(app) => app._id}
-            contentContainerStyle={styles.list}
+            ref={scrollTopRef}
+            contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
             refreshControl={<BrandRefreshControl refreshing={refreshing} onRefresh={() => load(true)} />}
             ListEmptyComponent={
               <EmptyState

@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { ThemedText } from '@/components/themed-text';
-import { Radius } from '@/constants/theme';
+import { FontFamily, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 interface BrandLogoProps {
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
   wordmark: {
     fontSize: 22,
     lineHeight: 28,
-    fontWeight: '800',
+    fontFamily: FontFamily.extrabold,
     letterSpacing: -0.5,
   },
 });

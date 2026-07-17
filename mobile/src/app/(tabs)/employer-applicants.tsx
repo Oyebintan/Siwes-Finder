@@ -1,7 +1,7 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useScrollToTop } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown, FadeInUp, FadeOut } from 'react-native-reanimated';
 
@@ -19,6 +19,7 @@ import { SkeletonList } from '@/components/ui/skeleton';
 import { SwipeRow } from '@/components/ui/swipe-row';
 import { useToast } from '@/components/ui/toast';
 import { Spacing } from '@/constants/theme';
+import { useTabBarInset } from '@/hooks/use-tab-bar-inset';
 import { useTheme } from '@/hooks/use-theme';
 import {
   ApiError,
@@ -38,6 +39,10 @@ const STAGGER_MS = 55;
 const MAX_STAGGERED = 8;
 
 export default function EmployerApplicantsScreen() {
+  const tabBarInset = useTabBarInset();
+  // Re-pressing the active tab scrolls this screen back to the top.
+  const scrollTopRef = useRef<FlatList<EmployerApplication>>(null);
+  useScrollToTop(scrollTopRef);
   const theme = useTheme();
   const toast = useToast();
 
@@ -132,7 +137,7 @@ export default function EmployerApplicantsScreen() {
           }
         />
 
-        {error ? <ErrorBanner message={error} style={styles.errorBanner} /> : null}
+        {error ? <ErrorBanner message={error} onRetry={() => load()} style={styles.errorBanner} /> : null}
 
         {loading ? (
           <SkeletonList />
@@ -140,7 +145,8 @@ export default function EmployerApplicantsScreen() {
           <FlatList
             data={applications}
             keyExtractor={(a) => a._id}
-            contentContainerStyle={styles.list}
+            ref={scrollTopRef}
+            contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
             refreshControl={<BrandRefreshControl refreshing={refreshing} onRefresh={() => load(true)} />}
             ListEmptyComponent={
               <EmptyState
@@ -242,7 +248,11 @@ export default function EmployerApplicantsScreen() {
           <Animated.View
             entering={FadeInUp.duration(250)}
             exiting={FadeOut.duration(150)}
-            style={[styles.bulkBar, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
+            // Sits above the floating tab bar rather than underneath it.
+            style={[
+              styles.bulkBar,
+              { backgroundColor: theme.backgroundElement, borderColor: theme.border, marginBottom: tabBarInset },
+            ]}
           >
             <ThemedText type="smallBold">{selected.size} selected</ThemedText>
             <View style={styles.bulkActions}>

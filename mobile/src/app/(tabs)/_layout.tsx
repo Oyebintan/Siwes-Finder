@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Platform, StyleSheet, View, type ColorValue } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Redirect, router, Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,17 +16,19 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BrandLogo } from '@/components/ui/brand-logo';
 import { Button } from '@/components/ui/button';
+import { TabBarIcon } from '@/components/ui/tab-bar-icon';
 import { VerifyEmailBanner } from '@/components/ui/verify-email-banner';
-import { Spacing } from '@/constants/theme';
+import { Radius, Spacing, TabBar } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/api/AuthContext';
+import { confirmSignOut } from '@/api/confirmSignOut';
 import { hasSeenOnboarding } from '@/api/onboardingFlag';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
 function tabIcon(focused: IconName, unfocused: IconName) {
-  return function TabIcon({ color, focused: isFocused }: { color: ColorValue; focused: boolean }) {
-    return <Ionicons name={isFocused ? focused : unfocused} size={23} color={color} />;
+  return function TabIconSlot({ focused: isFocused }: { focused: boolean }) {
+    return <TabBarIcon focused={isFocused} focusedIcon={focused} unfocusedIcon={unfocused} />;
   };
 }
 
@@ -104,37 +106,44 @@ export default function TabsLayout() {
           label="Sign out"
           variant="secondary"
           icon="log-out-outline"
-          onPress={async () => {
-            await logout();
-            router.replace('/login');
-          }}
+          onPress={() =>
+            confirmSignOut(async () => {
+              await logout();
+              router.replace('/login');
+            })
+          }
         />
       </ThemedView>
     );
   }
 
+  // Floating glass pill: icon-only, detached from the screen edges, content
+  // scrolls underneath (screens pad their bottom via useTabBarInset()). The
+  // active tab sits in a filled brand pill (see ui/tab-bar-icon.tsx).
   const tabBarScreenOptions = {
     headerShown: false,
     // Subtle horizontal shift between tab scenes instead of a hard cut.
     animation: 'shift' as const,
+    tabBarShowLabel: false,
+    tabBarHideOnKeyboard: true,
     tabBarActiveTintColor: theme.primary,
     tabBarInactiveTintColor: theme.textSecondary,
-    tabBarLabelStyle: styles.tabLabel,
+    tabBarItemStyle: styles.tabItem,
     tabBarStyle: {
-      backgroundColor: theme.backgroundElement,
-      // Floating-surface look: no hairline, a soft upward shadow instead.
+      position: 'absolute' as const,
+      left: Spacing.four,
+      right: Spacing.four,
+      bottom: insets.bottom + TabBar.gap,
+      height: TabBar.height,
+      borderRadius: Radius.full,
       borderTopWidth: 0,
+      // Slightly translucent so scrolled content glows through the glass.
+      backgroundColor: `${theme.backgroundElement}F0`,
       shadowColor: '#0b1220',
-      shadowOffset: { width: 0, height: -4 },
-      shadowOpacity: 0.08,
-      shadowRadius: 12,
-      elevation: 12,
-      // On Android the bar sits flush with the screen edge, so gesture-nav
-      // insets have to be added by hand or the bar hides behind the system
-      // pill on edge-to-edge devices.
-      ...(Platform.OS === 'android'
-        ? { height: 62 + insets.bottom, paddingTop: 6, paddingBottom: 8 + insets.bottom }
-        : {}),
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.16,
+      shadowRadius: 24,
+      elevation: 16,
     },
   };
 
@@ -237,8 +246,9 @@ const styles = StyleSheet.create({
   holdingCopy: {
     maxWidth: 320,
   },
-  tabLabel: {
-    fontSize: 11,
-    fontWeight: '600',
+  tabItem: {
+    // Center the icon pills vertically inside the 64px bar.
+    height: TabBar.height,
+    paddingVertical: (TabBar.height - 40) / 2,
   },
 });

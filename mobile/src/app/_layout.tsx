@@ -1,12 +1,20 @@
+import { useEffect } from 'react';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
 
 import { AuthProvider } from '@/api/AuthContext';
 import { useNotificationDeepLinks } from '@/api/notificationRouting';
+import { OfflineBanner } from '@/components/ui/offline-banner';
 import { ToastProvider } from '@/components/ui/toast';
-import { Colors } from '@/constants/theme';
+import { FontFamily, Colors } from '@/constants/theme';
+
+// Hold the native splash until the brand font is ready, so the first
+// painted frame is already in Manrope instead of flashing system font.
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 // (tabs) holds the authenticated, role-gated experience (see
 // (tabs)/_layout.tsx). login, signup, forgot-password, onboarding,
@@ -16,7 +24,23 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   useNotificationDeepLinks();
 
+  const [fontsLoaded] = useFonts({
+    Manrope_400Regular: require('../../assets/fonts/Manrope_400Regular.ttf'),
+    Manrope_500Medium: require('../../assets/fonts/Manrope_500Medium.ttf'),
+    Manrope_600SemiBold: require('../../assets/fonts/Manrope_600SemiBold.ttf'),
+    Manrope_700Bold: require('../../assets/fonts/Manrope_700Bold.ttf'),
+    Manrope_800ExtraBold: require('../../assets/fonts/Manrope_800ExtraBold.ttf'),
+  });
+
+  useEffect(() => {
+    if (fontsLoaded) SplashScreen.hideAsync().catch(() => {});
+  }, [fontsLoaded]);
+
   const palette = colorScheme === 'dark' ? Colors.dark : Colors.light;
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
     <GestureHandlerRootView style={styles.flex}>
@@ -47,6 +71,7 @@ export default function RootLayout() {
               <Stack.Screen name="school/students/[id]" options={{ headerShown: true, title: 'Student' }} />
               <Stack.Screen name="messages/[id]" options={{ headerShown: true, title: 'Messages' }} />
             </Stack>
+            <OfflineBanner />
             <StatusBar style="auto" />
           </ToastProvider>
         </AuthProvider>
@@ -60,7 +85,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
-    fontWeight: '800',
+    fontFamily: FontFamily.extrabold,
     fontSize: 17,
   },
 });

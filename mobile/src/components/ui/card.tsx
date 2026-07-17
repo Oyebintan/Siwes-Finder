@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Platform, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { Radius, Spacing } from '@/constants/theme';
+import { FontFamily, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { PressableScale } from './pressable-scale';
 
@@ -48,7 +48,7 @@ export function InitialAvatar({ name, size = 44 }: { name: string; size?: number
         { width: size, height: size, borderRadius: size / 2, backgroundColor: theme.primarySoft },
       ]}
     >
-      <Text style={{ color: theme.primary, fontWeight: '800', fontSize: size * 0.42 }} allowFontScaling={false}>
+      <Text style={{ color: theme.primary, fontFamily: FontFamily.extrabold, fontSize: size * 0.42 }} allowFontScaling={false}>
         {initial}
       </Text>
     </View>

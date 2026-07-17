@@ -5,7 +5,7 @@ import * as Haptics from 'expo-haptics';
 import Swipeable, { type SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
 
 import { ThemedText } from '@/components/themed-text';
-import { Radius, Spacing } from '@/constants/theme';
+import { FontFamily, Radius, Spacing } from '@/constants/theme';
 
 export interface SwipeAction {
   icon: keyof typeof Ionicons.glyphMap;
@@ -82,6 +82,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '700',
+    fontFamily: FontFamily.bold,
   },
 });

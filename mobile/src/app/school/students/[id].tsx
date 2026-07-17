@@ -9,7 +9,7 @@ import { Badge, type BadgeTone } from '@/components/ui/badge';
 import { Card, InitialAvatar } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Radius, Spacing } from '@/constants/theme';
+import { FontFamily, Radius, Spacing } from '@/constants/theme';
 import { ApiError, getSchoolStudentDetail, type SchoolStudentDetail } from '@/api/client';
 
 const STATUS_TONE: Record<string, BadgeTone> = {
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 22,
     lineHeight: 28,
-    fontWeight: '800',
+    fontFamily: FontFamily.extrabold,
     letterSpacing: -0.4,
   },
   chipRow: {

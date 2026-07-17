@@ -13,6 +13,8 @@ export type FieldProps = TextInputProps & {
   /** Renders an eye toggle and manages secureTextEntry internally. */
   password?: boolean;
   error?: string;
+  /** Shows a ×-button while there's text (search fields). */
+  onClear?: () => void;
 };
 
 /**
@@ -20,7 +22,7 @@ export type FieldProps = TextInputProps & {
  * focus ring (border fades to the brand color), and a built-in
  * show/hide-password toggle.
  */
-export function Field({ label, icon, password, error, style, onFocus, onBlur, ...rest }: FieldProps) {
+export function Field({ label, icon, password, error, onClear, style, onFocus, onBlur, ...rest }: FieldProps) {
   const theme = useTheme();
   const [hidden, setHidden] = useState(true);
   const focus = useSharedValue(0);
@@ -61,6 +63,16 @@ export function Field({ label, icon, password, error, style, onFocus, onBlur, ..
           }}
           style={[styles.input, { color: theme.text }, style]}
         />
+        {onClear && !!rest.value ? (
+          <Pressable
+            onPress={onClear}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel="Clear text"
+          >
+            <Ionicons name="close-circle" size={18} color={theme.textSecondary} />
+          </Pressable>
+        ) : null}
         {password ? (
           <Pressable
             onPress={() => setHidden((v) => !v)}

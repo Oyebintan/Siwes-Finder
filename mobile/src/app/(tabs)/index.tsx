@@ -1,9 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Redirect, router, useFocusEffect } from 'expo-router';
+import { Redirect, router, useFocusEffect, useScrollToTop } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, {
+  Extrapolation,
+  FadeInDown,
+  ZoomIn,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -18,7 +27,8 @@ import { BrandRefreshControl } from '@/components/ui/refresh-control';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { SwipeRow } from '@/components/ui/swipe-row';
 import { useToast } from '@/components/ui/toast';
-import { Spacing } from '@/constants/theme';
+import { FontFamily, Spacing } from '@/constants/theme';
+import { useTabBarInset } from '@/hooks/use-tab-bar-inset';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/api/AuthContext';
 import { ApiError, listJobs, listSavedJobs, toggleSavedJob, type Job } from '@/api/client';
@@ -30,6 +40,15 @@ const TYPE_FILTERS: JobType[] = ['On-site', 'Remote', 'Hybrid'];
 // off-screen rows don't animate in late while scrolling.
 const STAGGER_MS = 55;
 const MAX_STAGGERED = 8;
+
+// The greeting + big title block collapses away over the first bit of list
+// scroll (the search field and filters stay pinned).
+const HERO_HEIGHT = 64;
+const HERO_COLLAPSE_DISTANCE = 72;
+
+// Jobs matching at least this well get the glow accent along the card's
+// bottom edge -- a highlight, not a default.
+const GLOW_MATCH_THRESHOLD = 70;
 
 // '/' is where login, signup, and verify-email all land (router.replace('/')),
 // and where a cold start opens -- so this route doubles as the role
@@ -45,6 +64,10 @@ export default function HomeTab() {
 }
 
 function JobsScreen() {
+  const tabBarInset = useTabBarInset();
+  // Re-pressing the active tab scrolls this screen back to the top.
+  const scrollTopRef = useRef<FlatList<Job>>(null);
+  useScrollToTop(scrollTopRef);
   const theme = useTheme();
   const { user } = useAuth();
   const toast = useToast();
@@ -114,36 +137,57 @@ function JobsScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
+  // Optimistic: the bookmark flips (and pops) instantly, then reconciles
+  // with the server's answer -- rolled back with an error toast on failure.
   const handleToggleSave = async (jobId: string) => {
-    try {
-      const { saved } = await toggleSavedJob(jobId);
+    const wasSaved = savedIds.has(jobId);
+    const applySaved = (saved: boolean) =>
       setSavedIds((prev) => {
         const next = new Set(prev);
         if (saved) next.add(jobId);
         else next.delete(jobId);
         return next;
       });
+
+    applySaved(!wasSaved);
+    try {
+      const { saved } = await toggleSavedJob(jobId);
+      applySaved(saved);
       if (savedOnly && !saved) {
         setJobs((prev) => prev.filter((j) => j._id !== jobId));
       }
       toast(saved ? 'Saved for later' : 'Removed from saved');
     } catch {
+      applySaved(wasSaved);
       toast("Couldn't update the bookmark — try again.", 'error');
     }
   };
+
+  // Collapsing hero: driven by the job list's scroll position, on the UI
+  // thread. The block shrinks to zero height and fades over the first
+  // ~72px of scroll.
+  const scrollY = useSharedValue(0);
+  const onListScroll = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
+  const heroStyle = useAnimatedStyle(() => ({
+    height: interpolate(scrollY.value, [0, HERO_COLLAPSE_DISTANCE], [HERO_HEIGHT, 0], Extrapolation.CLAMP),
+    opacity: interpolate(scrollY.value, [0, HERO_COLLAPSE_DISTANCE * 0.75], [1, 0], Extrapolation.CLAMP),
+    overflow: 'hidden' as const,
+  }));
 
   return (
     <ThemedView style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={['top']}>
         <Animated.View entering={FadeInDown.duration(320)} style={styles.header}>
-          <View style={styles.headerText}>
+          <Animated.View style={[styles.headerText, heroStyle]}>
             {firstName ? (
               <ThemedText type="small" themeColor="textSecondary">
                 Hi {firstName} 👋
               </ThemedText>
             ) : null}
             <ThemedText style={styles.headerTitle}>Find your placement</ThemedText>
-          </View>
+          </Animated.View>
 
           <Field
             icon="search-outline"
@@ -152,6 +196,7 @@ function JobsScreen() {
               setSavedOnly(false);
               setQuery(v);
             }}
+            onClear={() => setQuery('')}
             placeholder="Search title, skill, company, location…"
             returnKeyType="search"
           />
@@ -198,15 +243,19 @@ function JobsScreen() {
           />
         </Animated.View>
 
-        {error ? <ErrorBanner message={error} style={styles.errorBanner} /> : null}
+        {error ? <ErrorBanner message={error} onRetry={() => load()} style={styles.errorBanner} /> : null}
 
         {loading ? (
           <SkeletonList />
         ) : (
-          <FlatList
+          <Animated.FlatList
             data={jobs}
             keyExtractor={(job) => job._id}
-            contentContainerStyle={styles.list}
+            ref={scrollTopRef}
+            contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
+            onScroll={onListScroll}
+            scrollEventThrottle={16}
+            keyboardDismissMode="on-drag"
             refreshControl={<BrandRefreshControl refreshing={refreshing} onRefresh={() => load(true)} />}
             ListEmptyComponent={
               <EmptyState
@@ -217,6 +266,15 @@ function JobsScreen() {
                     ? 'Tap the bookmark on any opportunity to keep it here for later.'
                     : 'Try a different search term or clear your filters.'
                 }
+                // Filter changes re-run load via the focus effect's
+                // dependency on `load`, so resetting state is enough.
+                actionLabel={query || type !== null || bestMatch || savedOnly ? 'Clear filters' : undefined}
+                onAction={() => {
+                  setQuery('');
+                  setType(null);
+                  setBestMatch(false);
+                  setSavedOnly(false);
+                }}
               />
             }
             renderItem={({ item, index }) => {
@@ -236,7 +294,16 @@ function JobsScreen() {
                       },
                     ]}
                   >
-                  <Card onPress={() => router.push(`/jobs/${item._id}`)}>
+                  <Card onPress={() => router.push(`/jobs/${item._id}`)} style={styles.cardSurface}>
+                    {/* Accent glow rising from the card's bottom edge for
+                        strong matches (see reference design). */}
+                    {item.matchScore != null && item.matchScore >= GLOW_MATCH_THRESHOLD ? (
+                      <LinearGradient
+                        colors={['transparent', theme.primarySoft]}
+                        style={styles.cardGlow}
+                        pointerEvents="none"
+                      />
+                    ) : null}
                     <View style={styles.cardHeader}>
                       <InitialAvatar name={companyName} />
                       <View style={styles.cardHeaderText}>
@@ -249,16 +316,24 @@ function JobsScreen() {
                       </View>
                       <PressableScale
                         onPress={() => handleToggleSave(item._id)}
-                        hitSlop={8}
+                        hitSlop={12}
                         accessibilityRole="button"
                         accessibilityLabel={isSaved ? 'Remove bookmark' : 'Bookmark this opportunity'}
-                        style={styles.bookmark}
+                        style={[
+                          styles.bookmarkCircle,
+                          { backgroundColor: isSaved ? theme.primarySoft : theme.backgroundSelected },
+                        ]}
                       >
-                        <Ionicons
-                          name={isSaved ? 'bookmark' : 'bookmark-outline'}
-                          size={21}
-                          color={isSaved ? theme.primary : theme.textSecondary}
-                        />
+                        <Animated.View
+                          key={isSaved ? 'saved' : 'unsaved'}
+                          entering={ZoomIn.springify().damping(12)}
+                        >
+                          <Ionicons
+                            name={isSaved ? 'bookmark' : 'bookmark-outline'}
+                            size={18}
+                            color={isSaved ? theme.primary : theme.textSecondary}
+                          />
+                        </Animated.View>
                       </PressableScale>
                     </View>
                     <View style={styles.badgeRow}>
@@ -296,7 +371,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 28,
     lineHeight: 34,
-    fontWeight: '800',
+    fontFamily: FontFamily.extrabold,
     letterSpacing: -0.5,
   },
   filterRow: {
@@ -325,8 +400,22 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: Spacing.half,
   },
-  bookmark: {
-    padding: Spacing.one,
+  cardSurface: {
+    overflow: 'hidden',
+  },
+  cardGlow: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 52,
+  },
+  bookmarkCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   badgeRow: {
     flexDirection: 'row',
