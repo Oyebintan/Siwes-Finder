@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useFocusEffect } from 'expo-router';
+import { Redirect, router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -29,7 +29,20 @@ const TYPE_FILTERS: JobType[] = ['On-site', 'Remote', 'Hybrid'];
 const STAGGER_MS = 55;
 const MAX_STAGGERED = 8;
 
-export default function JobsScreen() {
+// '/' is where login, signup, and verify-email all land (router.replace('/')),
+// and where a cold start opens -- so this route doubles as the role
+// dispatcher, mirroring the website's role-scoped dashboards. Students get
+// the Jobs feed; everyone else is bounced straight to their own dashboard
+// (their Jobs tab is hidden by (tabs)/_layout.tsx, this makes '/' unreachable
+// for them too).
+export default function HomeTab() {
+  const { user } = useAuth();
+  if (user?.role === 'employer') return <Redirect href="/employer-applicants" />;
+  if (user?.role === 'school') return <Redirect href="/school-overview" />;
+  return <JobsScreen />;
+}
+
+function JobsScreen() {
   const theme = useTheme();
   const { user } = useAuth();
 
