@@ -6,9 +6,10 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 
-import { AuthProvider } from '@/api/AuthContext';
+import { AuthProvider, useAuth } from '@/api/AuthContext';
 import { useNotificationDeepLinks } from '@/api/notificationRouting';
 import { ThemeModeProvider, useThemeMode } from '@/api/ThemeModeContext';
+import { LockScreen } from '@/components/ui/lock-screen';
 import { OfflineBanner } from '@/components/ui/offline-banner';
 import { ToastProvider } from '@/components/ui/toast';
 import { FontFamily, Colors } from '@/constants/theme';
@@ -90,10 +91,21 @@ function RootLayoutInner() {
               in-app override -- explicit here so a manually-chosen theme
               never mismatches the status bar. */}
           <StatusBar style={effectiveScheme === 'dark' ? 'light' : 'dark'} />
+          <LockGate />
         </ToastProvider>
       </AuthProvider>
     </ThemeProvider>
   );
+}
+
+// Overlays the whole app (Stack, banners, everything) with LockScreen
+// while idle-locked, WITHOUT unmounting the Stack underneath -- keeps
+// navigation state intact across a lock/unlock round trip. Split into its
+// own component because useAuth() needs to be inside AuthProvider, one
+// level below where RootLayoutInner itself can call it.
+function LockGate() {
+  const { locked } = useAuth();
+  return locked ? <LockScreen /> : null;
 }
 
 const styles = StyleSheet.create({

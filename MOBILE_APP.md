@@ -626,6 +626,56 @@ screens to feel less static. Both OTA-eligible (no native deps):
       anchored bottom) to fit it in.
 - [ ] Not yet verified on a device — same caveat as every phase.
 
+### Phase 12 — Biometric/PIN unlock (2026-07-17)
+Closes the gap deliberately left open in Phase 10's auto-lock: idle-lock
+now offers a fast unlock instead of always requiring the password again.
+**New native dependency (`expo-local-authentication`) → requires a fresh
+EAS build**, unlike every other phase since Phase 9. `app.json` version
+bumped 1.2.0 → 1.3.0 for this build.
+- [x] `api/biometricSettings.ts` — `isBiometricHardwareReady()`
+      (`hasHardwareAsync` && `isEnrolledAsync`), `getBiometricEnabled`/
+      `setBiometricEnabled` (AsyncStorage flag, opt-in, defaults off),
+      `authenticateWithBiometrics()` wraps `authenticateAsync` with
+      `disableDeviceFallback: false` (the default) so the OS's own
+      BiometricPrompt/LocalAuthentication sheet already falls back to
+      whatever device credential is enrolled (PIN, pattern, password) when
+      Face ID/fingerprint isn't available or fails — "unlock with
+      fingerprint or PIN or anyone their phone allows" comes from the
+      platform sheet itself, no second bespoke PIN entry screen needed.
+- [x] **`AuthContext` gains a `locked` state** (session/token kept,
+      distinct from signing out) plus `lock()`/`unlock()`. `useIdleAutoLock`
+      now locks instead of logging out when the user has biometric enabled
+      AND the device still has a usable credential enrolled; otherwise it
+      falls back to the pre-Phase-12 full-logout behavior unchanged. The
+      cold-boot check in `AuthContext`'s token-restore effect got the same
+      branch, so a full app kill during the locked window boots straight
+      into the lock screen (keeping the session) instead of wiping it.
+- [x] **`ui/lock-screen.tsx`** — full-screen overlay rendered in
+      `app/_layout.tsx` (via a small `LockGate` reading `useAuth().locked`)
+      *on top of* the still-mounted Stack rather than replacing it, so
+      navigation state under the lock survives the round trip. Auto-prompts
+      biometrics on mount; "Use password instead" runs the normal
+      `confirmSignOut()` flow into `/login`, same pattern as every other
+      sign-out button in the app.
+- [x] Settings screen: a "Biometric unlock" section with a native `Switch`,
+      shown only when `isBiometricHardwareReady()` is true (a clear
+      "not available" card explains why otherwise); turning it on requires
+      passing one biometric check first, so a stale/misconfigured
+      enrollment can't lock someone out with no way back in. Auto-lock's
+      footnote text now reflects whichever mode is active.
+- [x] `app.json`: `expo-local-authentication` config plugin added
+      (`faceIDPermission` string for a future iOS build; Android needs no
+      extra config, its permissions are auto-injected).
+- [x] `.github/workflows/mobile-build-release.yml`: the download-link
+      auto-commit step now rebases and retries (up to 5x) on a rejected
+      push instead of failing outright — this is the exact race that hit
+      build run #6 against the `PROGRESS.md` bot's commit (fixed by hand
+      that time; this closes it going forward).
+- [ ] Not yet verified on a device — same caveat as every phase. **Needs
+      the new build this version bump triggers** to reach the owner's
+      phone (OTA can't ship a new native module to an already-installed
+      APK).
+
 ## Over-the-air updates (EAS Update) — read this before cutting a build
 
 `expo-updates` is configured (`runtimeVersion.policy: "appVersion"`,

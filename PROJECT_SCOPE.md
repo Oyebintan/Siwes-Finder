@@ -8,14 +8,22 @@ SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
 seeking SIWES (Students Industrial Work Experience Scheme) placements with
 verified employers, and gives their schools visibility into the process.
 
-**Last synced with:** UI/UX + feed-relevance batch (2026-07-17) — mobile
-Dashboard landing tab (Jobs demoted to a secondary "browse-jobs" tab),
-mobile post-signup profile-setup wizard, manual light/dark theme override
-+ Settings screen, swipe-to-save auto-close, mobile idle-timeout auto-lock,
-`Job.department` (required, canonical list) + compulsory skills on
-posting, default department/skill feed scoping (search stays universal),
-mobile Jobs feed pagination (see "Default feed scoping" and Mobile app
-section below). Before that: full security audit + hardening (2026-07-14)
+**Last synced with:** mobile biometric/PIN unlock + visible OTA sync
+(2026-07-17) — idle-lock now offers Face ID/fingerprint/device-PIN
+unlock instead of always forcing a full re-login (new native dependency,
+mobile version bumped 1.2.0 → 1.3.0); the cold-start loading screen shows
+the running app version and, when applicable, when it last synced an OTA
+update; onboarding gained animated illustrations; a git-push race in the
+native-build workflow's download-link step now retries instead of
+failing outright (see `MOBILE_APP.md` Phases 11-12). Before that: UI/UX +
+feed-relevance batch (2026-07-17) — mobile Dashboard landing tab (Jobs
+demoted to a secondary "browse-jobs" tab), mobile post-signup
+profile-setup wizard, manual light/dark theme override + Settings screen,
+swipe-to-save auto-close, mobile idle-timeout auto-lock, `Job.department`
+(required, canonical list) + compulsory skills on posting, default
+department/skill feed scoping (search stays universal), mobile Jobs feed
+pagination (see "Default feed scoping" and Mobile app section below).
+Before that: full security audit + hardening (2026-07-14)
 — jwt role-escalation fix, rate limiting, security headers, email
 normalization, 404/error pages, robots/sitemap (see "Security hardening"
 below); before that, email verification made opt-in via
@@ -379,12 +387,12 @@ revocation.
   fire** — `CRON_SECRET` must be set identically in the GitHub Actions repo
   secrets and Vercel's env vars; until then the scheduled workflow's daily
   run just 401s against its own request.
-- **Mobile biometric/PIN unlock is not built** — the idle-timeout auto-lock
-  (configurable in mobile Settings) signs the user out and requires their
-  password again; a biometric/PIN quick-unlock needs `expo-local-authentication`
-  (a new native dependency, which triggers its own EAS native build + version
-  bump under this project's release workflow), deliberately deferred to a
-  dedicated follow-up PR rather than bundled into a larger batch.
+- **Mobile biometric/PIN unlock ships pending its own native build** — the
+  code landed (see `MOBILE_APP.md` Phase 12: `AuthContext`'s `locked` state,
+  `ui/lock-screen.tsx`, a Settings toggle), but `expo-local-authentication`
+  is a new native dependency, so it can't reach an already-installed app
+  over OTA — an install stays on the old (password-only) behavior until it
+  updates to the 1.3.0 build this change triggers.
 - **Job.department backfill** — jobs created before this field existed have
   no `department` value in the DB (Mongoose's `required: true` only
   validates new saves, not existing documents) and are excluded from the
