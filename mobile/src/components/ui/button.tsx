@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/themed-text';
-import { Radius, Spacing } from '@/constants/theme';
+import { FontFamily, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { PressableScale } from './pressable-scale';
 
@@ -40,7 +40,13 @@ export function Button({ label, onPress, variant = 'primary', icon, loading, dis
       ) : (
         <>
           {icon ? <Ionicons name={icon} size={small ? 15 : 18} color={contentColor} /> : null}
-          <ThemedText type={small ? 'smallBold' : 'default'} style={[styles.label, { color: contentColor }]}>
+          <ThemedText
+            type={small ? 'smallBold' : 'default'}
+            style={[styles.label, { color: contentColor }]}
+            // Buttons have fixed min-heights; cap OS font scaling so the
+            // label never clips at accessibility text sizes.
+            maxFontSizeMultiplier={1.3}
+          >
             {label}
           </ThemedText>
         </>
@@ -103,7 +109,7 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   label: {
-    fontWeight: '700',
+    fontFamily: FontFamily.bold,
   },
   disabled: {
     opacity: 0.5,

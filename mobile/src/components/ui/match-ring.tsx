@@ -6,6 +6,8 @@ import Animated, { useAnimatedProps, useSharedValue, withDelay, withTiming, Easi
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
 
+import { FontFamily } from '@/constants/theme';
+
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 interface MatchRingProps {
@@ -91,7 +93,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   value: {
-    fontWeight: '800',
+    fontFamily: FontFamily.extrabold,
     letterSpacing: -0.3,
   },
 });

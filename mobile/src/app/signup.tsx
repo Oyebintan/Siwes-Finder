@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { ErrorBanner } from '@/components/ui/error-banner';
 import { Field } from '@/components/ui/field';
 import { PressableScale } from '@/components/ui/pressable-scale';
-import { Radius, Spacing } from '@/constants/theme';
+import { FontFamily, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/api/AuthContext';
 import { ApiError, register } from '@/api/client';
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     lineHeight: 32,
-    fontWeight: '800',
+    fontFamily: FontFamily.extrabold,
     letterSpacing: -0.5,
     textAlign: 'center',
   },
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two + Spacing.half,
   },
   tabTextActive: {
-    fontWeight: '700',
+    fontFamily: FontFamily.bold,
   },
   form: {
     gap: Spacing.three,

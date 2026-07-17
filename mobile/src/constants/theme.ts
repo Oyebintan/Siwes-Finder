@@ -54,6 +54,18 @@ export const Colors = {
   },
 } as const;
 
+// Brand typeface. Manrope ships in the app bundle (assets/fonts, OFL
+// licensed) and is loaded in app/_layout.tsx before first paint. Android
+// has no faux-bold for custom fonts, so every weight is its own family —
+// always set fontFamily from this map instead of fontWeight.
+export const FontFamily = {
+  regular: 'Manrope_400Regular',
+  medium: 'Manrope_500Medium',
+  semibold: 'Manrope_600SemiBold',
+  bold: 'Manrope_700Bold',
+  extrabold: 'Manrope_800ExtraBold',
+} as const;
+
 // Corner radii — one scale everywhere so surfaces read as one system.
 export const Radius = {
   sm: 10,
@@ -100,5 +112,12 @@ export const Spacing = {
   six: 64,
 } as const;
 
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
+// The floating pill tab bar's geometry — screens add useTabBarInset()
+// (hooks/use-tab-bar-inset.ts) as bottom padding so content clears it.
+export const TabBar = {
+  height: 64,
+  /** Gap between the pill and the bottom safe-area edge. */
+  gap: 10,
+} as const;
+
 export const MaxContentWidth = 800;

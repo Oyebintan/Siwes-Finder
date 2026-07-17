@@ -1,7 +1,7 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useScrollToTop } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
@@ -16,12 +16,17 @@ import { ScreenHeader } from '@/components/ui/screen-header';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
 import { Spacing } from '@/constants/theme';
+import { useTabBarInset } from '@/hooks/use-tab-bar-inset';
 import { ApiError, approveLogbookEntry, listEmployerLogbookEntries, type EmployerLogbookEntry } from '@/api/client';
 
 const STAGGER_MS = 55;
 const MAX_STAGGERED = 8;
 
 export default function EmployerLogbookScreen() {
+  const tabBarInset = useTabBarInset();
+  // Re-pressing the active tab scrolls this screen back to the top.
+  const scrollTopRef = useRef<FlatList<EmployerLogbookEntry>>(null);
+  useScrollToTop(scrollTopRef);
   const toast = useToast();
   const [entries, setEntries] = useState<EmployerLogbookEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +72,7 @@ export default function EmployerLogbookScreen() {
       <SafeAreaView style={styles.flex} edges={['top']}>
         <ScreenHeader title="Logbook approvals" subtitle="Sign off your interns' daily entries" />
 
-        {error ? <ErrorBanner message={error} style={styles.errorBanner} /> : null}
+        {error ? <ErrorBanner message={error} onRetry={() => load()} style={styles.errorBanner} /> : null}
 
         {loading ? (
           <SkeletonList />
@@ -75,7 +80,8 @@ export default function EmployerLogbookScreen() {
           <FlatList
             data={entries}
             keyExtractor={(e) => e._id}
-            contentContainerStyle={styles.list}
+            ref={scrollTopRef}
+            contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
             refreshControl={<BrandRefreshControl refreshing={refreshing} onRefresh={() => load(true)} />}
             ListEmptyComponent={
               <EmptyState

@@ -1,39 +1,52 @@
 import { useRef, useState } from 'react';
 import { FlatList, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { BrandLogo } from '@/components/ui/brand-logo';
 import { Button } from '@/components/ui/button';
 import { PressableScale } from '@/components/ui/pressable-scale';
-import { Radius, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { Colors, FontFamily, Spacing } from '@/constants/theme';
 import { markOnboardingSeen } from '@/api/onboardingFlag';
+
+// The intro is deliberately dark regardless of system theme -- a full-bleed
+// gradient glow per slide with the headline anchored at the bottom, in the
+// style of modern fintech onboarding. Each slide owns a glow color; the
+// second headline line picks up the same accent.
+const DARK_BG = Colors.dark.background;
 
 const SLIDES = [
   {
-    icon: 'briefcase' as const,
-    title: 'Find verified placements',
-    body: 'Browse SIWES and IT opportunities from vetted Nigerian companies — filtered by your skills, course, and preferred state.',
+    key: 'find',
+    glow: ['#2557eb', '#132a75', DARK_BG] as const,
+    accent: '#7ea2ff',
+    titleTop: 'Find your placement,',
+    titleAccent: 'made for you.',
+    body: 'SIWES and IT opportunities from vetted Nigerian companies — matched to your skills, course, and preferred state.',
   },
   {
-    icon: 'paper-plane' as const,
-    title: 'Apply in seconds',
-    body: 'One profile, one tap to apply. Track every application and message employers right from your phone.',
+    key: 'apply',
+    glow: ['#4338ca', '#251d76', DARK_BG] as const,
+    accent: '#a5b4fc',
+    titleTop: 'Apply in seconds,',
+    titleAccent: 'track everything.',
+    body: 'One profile, one tap to apply. Follow every application and message employers right from your phone.',
   },
   {
-    icon: 'book' as const,
-    title: 'Keep your logbook alive',
-    body: 'Log your day in 20 seconds — even offline. Your employer approves entries and your school sees your progress automatically.',
+    key: 'logbook',
+    glow: ['#0d9463', '#07422e', DARK_BG] as const,
+    accent: '#3fe6a0',
+    titleTop: 'Keep your logbook',
+    titleAccent: 'alive — anywhere.',
+    body: 'Log your day in 20 seconds, even offline. Your employer signs off and your school sees progress automatically.',
   },
 ];
 
 export default function OnboardingScreen() {
-  const theme = useTheme();
   const { width } = useWindowDimensions();
   const listRef = useRef<FlatList>(null);
   const [index, setIndex] = useState(0);
@@ -45,80 +58,92 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <ThemedView style={styles.flex}>
-      <SafeAreaView style={styles.flex}>
-        <View style={styles.topRow}>
-          <BrandLogo size={36} />
-          {!isLast ? (
-            <PressableScale onPress={() => finish('/login')} haptic={false} hitSlop={8}>
-              <ThemedText type="smallBold" themeColor="textSecondary">
-                Skip
-              </ThemedText>
-            </PressableScale>
-          ) : null}
-        </View>
+    <View style={[styles.flex, { backgroundColor: DARK_BG }]}>
+      <StatusBar style="light" />
 
-        <FlatList
-          ref={listRef}
-          data={SLIDES}
-          keyExtractor={(s) => s.title}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={(e) => setIndex(Math.round(e.nativeEvent.contentOffset.x / width))}
-          renderItem={({ item }) => (
-            <View style={[styles.slide, { width }]}>
-              <Animated.View
-                entering={FadeInDown.duration(400)}
-                style={[styles.slideIcon, { backgroundColor: theme.primarySoft }]}
-              >
-                <Ionicons name={item.icon} size={52} color={theme.primary} />
+      <FlatList
+        ref={listRef}
+        data={SLIDES}
+        keyExtractor={(s) => s.key}
+        horizontal
+        pagingEnabled
+        bounces={false}
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={(e) => setIndex(Math.round(e.nativeEvent.contentOffset.x / width))}
+        renderItem={({ item }) => (
+          <View style={[styles.slide, { width }]}>
+            {/* Full-bleed glow: vivid at the top, dissolving into the dark
+                canvas about two-thirds down. */}
+            <LinearGradient
+              colors={item.glow}
+              locations={[0, 0.42, 0.78]}
+              style={StyleSheet.absoluteFill}
+            />
+
+            <SafeAreaView style={styles.slideSafe} edges={['top', 'bottom']}>
+              <Animated.View entering={FadeInDown.duration(420)} style={styles.slideContent}>
+                <View style={styles.brandRow}>
+                  <BrandLogo size={30} />
+                  <ThemedText style={styles.brandName}>SIWES Finder</ThemedText>
+                </View>
+
+                <ThemedText style={styles.headline}>
+                  {item.titleTop}
+                  {'\n'}
+                  <ThemedText style={[styles.headline, { color: item.accent }]}>{item.titleAccent}</ThemedText>
+                </ThemedText>
+
+                <ThemedText style={styles.body}>{item.body}</ThemedText>
               </Animated.View>
-              <ThemedText style={styles.slideTitle}>{item.title}</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary" style={styles.slideBody}>
-                {item.body}
-              </ThemedText>
-            </View>
-          )}
-        />
+            </SafeAreaView>
+          </View>
+        )}
+      />
 
+      <SafeAreaView edges={['bottom']}>
         <View style={styles.footer}>
           <View style={styles.dots}>
             {SLIDES.map((s, i) => (
               <View
-                key={s.title}
-                style={[
-                  styles.dot,
-                  i === index
-                    ? [styles.dotActive, { backgroundColor: theme.primary }]
-                    : { backgroundColor: theme.backgroundSelected },
-                ]}
+                key={s.key}
+                style={[styles.dot, i === index ? styles.dotActive : styles.dotIdle]}
               />
             ))}
           </View>
 
-          {isLast ? (
-            <Animated.View entering={FadeInDown.duration(300)} style={styles.ctaGroup}>
-              <Button label="Create your account" icon="arrow-forward" onPress={() => finish('/signup')} />
-              <PressableScale onPress={() => finish('/login')} style={styles.loginLink} haptic={false}>
-                <ThemedText type="small" themeColor="textSecondary">
-                  Already have an account? <ThemedText type="smallBold" themeColor="primary">Log in</ThemedText>
-                </ThemedText>
-              </PressableScale>
-            </Animated.View>
-          ) : (
-            <Button
-              label="Next"
-              icon="arrow-forward"
-              onPress={() => {
+          <Button
+            label={isLast ? 'Get started' : 'Next'}
+            icon="arrow-forward"
+            onPress={() => {
+              if (isLast) {
+                finish('/signup');
+              } else {
                 listRef.current?.scrollToIndex({ index: index + 1, animated: true });
                 setIndex((i) => Math.min(i + 1, SLIDES.length - 1));
-              }}
-            />
-          )}
+              }
+            }}
+          />
+
+          <PressableScale
+            onPress={() => finish('/login')}
+            style={styles.skipRow}
+            haptic={false}
+            accessibilityRole="button"
+            accessibilityLabel={isLast ? 'Log in to an existing account' : 'Skip the intro'}
+          >
+            {isLast ? (
+              <ThemedText type="small" style={styles.skipText}>
+                Already have an account? <ThemedText type="smallBold" style={styles.skipEmphasis}>Log in</ThemedText>
+              </ThemedText>
+            ) : (
+              <ThemedText type="smallBold" style={styles.skipText}>
+                Skip
+              </ThemedText>
+            )}
+          </PressableScale>
         </View>
       </SafeAreaView>
-    </ThemedView>
+    </View>
   );
 }
 
@@ -126,61 +151,72 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.two,
-  },
   slide: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.five,
+    flex: 1,
+  },
+  slideSafe: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  slideContent: {
+    paddingHorizontal: Spacing.four,
     gap: Spacing.three,
   },
-  slideIcon: {
-    width: 120,
-    height: 120,
-    borderRadius: Radius.full,
+  brandRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.two,
+    gap: Spacing.two,
   },
-  slideTitle: {
-    fontSize: 26,
-    lineHeight: 32,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-    textAlign: 'center',
+  brandName: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontFamily: FontFamily.bold,
   },
-  slideBody: {
-    textAlign: 'center',
-    maxWidth: 300,
+  headline: {
+    color: '#ffffff',
+    fontSize: 32,
+    lineHeight: 40,
+    fontFamily: FontFamily.extrabold,
+    letterSpacing: -0.6,
+  },
+  body: {
+    color: 'rgba(243,245,248,0.72)',
+    fontSize: 14,
     lineHeight: 21,
+    fontFamily: FontFamily.medium,
+    maxWidth: 330,
   },
   footer: {
-    padding: Spacing.four,
-    gap: Spacing.four,
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.three,
+    paddingBottom: Spacing.two,
+    gap: Spacing.three,
+    backgroundColor: DARK_BG,
   },
   dots: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: Spacing.two,
+    gap: Spacing.one + Spacing.half,
   },
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    height: 6,
+    borderRadius: 3,
   },
   dotActive: {
-    width: 22,
+    width: 26,
+    backgroundColor: '#5c86ff',
   },
-  ctaGroup: {
-    gap: Spacing.two,
+  dotIdle: {
+    width: 6,
+    backgroundColor: 'rgba(255,255,255,0.28)',
   },
-  loginLink: {
+  skipRow: {
     alignItems: 'center',
-    paddingVertical: Spacing.two,
+    paddingVertical: Spacing.one,
+  },
+  skipText: {
+    color: 'rgba(243,245,248,0.75)',
+  },
+  skipEmphasis: {
+    color: '#7ea2ff',
   },
 });

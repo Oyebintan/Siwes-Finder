@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useScrollToTop } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -18,9 +19,11 @@ import { Field } from '@/components/ui/field';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
-import { Radius, Spacing } from '@/constants/theme';
+import { FontFamily, Radius, Spacing } from '@/constants/theme';
+import { useTabBarInset } from '@/hooks/use-tab-bar-inset';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/api/AuthContext';
+import { confirmSignOut } from '@/api/confirmSignOut';
 import { ApiError, getProfile, updateProfile, uploadFile } from '@/api/client';
 
 const SKILL_OPTIONS = ['React', 'Python', 'SQL', 'Figma', 'Excel', 'Node.js', 'Data Analysis', 'Networking'];
@@ -32,6 +35,10 @@ function initials(name: string) {
 }
 
 export default function ProfileScreen() {
+  const tabBarInset = useTabBarInset();
+  // Re-pressing the active tab scrolls this screen back to the top.
+  const scrollTopRef = useRef<ScrollView>(null);
+  useScrollToTop(scrollTopRef);
   const theme = useTheme();
   const toast = useToast();
   const { user, logout } = useAuth();
@@ -158,7 +165,7 @@ export default function ProfileScreen() {
   return (
     <ThemedView style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={['top']}>
-        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={[styles.container, { paddingBottom: tabBarInset }]} keyboardShouldPersistTaps="handled">
           {/* Gradient identity header — avatar over the brand gradient. */}
           <Animated.View entering={FadeInDown.duration(350)}>
             <LinearGradient
@@ -169,7 +176,7 @@ export default function ProfileScreen() {
             >
               <PressableScale onPress={handlePickAvatar} disabled={uploadingAvatar} style={styles.avatarWrap}>
                 {avatarUrl ? (
-                  <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+                  <Image source={{ uri: avatarUrl }} style={styles.avatar} transition={150} />
                 ) : (
                   <View style={[styles.avatar, styles.avatarPlaceholder]}>
                     <ThemedText style={styles.avatarInitials}>{initials(name || user?.name || '?')}</ThemedText>
@@ -279,10 +286,12 @@ export default function ProfileScreen() {
               label="Sign out"
               icon="log-out-outline"
               variant="danger"
-              onPress={async () => {
-                await logout();
-                router.replace('/login');
-              }}
+              onPress={() =>
+                confirmSignOut(async () => {
+                  await logout();
+                  router.replace('/login');
+                })
+              }
             />
           </Animated.View>
         </ScrollView>
@@ -344,7 +353,7 @@ const styles = StyleSheet.create({
   },
   avatarInitials: {
     color: '#ffffff',
-    fontWeight: '800',
+    fontFamily: FontFamily.extrabold,
     fontSize: 26,
   },
   avatarOverlay: {
@@ -370,7 +379,7 @@ const styles = StyleSheet.create({
   },
   heroName: {
     color: '#ffffff',
-    fontWeight: '800',
+    fontFamily: FontFamily.extrabold,
     fontSize: 20,
     lineHeight: 26,
   },

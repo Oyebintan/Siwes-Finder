@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { FontFamily, Spacing } from '@/constants/theme';
 
 interface ScreenHeaderProps {
   title: string;
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     lineHeight: 34,
-    fontWeight: '800',
+    fontFamily: FontFamily.extrabold,
     letterSpacing: -0.5,
   },
 });

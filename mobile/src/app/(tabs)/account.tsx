@@ -11,9 +11,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Radius, Spacing } from '@/constants/theme';
+import { FontFamily, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/api/AuthContext';
+import { confirmSignOut } from '@/api/confirmSignOut';
 import { getProfile } from '@/api/client';
 
 const ROLE_LABEL: Record<string, string> = {
@@ -84,10 +85,12 @@ export default function AccountScreen() {
               label="Sign out"
               icon="log-out-outline"
               variant="danger"
-              onPress={async () => {
-                await logout();
-                router.replace('/login');
-              }}
+              onPress={() =>
+                confirmSignOut(async () => {
+                  await logout();
+                  router.replace('/login');
+                })
+              }
             />
           </Animated.View>
         </View>
@@ -125,12 +128,12 @@ const styles = StyleSheet.create({
   },
   heroInitials: {
     color: '#ffffff',
-    fontWeight: '800',
+    fontFamily: FontFamily.extrabold,
     fontSize: 24,
   },
   heroName: {
     color: '#ffffff',
-    fontWeight: '800',
+    fontFamily: FontFamily.extrabold,
     fontSize: 20,
     lineHeight: 26,
   },

@@ -1,7 +1,7 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useScrollToTop } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -14,11 +14,16 @@ import { ErrorBanner } from '@/components/ui/error-banner';
 import { BrandRefreshControl } from '@/components/ui/refresh-control';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { Skeleton, SkeletonCard } from '@/components/ui/skeleton';
-import { Radius, Spacing } from '@/constants/theme';
+import { FontFamily, Radius, Spacing } from '@/constants/theme';
+import { useTabBarInset } from '@/hooks/use-tab-bar-inset';
 import { useTheme } from '@/hooks/use-theme';
 import { ApiError, getSchoolStudents, type SchoolStudent } from '@/api/client';
 
 export default function SchoolOverviewScreen() {
+  const tabBarInset = useTabBarInset();
+  // Re-pressing the active tab scrolls this screen back to the top.
+  const scrollTopRef = useRef<ScrollView>(null);
+  useScrollToTop(scrollTopRef);
   const theme = useTheme();
 
   const [students, setStudents] = useState<SchoolStudent[]>([]);
@@ -110,7 +115,7 @@ export default function SchoolOverviewScreen() {
     <ThemedView style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={['top']}>
         <ScrollView
-          contentContainerStyle={styles.container}
+          contentContainerStyle={[styles.container, { paddingBottom: tabBarInset }]}
           refreshControl={<BrandRefreshControl refreshing={refreshing} onRefresh={() => load(true)} />}
         >
           <ScreenHeader
@@ -118,7 +123,7 @@ export default function SchoolOverviewScreen() {
             subtitle="Students who registered with your institution name, and where they stand"
           />
 
-          {error ? <ErrorBanner message={error} /> : null}
+          {error ? <ErrorBanner message={error} onRetry={() => load()} /> : null}
 
           <View style={styles.kpiGrid}>
             <Kpi icon="people" label="Registered students" value={students.length} tone="primary" delay={60} />
@@ -245,7 +250,7 @@ const styles = StyleSheet.create({
   kpiValue: {
     fontSize: 26,
     lineHeight: 32,
-    fontWeight: '800',
+    fontFamily: FontFamily.extrabold,
     letterSpacing: -0.5,
   },
   section: {

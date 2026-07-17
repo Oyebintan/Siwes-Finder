@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
-import { Radius, Spacing } from '@/constants/theme';
+import { FontFamily, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { Card } from './card';
 
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
   streakText: {
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '700',
+    fontFamily: FontFamily.bold,
   },
   dotsRow: {
     flexDirection: 'row',
@@ -160,6 +160,6 @@ const styles = StyleSheet.create({
   },
   todayInitial: {
     fontSize: 11,
-    fontWeight: '800',
+    fontFamily: FontFamily.extrabold,
   },
 });

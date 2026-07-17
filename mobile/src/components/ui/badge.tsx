@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/themed-text';
-import { Radius, Spacing } from '@/constants/theme';
+import { FontFamily, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export type BadgeTone = 'neutral' | 'primary' | 'success' | 'warning' | 'error';
@@ -47,6 +47,6 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '600',
+    fontFamily: FontFamily.semibold,
   },
 });

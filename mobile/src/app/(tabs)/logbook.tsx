@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useScrollToTop } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import NetInfo from '@react-native-community/netinfo';
@@ -21,6 +21,7 @@ import { SkeletonCard } from '@/components/ui/skeleton';
 import { StreakCard } from '@/components/ui/streak-card';
 import { useToast } from '@/components/ui/toast';
 import { Spacing } from '@/constants/theme';
+import { useTabBarInset } from '@/hooks/use-tab-bar-inset';
 import { useTheme } from '@/hooks/use-theme';
 import { ApiError, createLogbookEntry, listLogbookEntries, type LogbookEntry } from '@/api/client';
 import { flushQueuedDrafts, getQueuedDrafts, queueDraft, type QueuedDraft } from '@/api/logbookDrafts';
@@ -34,6 +35,10 @@ type WeekGroup = {
 };
 
 export default function LogbookScreen() {
+  const tabBarInset = useTabBarInset();
+  // Re-pressing the active tab scrolls this screen back to the top.
+  const scrollTopRef = useRef<ScrollView>(null);
+  useScrollToTop(scrollTopRef);
   const theme = useTheme();
   const toast = useToast();
 
@@ -157,7 +162,7 @@ export default function LogbookScreen() {
     <ThemedView style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={['top']}>
         <ScrollView
-          contentContainerStyle={styles.container}
+          contentContainerStyle={[styles.container, { paddingBottom: tabBarInset }]}
           keyboardShouldPersistTaps="handled"
           refreshControl={<BrandRefreshControl refreshing={refreshing} onRefresh={() => load(true)} />}
         >
@@ -213,7 +218,7 @@ export default function LogbookScreen() {
             </Card>
           </Animated.View>
 
-          {error ? <ErrorBanner message={error} /> : null}
+          {error ? <ErrorBanner message={error} onRetry={() => load()} /> : null}
 
           {loading ? (
             <View style={styles.skeletons}>

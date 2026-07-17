@@ -409,6 +409,46 @@ any API logic:
       - Perf fix: the jobs feed fired a redundant second fetch 350ms after
         every mount (search-debounce effect running on first render).
 
+### Phase 7.5 — v1.2 UI/UX overhaul (2026-07-17, owner-directed)
+Owner supplied reference designs (fintech gradient onboarding, glass pill
+nav bar, glow-accent stat cards) and asked for a heavy UI/UX-only pass.
+All JS-only → OTA-deliverable to v1.0.0-android-ci5 installs; the v1.2.0
+version bump + fresh APK is a separate, final PR (runtimeVersion is
+appVersion-keyed, so the bump must come last or current installs stop
+receiving updates).
+- [x] **Manrope brand typeface** app-wide: five weights vendored in
+      `mobile/assets/fonts/` (OFL license alongside), loaded via
+      `useFonts` with the splash held until ready. `FontFamily` tokens in
+      `constants/theme.ts`; every `fontWeight` in the app replaced with an
+      exact family (Android has no faux-bold for custom fonts). Type
+      scale retuned mobile-first (`title` 48→28, `subtitle` 32→20); the
+      hardcoded `#3c87f7` in `linkPrimary` now uses `theme.primary`.
+- [x] **Onboarding redesign** (reference 1): always-dark slides with a
+      full-bleed per-slide gradient glow, brand row, two-tone headline
+      (second line in the slide's accent), elongated progress dots,
+      full-width CTA with Skip beneath.
+- [x] **Floating glass pill tab bar** (reference 3): icon-only, detached
+      from screen edges, translucent surface + shadow, active tab in a
+      spring-in filled brand pill (`ui/tab-bar-icon.tsx`), hides when the
+      keyboard opens. Screens pad their scroll content via the new
+      `useTabBarInset()` so lists scroll underneath the glass.
+- [x] **Jobs feed** (reference 2): bottom-edge gradient glow on cards
+      matching ≥70%, bookmark moved into a tinted icon-circle, optimistic
+      save with a spring pop (rolled back + error toast on failure), and
+      a collapsing large-title hero driven by list scroll on the UI
+      thread (search + filters stay pinned).
+- [x] **UX flows**: re-pressing the active tab scrolls to top on all nine
+      tab screens (`useScrollToTop`); load-error banners gained a
+      "Try again" action; app-wide offline strip (`ui/offline-banner.tsx`,
+      NetInfo) with a "Back online" toast on reconnect; search fields
+      gained a clear-× button; every sign-out button now confirms via a
+      native dialog (`api/confirmSignOut.ts`); feed empty state offers
+      "Clear filters"; profile avatar renders through `expo-image`
+      (cached, fade-in); button labels cap font scaling at 1.3× so fixed
+      heights never clip.
+- [ ] v1.2.0 release PR (version bump + workflow poll-cap raise) — after
+      the owner reviews this phase on device.
+
 ### Phase 8 — Engagement features
 Follow-up batch on top of Phase 7, all approved by the owner in one go:
 - [x] **Forgot password** — `forgot-password.tsx` (email → OTP + new

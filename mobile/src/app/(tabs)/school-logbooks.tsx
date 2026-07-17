@@ -1,7 +1,7 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useScrollToTop } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
@@ -15,6 +15,7 @@ import { BrandRefreshControl } from '@/components/ui/refresh-control';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { Spacing } from '@/constants/theme';
+import { useTabBarInset } from '@/hooks/use-tab-bar-inset';
 import { ApiError, getSchoolLogbooks, type SchoolLogbookEntry } from '@/api/client';
 
 type StatusFilter = 'all' | 'approved' | 'pending';
@@ -28,6 +29,10 @@ const STAGGER_MS = 55;
 const MAX_STAGGERED = 8;
 
 export default function SchoolLogbooksScreen() {
+  const tabBarInset = useTabBarInset();
+  // Re-pressing the active tab scrolls this screen back to the top.
+  const scrollTopRef = useRef<FlatList<SchoolLogbookEntry>>(null);
+  useScrollToTop(scrollTopRef);
   const [entries, setEntries] = useState<SchoolLogbookEntry[]>([]);
   const [status, setStatus] = useState<StatusFilter>('all');
   const [loading, setLoading] = useState(true);
@@ -84,7 +89,7 @@ export default function SchoolLogbooksScreen() {
           ))}
         </View>
 
-        {error ? <ErrorBanner message={error} style={styles.errorBanner} /> : null}
+        {error ? <ErrorBanner message={error} onRetry={() => load(status)} style={styles.errorBanner} /> : null}
 
         {loading ? (
           <SkeletonList />
@@ -92,7 +97,8 @@ export default function SchoolLogbooksScreen() {
           <FlatList
             data={entries}
             keyExtractor={(e) => e._id}
-            contentContainerStyle={styles.list}
+            ref={scrollTopRef}
+            contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
             refreshControl={<BrandRefreshControl refreshing={refreshing} onRefresh={() => load(status, true)} />}
             ListEmptyComponent={
               <EmptyState

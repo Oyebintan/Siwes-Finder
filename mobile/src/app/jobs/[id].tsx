@@ -17,7 +17,7 @@ import { MatchRing } from '@/components/ui/match-ring';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
-import { Radius, Spacing } from '@/constants/theme';
+import { FontFamily, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import {
   ApiError,
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     lineHeight: 28,
-    fontWeight: '800',
+    fontFamily: FontFamily.extrabold,
     letterSpacing: -0.4,
   },
   badgeRow: {
