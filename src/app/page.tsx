@@ -9,7 +9,7 @@ import { ArrowRightCircle, ArrowUpRight, CheckCircle2, Download, Smartphone, Use
 // means a new Release + a new default here (or just set the env var).
 const ANDROID_APK_URL =
   process.env.NEXT_PUBLIC_ANDROID_APK_URL ||
-  'https://github.com/Oyebintan/Siwes-Finder/releases/download/v1.0.0-android-ci5/app-release.apk';
+  'https://github.com/Oyebintan/Siwes-Finder/releases/download/v1.2.0-android-ci6/app-release.apk';
 
 const companies = ['Paystack', 'Flutterwave', 'Andela', 'MTN Nigeria', 'Interswitch', 'Nigerian Breweries'];
 
