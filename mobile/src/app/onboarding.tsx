@@ -9,6 +9,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ThemedText } from '@/components/themed-text';
 import { BrandLogo } from '@/components/ui/brand-logo';
 import { Button } from '@/components/ui/button';
+import { OnboardingIllustration, type OnboardingVariant } from '@/components/ui/onboarding-illustration';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Colors, FontFamily, Spacing } from '@/constants/theme';
 import { markOnboardingSeen } from '@/api/onboardingFlag';
@@ -19,7 +20,14 @@ import { markOnboardingSeen } from '@/api/onboardingFlag';
 // second headline line picks up the same accent.
 const DARK_BG = Colors.dark.background;
 
-const SLIDES = [
+const SLIDES: {
+  key: OnboardingVariant;
+  glow: readonly [string, string, string];
+  accent: string;
+  titleTop: string;
+  titleAccent: string;
+  body: string;
+}[] = [
   {
     key: 'find',
     glow: ['#2557eb', '#132a75', DARK_BG] as const,
@@ -81,12 +89,18 @@ export default function OnboardingScreen() {
             />
 
             <SafeAreaView style={styles.slideSafe} edges={['top', 'bottom']}>
-              <Animated.View entering={FadeInDown.duration(420)} style={styles.slideContent}>
+              <View style={styles.topRow}>
                 <View style={styles.brandRow}>
                   <BrandLogo size={30} />
                   <ThemedText style={styles.brandName}>SIWES Finder</ThemedText>
                 </View>
+              </View>
 
+              <Animated.View entering={FadeInDown.duration(500).delay(60)} style={styles.illustrationWrap}>
+                <OnboardingIllustration variant={item.key} />
+              </Animated.View>
+
+              <Animated.View entering={FadeInDown.duration(420)} style={styles.slideContent}>
                 <ThemedText style={styles.headline}>
                   {item.titleTop}
                   {'\n'}
@@ -156,7 +170,15 @@ const styles = StyleSheet.create({
   },
   slideSafe: {
     flex: 1,
-    justifyContent: 'flex-end',
+  },
+  topRow: {
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.two,
+  },
+  illustrationWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   slideContent: {
     paddingHorizontal: Spacing.four,

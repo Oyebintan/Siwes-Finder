@@ -4,7 +4,10 @@ import { Redirect, router, Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import Constants from 'expo-constants';
+import * as Updates from 'expo-updates';
 import Animated, {
+  Easing,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
@@ -33,22 +36,60 @@ function tabIcon(focused: IconName, unfocused: IconName) {
   };
 }
 
-/** Branded session-restore state: the logomark gently pulsing. */
+// Whichever update is currently running -- either the build's embedded
+// bundle, or an OTA update fetched after that. Read once at module scope
+// (it can't change without a fresh app launch) rather than on every render.
+const runningVersion = Constants.expoConfig?.version;
+const otaSyncedAt =
+  !Updates.isEmbeddedLaunch && Updates.createdAt
+    ? Updates.createdAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+    : null;
+
+/**
+ * Branded session-restore state: the logomark pulsing with an expanding
+ * "ping" ring, plus the running app version (and, if this launch is
+ * running an OTA-delivered update rather than the build's embedded
+ * bundle, when it last synced) -- lets anyone confirm at a glance whether
+ * an over-the-air update actually landed, without digging into settings.
+ */
 function BrandedLoading() {
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const pulse = useSharedValue(1);
+  const ring = useSharedValue(0);
+
   useEffect(() => {
     pulse.value = withRepeat(
       withSequence(withTiming(1.08, { duration: 700 }), withTiming(1, { duration: 700 })),
       -1
     );
-  }, [pulse]);
-  const style = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
+    ring.value = withRepeat(withTiming(1, { duration: 1600, easing: Easing.out(Easing.ease) }), -1);
+  }, [pulse, ring]);
+
+  const logoStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
+  const ringStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + ring.value * 0.9 }],
+    opacity: (1 - ring.value) * 0.5,
+  }));
 
   return (
     <ThemedView style={styles.center}>
-      <Animated.View style={style}>
-        <BrandLogo size={72} />
-      </Animated.View>
+      <View style={styles.logoStack}>
+        <Animated.View style={[styles.ring, { borderColor: theme.primary }, ringStyle]} />
+        <Animated.View style={logoStyle}>
+          <BrandLogo size={72} />
+        </Animated.View>
+      </View>
+      {runningVersion ? (
+        <ThemedText
+          type="small"
+          themeColor="textSecondary"
+          style={[styles.versionText, { bottom: insets.bottom + Spacing.four }]}
+        >
+          v{runningVersion}
+          {otaSyncedAt ? ` · Synced ${otaSyncedAt}` : ''}
+        </ThemedText>
+      ) : null}
     </ThemedView>
   );
 }
@@ -250,6 +291,21 @@ const styles = StyleSheet.create({
   },
   holdingCopy: {
     maxWidth: 320,
+  },
+  logoStack: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ring: {
+    position: 'absolute',
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 2,
+  },
+  versionText: {
+    position: 'absolute',
+    alignSelf: 'center',
   },
   tabItem: {
     // Center the icon pills vertically inside the 64px bar.
