@@ -53,8 +53,22 @@ jobs:
         # interpolation inside `run`, so quotes/backticks in a merge commit
         # can't break out of the shell command. Empty on workflow_dispatch,
         # hence the fallback.
+        #
+        # --channel (NOT --branch): installs request updates by CHANNEL
+        # (baked into the binary as expo-channel-name), and the server only
+        # serves what the channel's linked branch contains. `--branch`
+        # publishes to the branch and silently does nothing for the channel
+        # if the two were never linked -- which left every publish from this
+        # workflow invisible to real installs. `--channel` targets the
+        # channel directly and creates/repairs the branch link itself.
         env:
           COMMIT_MESSAGE: ${{ github.event.head_commit.message || 'Manual OTA re-publish' }}
         run: |
-          eas update --branch production --non-interactive \
+          eas update --channel production --non-interactive \
             --message "$COMMIT_MESSAGE"
+
+      # Print the channel -> branch mapping so a broken link is visible in
+      # the run log instead of failing silently on devices.
+      - name: Show channel/branch mapping
+        working-directory: mobile
+        run: eas channel:view production --non-interactive || true
