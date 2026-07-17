@@ -7,6 +7,7 @@
 
 | Date | Commit | What landed |
 |---|---|---|
+| 2026-07-17 | `d838931` | Merge pull request #47 from Oyebintan/claude/super-admin-email-promotion-uajc07 |
 | 2026-07-17 | `c8ed146` | Merge pull request #46 from Oyebintan/claude/super-admin-email-promotion-uajc07 |
 | 2026-07-17 | `a2d523a` | Merge pull request #45 from Oyebintan/claude/super-admin-email-promotion-uajc07 |
 | 2026-07-17 | `49539d2` | Merge pull request #44 from Oyebintan/claude/super-admin-email-promotion-uajc07 |
