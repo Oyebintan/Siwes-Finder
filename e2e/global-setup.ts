@@ -53,6 +53,7 @@ export default async function globalSetup() {
     location: 'Lagos',
     type: 'Remote',
     duration: '6 Months',
+    department: 'Computer Science',
     requirements: ['React'],
     description: 'Seeded fixture job for the Playwright golden-path suite.',
     isActive: true,
