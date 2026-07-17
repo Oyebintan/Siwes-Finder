@@ -228,10 +228,13 @@ export default function ProfileSetup() {
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  // Nested label (rather than a sibling label + unlinked input/select)
+  // so the control is programmatically associated with its label -- both
+  // for screen readers and for `getByLabel` in the E2E suite.
   return (
-    <div>
-      <label className="block text-[13px] font-semibold mb-1.5">{label}</label>
+    <label className="block">
+      <span className="block text-[13px] font-semibold mb-1.5">{label}</span>
       {children}
-    </div>
+    </label>
   );
 }
