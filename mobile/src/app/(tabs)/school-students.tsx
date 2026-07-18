@@ -132,10 +132,15 @@ export default function SchoolStudentsScreen() {
                     </ThemedText>
                     <Badge label={`${list.length}`} tone="neutral" />
                   </View>
-                  {list.map((s) => (
+                  {list.map((s) => {
+                    const statusColor = s.placedAt ? theme.success : s.applicationCount > 0 ? theme.warning : theme.textSecondary;
+                    return (
                     <Card key={s._id} onPress={() => router.push(`/school/students/${s._id}`)}>
                       <View style={styles.cardRow}>
-                        <InitialAvatar name={s.name} size={40} />
+                        <View style={styles.avatarWrap}>
+                          <InitialAvatar name={s.name} size={40} />
+                          <View style={[styles.statusDot, { backgroundColor: statusColor, borderColor: theme.backgroundElement }]} />
+                        </View>
                         <View style={styles.cardText}>
                           <ThemedText type="smallBold" numberOfLines={1}>
                             {s.name}
@@ -153,7 +158,8 @@ export default function SchoolStudentsScreen() {
                         )}
                       </View>
                     </Card>
-                  ))}
+                    );
+                  })}
                 </Animated.View>
               ))
             )}
@@ -202,6 +208,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.three,
+  },
+  avatarWrap: {
+    position: 'relative',
+  },
+  statusDot: {
+    position: 'absolute',
+    bottom: -1,
+    right: -1,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2,
   },
   cardText: {
     flex: 1,

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
-import { getBiometricEnabled, isBiometricHardwareReady } from './biometricSettings';
+import { hasQuickUnlockConfigured } from './pinSettings';
 import { clearBackgroundedMark, hasAutoLockTimedOut, markBackgrounded } from './autoLockSettings';
 import type { SessionUser } from './client';
 
@@ -13,11 +13,10 @@ interface UseIdleAutoLockParams {
 
 /**
  * Once the app has sat backgrounded past the configured auto-lock timeout
- * (Settings -> Auto-lock, default 5 min): if the user has biometric
- * unlock enabled and the device still has a usable biometric/PIN
- * credential, the app is *locked* (session kept, LockScreen overlay shown
- * -- see app/_layout.tsx) rather than signed out. Otherwise it falls back
- * to signing out entirely, same as before biometric unlock existed.
+ * (Settings -> Auto-lock, default 5 min): if the user has biometric or PIN
+ * unlock configured, the app is *locked* (session kept, LockScreen overlay
+ * shown -- see app/_layout.tsx) rather than signed out. Otherwise it falls
+ * back to signing out entirely, same as before quick-unlock existed.
  * Elapsed time is checked on resume against a persisted timestamp rather
  * than a running timer, so it survives the JS thread being fully
  * suspended while backgrounded. The matching cold-boot check lives in
@@ -40,12 +39,9 @@ export function useIdleAutoLock({ user, logout, lock }: UseIdleAutoLockParams) {
         return;
       }
 
-      const [biometricEnabled, hardwareReady] = await Promise.all([
-        getBiometricEnabled(),
-        isBiometricHardwareReady(),
-      ]);
+      const quickUnlockConfigured = await hasQuickUnlockConfigured();
       await clearBackgroundedMark();
-      if (biometricEnabled && hardwareReady) {
+      if (quickUnlockConfigured) {
         lock();
       } else {
         await logout();

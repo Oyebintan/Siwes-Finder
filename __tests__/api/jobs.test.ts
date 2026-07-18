@@ -14,7 +14,6 @@ vi.mock('@/lib/push', () => ({ sendPushNotification: vi.fn() }));
 vi.mock('@/lib/email', () => ({ sendNewJobAlertEmail: vi.fn() }));
 
 import { GET, POST } from '@/app/api/jobs/route';
-import { getServerSession } from 'next-auth/next';
 import { requireSession } from '@/lib/mobileAuth';
 import Job from '@/models/Job';
 import User from '@/models/User';
@@ -49,15 +48,21 @@ describe('POST /api/jobs', () => {
   });
 
   it('rejects unauthenticated/non-employer requests', async () => {
-    (getServerSession as any).mockResolvedValue(null);
-    const res = await POST(makePostRequest(validJob));
+    (requireSession as any).mockResolvedValue(null);
+    const req = makePostRequest(validJob);
+    const res = await POST(req);
     expect(res.status).toBe(401);
+    // Confirms this route serves mobile bearer-token callers too (needed
+    // for the mobile "Post a job" screen): it must hand the raw Request
+    // through to requireSession, not call the cookie-only getServerSession
+    // directly.
+    expect(requireSession).toHaveBeenCalledWith(req);
   });
 
   it("rejects employers who haven't verified their email, even if company-approved (verification on)", async () => {
     process.env.REQUIRE_EMAIL_VERIFICATION = 'true';
     try {
-      (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+      (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
       (User.findById as any).mockReturnValue({
         select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: false }),
       });
@@ -75,7 +80,7 @@ describe('POST /api/jobs', () => {
   });
 
   it('skips the email gate when verification is switched off (the default)', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     // Email unverified but company-approved: with the gate off this falls
     // through to field validation (400), not EMAIL_NOT_VERIFIED (403).
     (User.findById as any).mockReturnValue({
@@ -87,7 +92,7 @@ describe('POST /api/jobs', () => {
   });
 
   it('rejects employers who are not verification-approved', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     (User.findById as any).mockReturnValue({
       select: vi.fn().mockResolvedValue({ verificationStatus: 'pending', emailVerified: true }),
     });
@@ -101,7 +106,7 @@ describe('POST /api/jobs', () => {
   });
 
   it('rejects missing required fields for an approved employer', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     (User.findById as any).mockReturnValue({
       select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: true }),
     });
@@ -111,7 +116,7 @@ describe('POST /api/jobs', () => {
   });
 
   it('rejects a job posting with no department', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     (User.findById as any).mockReturnValue({
       select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: true }),
     });
@@ -126,7 +131,7 @@ describe('POST /api/jobs', () => {
   });
 
   it('rejects an unrecognized department', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     (User.findById as any).mockReturnValue({
       select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: true }),
     });
@@ -137,7 +142,7 @@ describe('POST /api/jobs', () => {
   });
 
   it('rejects a job posting with no required skills', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     (User.findById as any).mockReturnValue({
       select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: true }),
     });
@@ -151,7 +156,7 @@ describe('POST /api/jobs', () => {
   });
 
   it('rejects an email application method without a valid email', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     (User.findById as any).mockReturnValue({
       select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: true }),
     });
@@ -163,7 +168,7 @@ describe('POST /api/jobs', () => {
   });
 
   it('rejects an external application method without a valid URL', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     (User.findById as any).mockReturnValue({
       select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: true }),
     });
@@ -175,7 +180,7 @@ describe('POST /api/jobs', () => {
   });
 
   it('rejects an invalid application deadline', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     (User.findById as any).mockReturnValue({
       select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: true }),
     });
@@ -189,7 +194,7 @@ describe('POST /api/jobs', () => {
   });
 
   it('rejects a non-positive maxApplicants', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     (User.findById as any).mockReturnValue({
       select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: true }),
     });
@@ -203,7 +208,7 @@ describe('POST /api/jobs', () => {
   });
 
   it('creates the job for an approved employer with valid data', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     (User.findById as any).mockReturnValue({
       select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: true }),
     });
@@ -219,7 +224,7 @@ describe('POST /api/jobs', () => {
   });
 
   it('creates the job with a valid application deadline and max applicants', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     (User.findById as any).mockReturnValue({
       select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: true }),
     });
@@ -235,7 +240,7 @@ describe('POST /api/jobs', () => {
   });
 
   it('best-effort alerts followers of the employer by email and push, keyed off followedEmployers', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     (User.findById as any).mockImplementation((id: string) => ({
       select: vi.fn().mockResolvedValue(
         id === 'emp1' ? { verificationStatus: 'approved', emailVerified: true, companyName: 'Acme Ltd' } : null
@@ -265,7 +270,7 @@ describe('POST /api/jobs', () => {
   });
 
   it('never fails job creation when the follower-alert lookup throws', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
+    (requireSession as any).mockResolvedValue({ user: { id: 'emp1', role: 'employer' } });
     (User.findById as any).mockReturnValue({
       select: vi.fn().mockResolvedValue({ verificationStatus: 'approved', emailVerified: true }),
     });

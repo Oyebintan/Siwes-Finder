@@ -12,7 +12,7 @@ import { useAuth } from '@/api/AuthContext';
 // this component only ever renders for the three roles Tabs supports.)
 export default function HomeTab() {
   const { user } = useAuth();
-  if (user?.role === 'employer') return <Redirect href="/employer-applicants" />;
+  if (user?.role === 'employer') return <Redirect href="/employer-dashboard" />;
   if (user?.role === 'school') return <Redirect href="/school-overview" />;
   return <Redirect href="/dashboard" />;
 }

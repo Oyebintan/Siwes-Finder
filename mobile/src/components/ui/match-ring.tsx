@@ -14,19 +14,26 @@ interface MatchRingProps {
   /** 0-100 */
   score: number;
   size?: number;
+  /** Overrides the default (backgroundSelected) track color -- e.g. a translucent white when the ring sits on a gradient hero. */
+  trackColor?: string;
+  /** Overrides the default (success at 70+, else brand primary) ring/label color. */
+  valueColor?: string;
 }
 
 /**
- * Circular gauge for the job match score — the ring sweeps from empty to
- * the score over ~900ms on mount. Green at 70+, brand blue below.
+ * Circular gauge — the ring sweeps from empty to the score over ~900ms on
+ * mount. Green at 70+, brand blue below, unless overridden. Originally
+ * built for the job match score; also used for the school overview's
+ * placement-rate gauge.
  */
-export function MatchRing({ score, size = 64 }: MatchRingProps) {
+export function MatchRing({ score, size = 64, trackColor, valueColor }: MatchRingProps) {
   const theme = useTheme();
   const clamped = Math.max(0, Math.min(100, score));
   const strokeWidth = size * 0.11;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const color = clamped >= 70 ? theme.success : theme.primary;
+  const color = valueColor ?? (clamped >= 70 ? theme.success : theme.primary);
+  const track = trackColor ?? theme.backgroundSelected;
 
   const progress = useSharedValue(0);
 
@@ -52,7 +59,7 @@ export function MatchRing({ score, size = 64 }: MatchRingProps) {
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={theme.backgroundSelected}
+          stroke={track}
           strokeWidth={strokeWidth}
           fill="none"
         />

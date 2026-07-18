@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { getBiometricEnabled, isBiometricHardwareReady } from './biometricSettings';
 import { clearBackgroundedMark, hasAutoLockTimedOut } from './autoLockSettings';
+import { hasQuickUnlockConfigured } from './pinSettings';
 import * as authStorage from './authStorage';
 import * as api from './client';
 import type { SessionUser } from './client';
@@ -64,15 +64,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // The app was killed/reopened after the configured auto-lock window
       // elapsed while backgrounded -- this is the path a full OS kill
       // takes (the in-memory resume path is useIdleAutoLock). A user with
-      // biometric unlock enabled keeps their session but boots straight
-      // into the locked state; everyone else is signed out outright,
-      // same as before biometric unlock existed.
+      // biometric or PIN unlock configured keeps their session but boots
+      // straight into the locked state; everyone else is signed out
+      // outright, same as before quick-unlock existed.
       if (await hasAutoLockTimedOut()) {
-        const [biometricEnabled, hardwareReady] = await Promise.all([
-          getBiometricEnabled(),
-          isBiometricHardwareReady(),
-        ]);
-        if (biometricEnabled && hardwareReady) {
+        if (await hasQuickUnlockConfigured()) {
           try {
             const profile = await api.getProfile();
             setUser(toSessionUser(profile));

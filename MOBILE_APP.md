@@ -716,6 +716,207 @@ bumped 1.2.0 → 1.3.0 for this build.
       provisioned first** (see "One-time account setup" below) — without
       them the button stays hidden by design, not broken.
 
+### Fintech redesign — Batch A: shared primitives (2026-07-18)
+Foundation for the full UI/UX redesign (Claude Design prototypes for
+student/employer/school, imported via DesignSync). No screen changes yet.
+OTA-eligible (no native dep):
+- [x] `theme.ts`: `GradientMood`/`GlowIntensity`/`MotionEnergy` constants
+      (shipped as one fixed default — deep/standard/snappy — not exposed
+      as Settings; these are aesthetic prototyping knobs, not a functional
+      preference).
+- [x] `ui/gradient-hero-card.tsx` + `ui/gradient-blob.tsx`: the
+      brand-gradient hero pattern (previously duplicated per screen) as
+      one reusable component, with an optional drifting glow-blob
+      backdrop.
+- [x] `ui/bottom-sheet.tsx`: hand-rolled sheet on RN's own `Modal
+      animationType="slide"` (no drag-to-dismiss, no new dependency —
+      matches the codebase's hand-rolled-over-library bias).
+- [x] `hooks/use-animated-counter.ts`: cubic-ease-out count-up hook for
+      KPI/stat numbers.
+
+### Fintech redesign — Batch B: PIN-keypad unlock (2026-07-18)
+Closes the "PIN quick-unlock was explicitly deferred" gap noted in Phase
+12 above, and matches the redesign prototypes' lock screen (which shows a
+PIN-keypad mode alongside the biometric one). Uses `expo-crypto`, already
+a transitive dependency since Google sign-in — **no new native
+dependency, OTA-eligible**:
+- [x] `api/pinSettings.ts` — `hasPinSet()`/`setPin()`/`verifyPin()`/
+      `clearPin()`; a salted SHA-256 hash (`expo-crypto`'s
+      `digestStringAsync`) stored in `expo-secure-store`, mirroring
+      `authStorage.ts`'s secret-goes-in-SecureStore convention (distinct
+      from `biometricSettings.ts`'s AsyncStorage-for-a-boolean-flag —
+      a PIN hash is a secret). `hasQuickUnlockConfigured()` is the shared
+      "biometric enabled + hardware ready, OR PIN set" check now used by
+      both `AuthContext`'s cold-boot restore and `useIdleAutoLock`, so a
+      PIN-only user locks (keeps their session) instead of being logged
+      out, exactly like a biometric-only user.
+- [x] `ui/pin-keypad.tsx` (new) — `PinDots`/`PinKeypad`, a shared 12-key
+      numeric pad + 4-dot progress indicator, used by both the lock
+      screen and the new Settings PIN flow.
+- [x] `ui/lock-screen.tsx` — now resolves which mode to show from what's
+      actually configured (a PIN-only user never sees the OS biometric
+      sheet auto-fire); "Use PIN instead"/"Use biometrics instead" toggle
+      appears only when both are configured.
+- [x] Settings screen: new "Quick-unlock PIN" section — "Set a PIN"/
+      "Change PIN" opens a `BottomSheet` with a two-step enter → confirm
+      keypad flow; "Remove" clears it with a native confirm dialog (same
+      pattern as `confirmSignOut()`). Auto-lock's footnote text now
+      reflects biometric-or-PIN, not biometric-only.
+- [ ] Not yet verified on a device — same caveat as every phase.
+      OTA-eligible: publishes automatically via `mobile-ota-update.yml`.
+
+### Fintech redesign — Batch C: student screens (2026-07-18, scope revised in-flight)
+OTA-eligible (no native dep). Applies Batch A's primitives where they add
+real value; explicitly skips prototype details that don't map onto real
+data or already-good screens (see `groovy-wiggling-dolphin.md`'s Batch C
+section for the full reasoning) rather than forcing a 1:1 prototype port:
+- [x] **Dashboard** (`(tabs)/dashboard.tsx`) — hero swapped to
+      `GradientHeroCard`; the four KPI numbers (applications sent/under
+      review/offers/open opportunities) now count up via
+      `useAnimatedCounter` instead of snapping in; "Recommended for you"
+      is now a horizontally-scrolling carousel instead of a stacked list.
+- [x] **Profile** (`(tabs)/profile.tsx`) — identity header hero swapped
+      to `GradientHeroCard` (same visual result, one shared component
+      instead of duplicated `LinearGradient` markup).
+- [x] **Onboarding** (`onboarding.tsx`) — two drifting `GradientBlob`
+      accents (top-right, bottom-left, each slide's own accent color)
+      layered over the existing full-bleed glow gradient, for the
+      prototype's "alive" motion quality without touching the
+      already-solid slide/copy/dot-indicator structure.
+- [x] **Logbook** (`(tabs)/logbook.tsx`) — the always-open entry form is
+      now a compact "Add today's entry" trigger row that opens a
+      `BottomSheet` composer (week/hours/day-chips/activity/submit,
+      unchanged fields, just relocated). The offline-queue path now also
+      toasts immediately (previously only an in-form notice, which would
+      have been hidden once the sheet closed); the persistent sync notice
+      moved onto the main scroll so it survives the sheet closing.
+- [x] `ui/bottom-sheet.tsx` gained a `KeyboardAvoidingView` wrap (same
+      `padding`-on-iOS/default-resize-on-Android convention every other
+      form screen already uses) — a `Modal` doesn't inherit that
+      behavior automatically, and the logbook composer's multiline field
+      needed it.
+- [ ] **Dropped from the original Batch C scope, on purpose**: a jobs-feed
+      bottom-sheet filter panel with a stipend-range slider
+      (`Job.stipend` is free text, not numeric — no backend field to
+      slide over, and the screen's existing inline Type/Best-match/Saved
+      chips already cover every real filter dimension); a restyle pass
+      on `login.tsx`/`signup.tsx`/`profile-setup.tsx` (already redesigned
+      in the "centered, animated, fintech" pass — re-skinning for
+      prototype parity alone wasn't worth the regression risk);
+      `applications.tsx` (already a clean list, no gap to close).
+- [ ] Not yet verified on a device — same caveat as every phase.
+
+### Fintech redesign — Batch D: Employer Dashboard + employer restyle (2026-07-18)
+OTA-eligible (no native dep). Closes the gap flagged in the original
+design-brief session (no Employer Dashboard tab — employers landed
+straight on Applicants):
+- [x] New `(tabs)/employer-dashboard.tsx` — the employer's Home tab:
+      `GradientHeroCard` "hiring pipeline" hero, an animated KPI row
+      (open postings / total applicants / pending review / acceptance
+      rate, all via `useAnimatedCounter`), a "+ Post a job" CTA, and an
+      "Awaiting your review" preview of up to 3 pending applications
+      (`See all →` routes to Applicants). Open postings and applicant
+      stats come from the same `GET /api/jobs`/`GET /api/applications`
+      calls the rest of the employer app already uses — no new read
+      endpoints needed.
+- [x] `(tabs)/_layout.tsx` — employer `Tabs.Protected` guard grew from 2
+      routes to 3 (`employer-dashboard`, `employer-applicants`,
+      `employer-logbook`); tab bar is now 4 tabs total
+      (Home/Applicants/Logbook/Account), matching the student side's
+      shape. `(tabs)/index.tsx`'s employer redirect now points at
+      `/employer-dashboard` instead of `/employer-applicants`.
+- [x] `employer-logbook.tsx` — approved entries now show `ui/approval-
+      stamp.tsx` (new): a rotated bordered "APPROVED" stamp that springs
+      in via `ZoomIn`, peeking off the card's top-right corner, in place
+      of the plain success Badge — the prototype's "stamp" visual.
+- [x] `account.tsx` (employer/school shared) — hero swapped to
+      `GradientHeroCard`, same treatment `profile.tsx` got in Batch C.
+- [x] **New: `post-job.tsx`** — a 3-step wizard (mirrors the web's
+      `/employer/post-job` field set and `POST /api/jobs` contract
+      exactly; required skills use this app's chip-multi-select
+      convention instead of the web's free-text tag input) reachable from
+      the dashboard's "+ Post a job" CTA. `api/client.ts` gained
+      `createJob()`. This wasn't in the original Batch D scope — the
+      prototype's CTA assumed job posting already existed on mobile, but
+      it was web-only with no mobile client function at all, so the CTA
+      would have had nothing to open.
+- [x] **Backend fix riding along, required for the CTA above to work at
+      all**: `POST /api/jobs` (`src/app/api/jobs/route.ts`) still used
+      `getServerSession(authOptions)` (cookie-only) while its sibling
+      `GET /api/jobs` was already retrofitted to `requireSession(req)`
+      (cookie *or* mobile bearer token) — `src/lib/mobileAuth.ts`'s own
+      comment already assumed this was done ("routes that actually gate
+      on this — POST /api/applications, POST /api/jobs — re-check the
+      DB"). Fixed to match GET; `__tests__/api/jobs.test.ts`'s 16
+      POST-block mocks updated from `getServerSession` to
+      `requireSession` accordingly (27/27 tests pass, full root suite
+      393/393 pass).
+- [ ] `employer-applicants.tsx` deliberately left unrestyled — already
+      uses the same Card/Badge/SwipeRow/bulk-select vocabulary as every
+      other redesigned list screen in the app, so there was no gap to
+      close (same call as Batch C's `applications.tsx`).
+- [ ] Not yet verified on a device — same caveat as every phase.
+
+### Fintech redesign — Batch E: school screens (2026-07-18)
+OTA-eligible (no native dep). Mostly landed on screens already in decent
+shape from earlier phases, so this batch was smaller than A-D:
+- [x] `school-overview.tsx` — new `GradientHeroCard` with a placement-rate
+      gauge: reused `ui/match-ring.tsx` (previously the job-detail match
+      score ring) rather than building a second circular-gauge component,
+      extending it with optional `trackColor`/`valueColor` props so it
+      reads in white on the gradient instead of its default theme colors.
+      The KPI grid's values now count up via `useAnimatedCounter` (same
+      primitive as Batches C/D), and the department-breakdown bars grow
+      from 0 to their placement rate on mount (new local `DeptBar`
+      helper, same shared-value + `withTiming` pattern `MatchRing` itself
+      uses) instead of snapping straight to their final width.
+- [x] `school-students.tsx` — added a small colored "status dot" on each
+      student's avatar corner (green/placed, amber/applying, gray/not
+      applied) as a quick-glance layer *alongside* the existing status
+      Badge, not a replacement.
+- [ ] `school-logbooks.tsx`'s status filter chips (All/Approved/Pending)
+      and `school/students/[id].tsx`'s Card/Badge drill-in already
+      existed from an earlier phase and already matched the redesign's
+      vocabulary — no changes needed, no gap to close.
+- [ ] Not yet verified on a device — same caveat as every phase.
+
+### Fintech redesign — Batch F: PDF export + streak banner (2026-07-18)
+Final redesign batch. **New native dependencies (`expo-print`,
+`expo-sharing`) → requires a fresh EAS build.** `app.json` version bumped
+1.4.0 → 1.5.0 for this build — this closes out the v1.5.0 fintech
+redesign (Batches A-F):
+- [x] `expo-print@~57.0.0` / `expo-sharing@~57.0.0` installed via plain
+      `npm install` pinned to match every other `expo-*` package's
+      `~57.0.x` range, since `npx expo install`'s extra compat-check call
+      to `api.expo.dev` isn't reachable from this sandbox (plain
+      `npm install` against `registry.npmjs.org` works fine and lands the
+      identical result). Neither package needs an `app.json` config
+      plugin entry.
+- [x] New `logbook-export.tsx` (stack route, pushed from the Logbook
+      tab's header "Export" button) — fetches entries + profile, builds a
+      self-contained HTML document, renders it to a PDF with
+      `Print.printToFileAsync`, then opens the OS share sheet via
+      `Sharing.shareAsync`. No server round trip, no new backend route.
+- [x] New `ui/streak-push-banner.tsx` — slides in ~2s after the dashboard
+      mounts, auto-hides ~5s later if untouched, tap routes to Logbook.
+      The dashboard now also fetches `listLogbookEntries()` and only
+      mounts the banner when there's an active weekday streak not yet
+      logged today (reuses `streak-card.tsx`'s existing
+      `computeWeekdayStreak`/`loggedThisWeek` rather than a second streak
+      implementation).
+- [x] `expo-doctor` run before commit: the 2 failing checks (config
+      schema validation, React Native Directory lookup) are both
+      `api.expo.dev`-network-blocked in this sandbox, not real project
+      issues. The duplicate-native-module warning (`expo-constants`,
+      `expo-web-browser`, `expo-application` each resolving twice)
+      pre-dates this batch — `expo-auth-session`'s own pinned
+      sub-dependencies from the Google sign-in batch — left alone as out
+      of scope.
+- [ ] Not yet verified on a device — same caveat as every phase. **Needs
+      the new build this version bump triggers** to reach the owner's
+      phone (OTA can't ship new native modules to an already-installed
+      APK).
+
 ## Over-the-air updates (EAS Update) — read this before cutting a build
 
 `expo-updates` is configured (`runtimeVersion.policy: "appVersion"`,

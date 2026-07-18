@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect, useScrollToTop } from 'expo-router';
+import { router, useFocusEffect, useScrollToTop } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import NetInfo from '@react-native-community/netinfo';
@@ -9,18 +9,20 @@ import NetInfo from '@react-native-community/netinfo';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Badge } from '@/components/ui/badge';
+import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorBanner } from '@/components/ui/error-banner';
 import { Field } from '@/components/ui/field';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { BrandRefreshControl } from '@/components/ui/refresh-control';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { SkeletonCard } from '@/components/ui/skeleton';
 import { StreakCard } from '@/components/ui/streak-card';
 import { useToast } from '@/components/ui/toast';
-import { Spacing } from '@/constants/theme';
+import { Radius, Spacing } from '@/constants/theme';
 import { useTabBarInset } from '@/hooks/use-tab-bar-inset';
 import { useTheme } from '@/hooks/use-theme';
 import { ApiError, createLogbookEntry, listLogbookEntries, type LogbookEntry } from '@/api/client';
@@ -55,6 +57,7 @@ export default function LogbookScreen() {
   const [hours, setHours] = useState('8');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [composerVisible, setComposerVisible] = useState(false);
 
   const load = useCallback(async (asRefresh = false) => {
     if (asRefresh) setRefreshing(true);
@@ -122,13 +125,14 @@ export default function LogbookScreen() {
     try {
       await createLogbookEntry(draft);
       setActivity('');
+      setComposerVisible(false);
       toast('Entry logged — nice work today 💪');
       await load();
     } catch (err) {
       if (err instanceof ApiError) {
         // The server explicitly rejected this entry (e.g. no accepted
         // placement yet) -- surfacing it beats silently queuing something
-        // that will never sync.
+        // that will never sync. Keep the sheet open so the user can fix it.
         setSubmitError(err.message);
       } else {
         // Not an ApiError means the request never reached the server (no
@@ -136,11 +140,18 @@ export default function LogbookScreen() {
         await queueDraft(draft);
         setDrafts(await getQueuedDrafts());
         setActivity('');
+        setComposerVisible(false);
         setSyncNotice('Saved offline — will sync when you\'re back online.');
+        toast('Saved offline — will sync later');
       }
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const openComposer = () => {
+    setSubmitError('');
+    setComposerVisible(true);
   };
 
   const weekGroups = useMemo<WeekGroup[]>(() => {
@@ -166,7 +177,21 @@ export default function LogbookScreen() {
           keyboardShouldPersistTaps="handled"
           refreshControl={<BrandRefreshControl refreshing={refreshing} onRefresh={() => load(true)} />}
         >
-          <ScreenHeader title="e-Logbook" subtitle="Your daily record, synced to your school" />
+          <ScreenHeader
+            title="e-Logbook"
+            subtitle="Your daily record, synced to your school"
+            right={
+              entries.length > 0 ? (
+                <Button
+                  label="Export"
+                  icon="share-outline"
+                  variant="secondary"
+                  small
+                  onPress={() => router.push('/logbook-export')}
+                />
+              ) : undefined
+            }
+          />
 
           {!loading && entries.length > 0 ? (
             <View style={styles.streakWrap}>
@@ -174,49 +199,68 @@ export default function LogbookScreen() {
             </View>
           ) : null}
 
-          <Animated.View entering={FadeInDown.duration(350).delay(80)}>
-            <Card style={styles.form}>
-              {submitError ? <ErrorBanner message={submitError} /> : null}
-              {syncNotice ? (
-                <View style={[styles.notice, { backgroundColor: theme.successSoft }]}>
-                  <Ionicons name="cloud-done-outline" size={16} color={theme.success} />
-                  <ThemedText themeColor="success" type="small">
-                    {syncNotice}
+          {syncNotice ? (
+            <View style={[styles.notice, styles.noticeOuter, { backgroundColor: theme.successSoft }]}>
+              <Ionicons name="cloud-done-outline" size={16} color={theme.success} />
+              <ThemedText themeColor="success" type="small">
+                {syncNotice}
+              </ThemedText>
+            </View>
+          ) : null}
+
+          <Animated.View entering={FadeInDown.duration(350).delay(80)} style={styles.composerTriggerWrap}>
+            <PressableScale onPress={openComposer} haptic accessibilityRole="button" accessibilityLabel="Add a logbook entry">
+              <Card style={styles.composerTrigger}>
+                <View style={[styles.composerTriggerIcon, { backgroundColor: theme.primarySoft }]}>
+                  <Ionicons name="add" size={20} color={theme.primary} />
+                </View>
+                <View style={styles.composerTriggerText}>
+                  <ThemedText type="smallBold">Add today&apos;s entry</ThemedText>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    20 seconds — even offline
                   </ThemedText>
                 </View>
-              ) : null}
-
-              <View style={styles.row}>
-                <View style={styles.flexField}>
-                  <Field label="Week" value={week} onChangeText={setWeek} keyboardType="number-pad" />
-                </View>
-                <View style={styles.flexField}>
-                  <Field label="Hours" value={hours} onChangeText={setHours} keyboardType="number-pad" />
-                </View>
-              </View>
-
-              <ThemedText type="smallBold" themeColor="textSecondary" style={styles.dayLabel}>
-                Day
-              </ThemedText>
-              <View style={styles.chipRow}>
-                {DAYS.map((d) => (
-                  <Chip key={d} label={d.slice(0, 3)} active={day === d} onPress={() => setDay(d)} />
-                ))}
-              </View>
-
-              <Field
-                label="What did you work on?"
-                value={activity}
-                onChangeText={setActivity}
-                placeholder="Describe today's tasks…"
-                multiline
-                numberOfLines={3}
-                style={styles.textArea}
-              />
-
-              <Button label="Add entry" icon="add-circle-outline" onPress={handleSubmit} loading={submitting} />
-            </Card>
+                <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+              </Card>
+            </PressableScale>
           </Animated.View>
+
+          <BottomSheet visible={composerVisible} onClose={() => setComposerVisible(false)}>
+            <ThemedText type="smallBold" style={styles.sheetTitle}>
+              Add a logbook entry
+            </ThemedText>
+            {submitError ? <ErrorBanner message={submitError} /> : null}
+
+            <View style={styles.row}>
+              <View style={styles.flexField}>
+                <Field label="Week" value={week} onChangeText={setWeek} keyboardType="number-pad" />
+              </View>
+              <View style={styles.flexField}>
+                <Field label="Hours" value={hours} onChangeText={setHours} keyboardType="number-pad" />
+              </View>
+            </View>
+
+            <ThemedText type="smallBold" themeColor="textSecondary" style={styles.dayLabel}>
+              Day
+            </ThemedText>
+            <View style={styles.chipRow}>
+              {DAYS.map((d) => (
+                <Chip key={d} label={d.slice(0, 3)} active={day === d} onPress={() => setDay(d)} />
+              ))}
+            </View>
+
+            <Field
+              label="What did you work on?"
+              value={activity}
+              onChangeText={setActivity}
+              placeholder="Describe today's tasks…"
+              multiline
+              numberOfLines={3}
+              style={styles.textArea}
+            />
+
+            <Button label="Add entry" icon="add-circle-outline" onPress={handleSubmit} loading={submitting} />
+          </BottomSheet>
 
           {error ? <ErrorBanner message={error} onRetry={() => load()} /> : null}
 
@@ -287,9 +331,27 @@ const styles = StyleSheet.create({
   streakWrap: {
     paddingHorizontal: Spacing.four,
   },
-  form: {
-    marginHorizontal: Spacing.four,
+  composerTriggerWrap: {
+    paddingHorizontal: Spacing.four,
+  },
+  composerTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: Spacing.three,
+  },
+  composerTriggerIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: Radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  composerTriggerText: {
+    flex: 1,
+    gap: Spacing.half,
+  },
+  sheetTitle: {
+    textAlign: 'center',
   },
   notice: {
     flexDirection: 'row',
@@ -297,6 +359,9 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     padding: Spacing.two,
     borderRadius: Spacing.two,
+  },
+  noticeOuter: {
+    marginHorizontal: Spacing.four,
   },
   row: {
     flexDirection: 'row',

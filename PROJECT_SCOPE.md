@@ -8,8 +8,24 @@ SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
 seeking SIWES (Students Industrial Work Experience Scheme) placements with
 verified employers, and gives their schools visibility into the process.
 
-**Last synced with:** mobile Google sign-in (2026-07-18) — a "Continue
-with Google" button ships on `login.tsx`/`signup.tsx`
+**Last synced with:** mobile fintech redesign Batch F — PDF export +
+streak banner (2026-07-18) — the final batch of the v1.5.0 redesign.
+`expo-print`/`expo-sharing` added (new native deps, `mobile/app.json`
+version bumped 1.4.0 → 1.5.0, **needs a fresh EAS build** to reach
+already-installed apps). New `logbook-export.tsx` builds a
+self-contained HTML document from the student's entries and
+renders/shares it as a PDF client-side (no new backend route). New
+`ui/streak-push-banner.tsx` nudges the dashboard ~2s after mount when
+there's an active weekday streak not yet logged today, auto-hiding ~5s
+later, reusing `streak-card.tsx`'s existing streak math (see
+`MOBILE_APP.md`'s "Fintech redesign — Batch F" phase for the install
+workaround needed in this sandbox and other detail). Before that:
+Batches A-E (gradient/bottom-sheet primitives, PIN-keypad unlock,
+student screens, a real Employer Dashboard + mobile job-posting wizard
+that fixed a `POST /api/jobs` bearer-auth bug, school screens) — see
+`MOBILE_APP.md`'s "Fintech redesign" phases for the full detail on each.
+Before that: mobile Google sign-in (2026-07-18) — a "Continue with
+Google" button ships on `login.tsx`/`signup.tsx`
 (`expo-auth-session`, new native dependency, mobile version bumped
 1.3.0 → 1.4.0), verified server-side by `POST /api/mobile/google-signin`
 (`google-auth-library`); web's NextAuth Google callback and this route
@@ -293,7 +309,10 @@ retrofitted `requireApprovedSchool()`. Phases 0-3 are done: foundations,
 student MVP (auth, browse/search/apply, saved jobs, applications tracker,
 profile), e-Logbook with offline drafts and push notifications, and
 employer (applicant review, logbook approval) + school (read-only
-dashboards) screens. Push notifications won't actually deliver until the
+dashboards) screens. Employers also got a Home dashboard tab and a
+mobile job-posting wizard in the fintech redesign's Batch D (see "Last
+synced with" above) -- posting a job was web-only until then. Push
+notifications won't actually deliver until the
 app has a linked EAS project (`User.expoPushToken` stays unset otherwise —
 see `MOBILE_APP.md`'s setup table). Phase 4 (Android release) has its icon
 assets and a `/privacy` policy page (a Play Store requirement) done, but
@@ -340,6 +359,58 @@ until the owner provisions Android/iOS OAuth client IDs (see
 shows the button rather than crashing. A brand-new Google sign-in
 (`role: 'unassigned'`) is routed to `role-picker.tsx`, mobile's
 equivalent of the web's `/onboarding` role picker.
+
+**Fintech redesign in progress (v1.5.0, batched, see `MOBILE_APP.md`)** —
+Claude Design prototypes imported for student/employer/school. Batch A
+(gradient hero card, bottom sheet, animated counter primitives) and Batch
+B shipped OTA so far. Batch B closes the "PIN unlock deferred" gap from
+v1.3: `pinSettings.ts` (salted-hash PIN via `expo-crypto`, already a
+transitive dependency — no new native module) adds a keypad-entry
+alternative to biometric unlock, with a shared
+`hasQuickUnlockConfigured()` check so a PIN-only user locks on idle
+timeout/app-kill instead of being logged out, same as a biometric-only
+user. Settings gained a "Quick-unlock PIN" section (set/change/remove via
+a bottom-sheet keypad flow). Batch C (student screens) shipped next:
+dashboard and profile heroes now use the shared `GradientHeroCard`, the
+dashboard's KPI row counts up on load, "Recommended for you" is a
+horizontal carousel, onboarding gained drifting gradient-blob accents,
+and the logbook entry form moved from an always-open card into a
+bottom-sheet composer behind an "Add today's entry" trigger row. Batch C
+deliberately dropped a jobs-feed stipend-range filter slider (no numeric
+`Job.stipend` field to back it) and skipped re-skinning the
+already-redesigned login/signup/profile-setup screens — see
+`MOBILE_APP.md`'s Batch C entry for the full reasoning. Batch D shipped
+next: mobile finally has an Employer Dashboard tab
+(`(tabs)/employer-dashboard.tsx` — gradient hiring-pipeline hero, animated
+KPI row, "Awaiting your review" preview; employer tab bar is now 4 tabs,
+Home/Applicants/Logbook/Account) and, since the design's own "+ Post a
+job" CTA assumed the feature already existed on mobile and it didn't, a
+new `post-job.tsx` wizard plus `createJob()` in the client. That surfaced
+a real backend bug fixed in the same batch: `POST /api/jobs` was still
+cookie-session-only (`getServerSession`) while its `GET` sibling already
+supported mobile bearer tokens (`requireSession`) — now both do (see
+`MOBILE_APP.md`'s Batch D entry, `__tests__/api/jobs.test.ts` updated,
+393/393 root tests pass). `employer-logbook.tsx` also gained the
+prototype's rotated "APPROVED" stamp visual. Batch E (school screens)
+shipped before that: `school-overview.tsx` gained a `GradientHeroCard`
+placement-rate gauge (reusing `ui/match-ring.tsx`, extended with
+`trackColor`/`valueColor` overrides, rather than a second gauge
+component) plus animated KPI counts and growing department-breakdown
+bars; `school-students.tsx` gained a small status dot on each student's
+avatar. `school-logbooks.tsx`'s status filter chips and the student
+drill-in screen already matched the redesign from an earlier phase, so
+neither needed changes.
+
+**Batch F (final): PDF logbook export + streak banner (v1.4.0 → v1.5.0,
+new native deps, needs a fresh build)** — `expo-print`/`expo-sharing`
+installed (`~57.0.x`, matching every other `expo-*` package's pinned
+range); a new `logbook-export.tsx` screen builds a self-contained HTML
+document from the student's entries client-side and renders/shares it as
+a PDF (no new backend route); a new `ui/streak-push-banner.tsx` nudges
+the dashboard ~2s after mount when there's an active weekday streak not
+yet logged today, auto-hiding ~5s later, reusing `streak-card.tsx`'s
+existing streak math rather than a second implementation. This closes
+out the v1.5.0 fintech redesign (Batches A-F, see `MOBILE_APP.md`).
 
 ## Demo/seed data
 

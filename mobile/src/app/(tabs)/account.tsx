@@ -3,18 +3,17 @@ import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { GradientHeroCard } from '@/components/ui/gradient-hero-card';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FontFamily, Radius, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { FontFamily, Spacing } from '@/constants/theme';
 import { useAuth } from '@/api/AuthContext';
 import { confirmSignOut } from '@/api/confirmSignOut';
 import { getProfile } from '@/api/client';
@@ -33,7 +32,6 @@ function initials(name: string) {
 // Phase 3's mobile scope for these roles is applicant/logbook review and
 // the school's read-only dashboards, not account management.
 export default function AccountScreen() {
-  const theme = useTheme();
   const { user, logout } = useAuth();
   const [email, setEmail] = useState(user?.email ?? '');
   const [loading, setLoading] = useState(true);
@@ -58,12 +56,7 @@ export default function AccountScreen() {
           <ScreenHeader title="Account" />
 
           <Animated.View entering={FadeInDown.duration(350).delay(80)}>
-            <LinearGradient
-              colors={[theme.gradientStart, theme.gradientEnd]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.hero}
-            >
+            <GradientHeroCard style={styles.hero}>
               <PressableScale
                 onPress={() => router.push('/settings')}
                 hitSlop={10}
@@ -85,7 +78,7 @@ export default function AccountScreen() {
               <View style={styles.heroBadge}>
                 <Badge label={(user?.role && ROLE_LABEL[user.role]) || user?.role || 'Account'} tone="primary" icon="shield-checkmark-outline" />
               </View>
-            </LinearGradient>
+            </GradientHeroCard>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.duration(350).delay(160)} style={styles.footer}>
@@ -123,7 +116,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.one,
     padding: Spacing.five,
-    borderRadius: Radius.xl,
     marginHorizontal: Spacing.four,
   },
   settingsButton: {
