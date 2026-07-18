@@ -25,7 +25,8 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://siwes-finder-eight.vercel.app"
+        "EXPO_PUBLIC_API_URL": "https://siwes-finder-eight.vercel.app",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "965127156937-o98lljv5h98q2dojuk6vfpcq6ckg94jh.apps.googleusercontent.com"
       }
     }
   }
