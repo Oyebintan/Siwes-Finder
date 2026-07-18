@@ -8,14 +8,24 @@ SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
 seeking SIWES (Students Industrial Work Experience Scheme) placements with
 verified employers, and gives their schools visibility into the process.
 
-**Last synced with:** mobile biometric/PIN unlock + visible OTA sync
-(2026-07-17) — idle-lock now offers Face ID/fingerprint/device-PIN
-unlock instead of always forcing a full re-login (new native dependency,
-mobile version bumped 1.2.0 → 1.3.0); the cold-start loading screen shows
-the running app version and, when applicable, when it last synced an OTA
-update; onboarding gained animated illustrations; a git-push race in the
-native-build workflow's download-link step now retries instead of
-failing outright (see `MOBILE_APP.md` Phases 11-12). Before that: UI/UX +
+**Last synced with:** mobile Google sign-in (2026-07-18) — a "Continue
+with Google" button ships on `login.tsx`/`signup.tsx`
+(`expo-auth-session`, new native dependency, mobile version bumped
+1.3.0 → 1.4.0), verified server-side by `POST /api/mobile/google-signin`
+(`google-auth-library`); web's NextAuth Google callback and this route
+now share one find-or-create helper (`src/lib/googleAuth.ts`) so both
+clients land the same account for a given email; a brand-new
+(`unassigned`) Google sign-in on mobile is routed to a new
+`role-picker.tsx` screen instead of the old "not supported" holding
+screen (see `MOBILE_APP.md`'s Google sign-in phase). Before that: mobile
+biometric/PIN unlock + visible OTA sync (2026-07-17) — idle-lock now
+offers Face ID/fingerprint/device-PIN unlock instead of always forcing a
+full re-login (new native dependency, mobile version bumped 1.2.0 →
+1.3.0); the cold-start loading screen shows the running app version and,
+when applicable, when it last synced an OTA update; onboarding gained
+animated illustrations; a git-push race in the native-build workflow's
+download-link step now retries instead of failing outright (see
+`MOBILE_APP.md` Phases 11-12). Before that: UI/UX +
 feed-relevance batch (2026-07-17) — mobile Dashboard landing tab (Jobs
 demoted to a secondary "browse-jobs" tab), mobile post-signup
 profile-setup wizard, manual light/dark theme override + Settings screen,
@@ -40,7 +50,7 @@ Recent-change log: see `PROGRESS.md` (auto-appended on every push to main).
 | `school` | Institutions tracking their students | Read-only view of their own students (matched by university name) — profiles, applications, logbooks; must be admin-approved before student data unlocks |
 | `admin` | Platform staff | Approve/reject companies & schools, moderate job listings, manage users |
 | `super_admin` | Elevated admin | Everything `admin` can do, plus promote other users to admin/super_admin and is the only role that can delete another super_admin's account |
-| `unassigned` | Just signed up via Google, hasn't picked a role yet | Routed to `/onboarding` |
+| `unassigned` | Just signed up via Google, hasn't picked a role yet | Routed to `/onboarding` (web) or `role-picker.tsx` (mobile) |
 
 Admin/super_admin are **never** self-assignable at signup — only granted via
 the `ADMIN_EMAILS` / `SUPER_ADMIN_EMAILS` env-var allowlists (promoted on
@@ -82,7 +92,14 @@ equivalent everywhere except that one deletion-hierarchy check.
 
 ## Feature surface
 
-**Auth** — credentials (bcrypt) + Google OAuth via NextAuth. Signup
+**Auth** — credentials (bcrypt) + Google OAuth via NextAuth on web;
+credentials + Google on mobile too (`POST /api/mobile/login` /
+`POST /api/mobile/google-signin`, bearer tokens instead of cookies — see
+Mobile app section). Both Google paths (web NextAuth callback, mobile
+route) share one find-or-create helper, `src/lib/googleAuth.ts`, so a
+Google sign-in from either client always lands on the same account for a
+given email; `src/lib/adminEmails.ts` holds the admin/super-admin
+allowlist logic both it and the credentials providers use. Signup
 (`/api/auth/register`) only accepts `student | employer | school` — never a
 privileged role. OTP-based forgot-password flow (`/api/auth/forgot-password`,
 `/api/auth/reset-password`) via Resend, 10-minute expiry, generic response to
@@ -311,6 +328,19 @@ route files -- Expo Router resolves routes from the JS bundle at runtime,
 not at native build time) ship over OTA, same as the rest of Phase 5 --
 no new native dependency, no fresh `eas build` required.
 
+**v1.3/v1.4 (native, needs a fresh build each)** — biometric/PIN unlock
+(`expo-local-authentication`, v1.3.0) lets idle-lock offer Face
+ID/fingerprint/device-PIN instead of always forcing a full re-login, kept
+gated behind a Settings toggle that requires one successful biometric
+check to turn on. Google sign-in (`expo-auth-session`, v1.4.0) adds a
+"Continue with Google" button to `login.tsx`/`signup.tsx`, verified
+server-side by `POST /api/mobile/google-signin`; it's hidden by default
+until the owner provisions Android/iOS OAuth client IDs (see
+`MOBILE_APP.md`'s account-setup table) — an unconfigured build just never
+shows the button rather than crashing. A brand-new Google sign-in
+(`role: 'unassigned'`) is routed to `role-picker.tsx`, mobile's
+equivalent of the web's `/onboarding` role picker.
+
 ## Demo/seed data
 
 `scripts/seed-companies.mjs` — idempotent script that creates 5 pre-verified
@@ -393,6 +423,15 @@ revocation.
   is a new native dependency, so it can't reach an already-installed app
   over OTA — an install stays on the old (password-only) behavior until it
   updates to the 1.3.0 build this change triggers.
+- **Mobile Google sign-in ships pending Google OAuth client IDs** — the
+  code landed (`ui/google-signin-button.tsx`, `POST
+  /api/mobile/google-signin`, `role-picker.tsx`), but the button hides
+  itself until `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` (build-time) and
+  `GOOGLE_ANDROID_CLIENT_ID` (server-side verification) are both set —
+  see `MOBILE_APP.md`'s account-setup table for how to create them.
+  `expo-auth-session` is also a new native dependency, so once those
+  exist the button additionally needs the 1.4.0 build it triggers to
+  reach an already-installed app.
 - **Job.department backfill** — jobs created before this field existed have
   no `department` value in the DB (Mongoose's `required: true` only
   validates new saves, not existing documents) and are excluded from the
@@ -410,7 +449,12 @@ in the path or Mongoose silently falls back to a `test` database),
 connected — don't set by hand), `RESEND_API_KEY` (forgot-password emails),
 `CRON_SECRET` (gates `POST /api/cron/logbook-streak-reminders` — must be set
 to the same value in both Vercel and the GitHub Actions repo secrets, or the
-daily reminder sweep 401s against itself).
+daily reminder sweep 401s against itself), `GOOGLE_ANDROID_CLIENT_ID` /
+`GOOGLE_IOS_CLIENT_ID` (verifies mobile Google sign-in ID tokens
+server-side, alongside the existing `GOOGLE_CLIENT_ID` web OAuth client —
+see `src/app/api/mobile/google-signin/route.ts`; the matching
+`EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` / `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`
+build-time vars live in `mobile/eas.json`, not here).
 
 ## Repo conventions worth knowing
 

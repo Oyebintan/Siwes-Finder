@@ -133,6 +133,13 @@ export default function TabsLayout() {
     return <Redirect href={seenOnboarding ? '/login' : '/onboarding'} />;
   }
 
+  // A brand-new Google sign-in (see login.tsx/signup.tsx) lands here with
+  // no role yet -- send them to the picker instead of the generic "not
+  // supported" holding screen below, which would otherwise dead-end them.
+  if (user.role === 'unassigned') {
+    return <Redirect href="/role-picker" />;
+  }
+
   const isStudent = user.role === 'student';
   const isEmployer = user.role === 'employer';
   const isSchool = user.role === 'school';

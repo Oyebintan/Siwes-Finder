@@ -10,10 +10,13 @@ import { BrandLogo } from '@/components/ui/brand-logo';
 import { Button } from '@/components/ui/button';
 import { ErrorBanner } from '@/components/ui/error-banner';
 import { Field } from '@/components/ui/field';
+import { GoogleSignInButton } from '@/components/ui/google-signin-button';
+import { OrDivider } from '@/components/ui/or-divider';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/api/AuthContext';
-import { ApiError } from '@/api/client';
+import { ApiError, type SessionUser } from '@/api/client';
+import { isGoogleSignInConfigured } from '@/api/googleAuth';
 
 export default function LoginScreen() {
   const { login } = useAuth();
@@ -34,6 +37,13 @@ export default function LoginScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // A Google sign-in on the login screen can just as easily be a brand-new
+  // account (the email simply didn't exist yet) as a returning one -- route
+  // by the account's actual role, same as signup.tsx.
+  const handleGoogleSuccess = (sessionUser: SessionUser) => {
+    router.replace(sessionUser.role === 'unassigned' ? '/role-picker' : '/');
   };
 
   return (
@@ -100,6 +110,13 @@ export default function LoginScreen() {
                   disabled={!email || !password}
                 />
               </Animated.View>
+
+              {isGoogleSignInConfigured() ? (
+                <Animated.View entering={FadeInDown.duration(400).delay(320)} style={styles.googleBlock}>
+                  <OrDivider />
+                  <GoogleSignInButton onError={setError} onSuccess={handleGoogleSuccess} />
+                </Animated.View>
+              ) : null}
             </View>
 
             <Animated.View entering={FadeInUp.duration(400).delay(400)}>
@@ -135,6 +152,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   form: {
+    gap: Spacing.three,
+  },
+  googleBlock: {
     gap: Spacing.three,
   },
   forgotRow: {
