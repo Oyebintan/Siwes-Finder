@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { requireSession } from '@/lib/mobileAuth';
 import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
 
+// Serves both the web's cookie session (post-Google-signup role picker at
+// /onboarding) and the mobile app's bearer token (role-picker.tsx) --
+// requireSession() resolves whichever the caller sent (see mobileAuth.ts).
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await requireSession(req);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

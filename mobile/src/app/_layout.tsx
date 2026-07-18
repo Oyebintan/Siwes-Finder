@@ -78,6 +78,7 @@ function RootLayoutInner() {
             <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
             <Stack.Screen name="login" options={{ animation: 'fade' }} />
             <Stack.Screen name="signup" options={{ animation: 'fade' }} />
+            <Stack.Screen name="role-picker" options={{ animation: 'fade' }} />
             <Stack.Screen name="profile-setup" options={{ animation: 'fade' }} />
             <Stack.Screen name="forgot-password" />
             <Stack.Screen name="verify-email" />

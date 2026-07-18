@@ -6,6 +6,8 @@ import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import { findUserByEmail } from "@/lib/userLookup";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rateLimit";
+import { resolvePrivilegedRole } from "@/lib/adminEmails";
+import { findOrCreateGoogleUser } from "@/lib/googleAuth";
 
 // No hardcoded fallback secret — but also no module-scope throw when it's
 // missing: `next build` imports every route module while collecting page
@@ -14,37 +16,6 @@ import { checkRateLimit, RATE_LIMITS } from "@/lib/rateLimit";
 // requests without a secret in production (NO_SECRET), which preserves the
 // "never run with a forgeable session" guarantee at runtime.
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
-
-// Admins are provisioned by email allowlist (there is no public admin signup).
-// Set ADMIN_EMAILS="a@x.com,b@y.com" in the environment. Matching users are
-// promoted to the 'admin' role the next time they sign in. SUPER_ADMIN_EMAILS
-// works the same way but promotes to 'super_admin', which outranks 'admin'
-// (e.g. a plain admin can't delete a super_admin's account).
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "")
-  .split(",")
-  .map((e) => e.trim().toLowerCase())
-  .filter(Boolean);
-
-const SUPER_ADMIN_EMAILS = (process.env.SUPER_ADMIN_EMAILS || "")
-  .split(",")
-  .map((e) => e.trim().toLowerCase())
-  .filter(Boolean);
-
-function isAdminEmail(email?: string | null): boolean {
-  return !!email && ADMIN_EMAILS.includes(email.toLowerCase());
-}
-
-function isSuperAdminEmail(email?: string | null): boolean {
-  return !!email && SUPER_ADMIN_EMAILS.includes(email.toLowerCase());
-}
-
-// Resolves the allowlist-driven role for an email, or null if it isn't on
-// either list. Super admin takes priority over plain admin.
-function resolvePrivilegedRole(email?: string | null): "super_admin" | "admin" | null {
-  if (isSuperAdminEmail(email)) return "super_admin";
-  if (isAdminEmail(email)) return "admin";
-  return null;
-}
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -102,26 +73,9 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google") {
-        await connectToDatabase();
-        const existingUser = await User.findOne({ email: user.email });
-        if (!existingUser) {
-          const newUser = await User.create({
-            name: user.name,
-            email: user.email,
-            role: resolvePrivilegedRole(user.email) ?? "unassigned",
-          });
-          user.id = newUser._id.toString();
-          user.role = newUser.role;
-        } else {
-          // Promote allowlisted emails to admin/super_admin on sign-in.
-          const privilegedRole = resolvePrivilegedRole(existingUser.email);
-          if (privilegedRole && existingUser.role !== privilegedRole) {
-            existingUser.role = privilegedRole;
-            await existingUser.save();
-          }
-          user.id = existingUser._id.toString();
-          user.role = existingUser.role;
-        }
+        const dbUser = await findOrCreateGoogleUser({ email: user.email!, name: user.name });
+        user.id = dbUser._id.toString();
+        user.role = dbUser.role;
       }
       return true;
     },

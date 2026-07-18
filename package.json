@@ -15,6 +15,7 @@
     "@vercel/blob": "^2.6.0",
     "bcryptjs": "^3.0.3",
     "expo-server-sdk": "^6.1.0",
+    "google-auth-library": "^10.9.0",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.23.0",
     "mongoose": "^9.7.3",

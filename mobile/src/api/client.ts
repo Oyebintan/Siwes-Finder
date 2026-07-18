@@ -65,6 +65,20 @@ export async function login(email: string, password: string): Promise<{ token: s
   return apiFetch('/api/mobile/login', { method: 'POST', body: JSON.stringify({ email, password }) });
 }
 
+// The client runs the OAuth flow on-device (see api/useGoogleAuth.ts) and
+// exchanges it for a Google ID token itself -- this only ever sends that
+// token, never a client secret.
+export async function googleSignIn(idToken: string): Promise<{ token: string; user: SessionUser }> {
+  return apiFetch('/api/mobile/google-signin', { method: 'POST', body: JSON.stringify({ idToken }) });
+}
+
+// First-time "how will you use this platform?" picker for a brand-new
+// Google sign-in (role starts 'unassigned'). Mirrors the web's /onboarding
+// -> POST /api/auth/role.
+export async function setRole(role: 'student' | 'employer'): Promise<{ message: string; role: string }> {
+  return apiFetch('/api/auth/role', { method: 'POST', body: JSON.stringify({ role }) });
+}
+
 export async function register(
   name: string,
   email: string,

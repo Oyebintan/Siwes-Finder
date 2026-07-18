@@ -11,11 +11,14 @@ import { BrandLogo } from '@/components/ui/brand-logo';
 import { Button } from '@/components/ui/button';
 import { ErrorBanner } from '@/components/ui/error-banner';
 import { Field } from '@/components/ui/field';
+import { GoogleSignInButton } from '@/components/ui/google-signin-button';
+import { OrDivider } from '@/components/ui/or-divider';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { FontFamily, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/api/AuthContext';
-import { ApiError, register } from '@/api/client';
+import { ApiError, register, type SessionUser } from '@/api/client';
+import { isGoogleSignInConfigured } from '@/api/googleAuth';
 
 type Role = 'student' | 'employer' | 'school';
 
@@ -68,6 +71,13 @@ export default function SignupScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // The role tabs above don't apply to Google sign-in (mirrors the web:
+  // the Google button always lands as 'unassigned', same as any first-time
+  // Google sign-in) -- route-picker decides student vs. employer instead.
+  const handleGoogleSuccess = (sessionUser: SessionUser) => {
+    router.replace(sessionUser.role === 'unassigned' ? '/role-picker' : '/');
   };
 
   return (
@@ -167,6 +177,13 @@ export default function SignupScreen() {
                   disabled={!canSubmit}
                 />
               </Animated.View>
+
+              {isGoogleSignInConfigured() ? (
+                <Animated.View entering={FadeInDown.duration(400).delay(410)} style={styles.googleBlock}>
+                  <OrDivider />
+                  <GoogleSignInButton onError={setError} onSuccess={handleGoogleSuccess} />
+                </Animated.View>
+              ) : null}
             </View>
 
             <Animated.View entering={FadeInUp.duration(400).delay(470)}>
@@ -245,6 +262,9 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.bold,
   },
   form: {
+    gap: Spacing.three,
+  },
+  googleBlock: {
     gap: Spacing.three,
   },
   linkRow: {

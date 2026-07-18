@@ -20,6 +20,9 @@ type AuthState = {
   // extra round trip -- state updates from setUser aren't readable
   // synchronously in the same tick.
   login: (email: string, password: string) => Promise<SessionUser>;
+  // Same shape as login(), but exchanging a Google ID token (see
+  // components/ui/google-signin-button.tsx) instead of a password.
+  loginWithGoogle: (idToken: string) => Promise<SessionUser>;
   logout: () => Promise<void>;
   // Re-fetches /api/profile and updates the local user snapshot -- used
   // after verifying the email so the "verify your email" banner clears
@@ -108,6 +111,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       locked,
       login: async (email: string, password: string) => {
         const { token, user: sessionUser } = await api.login(email, password);
+        await authStorage.setToken(token);
+        setUser(sessionUser);
+        registerForPushNotifications().catch(() => {});
+        return sessionUser;
+      },
+      loginWithGoogle: async (idToken: string) => {
+        const { token, user: sessionUser } = await api.googleSignIn(idToken);
         await authStorage.setToken(token);
         setUser(sessionUser);
         registerForPushNotifications().catch(() => {});

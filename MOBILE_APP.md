@@ -62,8 +62,13 @@ mobile app authenticates with **bearer tokens signed by the same
    existing API route serves both clients with a one-line change. Adopt it
    route-by-route as the app needs them (Phase 1 list below), not
    big-bang.
-4. Google sign-in on mobile via `expo-auth-session` is **Phase 2+** —
-   credentials login ships first.
+4. Google sign-in ships in v1.4.0 (see "Google sign-in" phase below):
+   `expo-auth-session`'s Google provider runs the OAuth code flow on-device
+   and hands the app a Google ID token; `POST /api/mobile/google-signin`
+   verifies it server-side (`google-auth-library`) and returns the same
+   `{ token, user }` shape as credentials login, via a helper
+   (`src/lib/googleAuth.ts`) shared with the web's NextAuth callback so
+   both paths find-or-create the same account for a given email.
 5. The app stores the token in `expo-secure-store` (encrypted device
    storage), never AsyncStorage.
 
@@ -676,6 +681,41 @@ bumped 1.2.0 → 1.3.0 for this build.
       phone (OTA can't ship a new native module to an already-installed
       APK).
 
+### Google sign-in (v1.4.0)
+- [x] "Continue with Google" button (`ui/google-signin-button.tsx`) on both
+      `login.tsx` and `signup.tsx`, using `expo-auth-session`'s Google
+      provider (`useIdTokenAuthRequest`) — runs the OAuth code flow
+      on-device (PKCE, no client secret needed) and exchanges it for a
+      Google ID token.
+- [x] Backend: `POST /api/mobile/google-signin` verifies the ID token with
+      `google-auth-library` against whichever of `GOOGLE_ANDROID_CLIENT_ID`
+      / `GOOGLE_IOS_CLIENT_ID` / `GOOGLE_CLIENT_ID` (the existing web
+      client, doubling as the Expo Go/dev fallback) the token's `aud`
+      matches, then returns the same `{ token, user }` shape as
+      `/api/mobile/login`.
+- [x] `src/lib/googleAuth.ts`'s `findOrCreateGoogleUser()` is shared
+      between this route and the web's NextAuth `signIn` callback
+      (`src/lib/auth.ts`) — one place decides whether an email is new,
+      existing, or admin-allowlisted, so the two clients can never
+      fork into duplicate accounts for the same address.
+- [x] Button only renders when a real OAuth client ID is configured for
+      the current platform (`isGoogleSignInConfigured()`, same "optional
+      provider" pattern as the web's `GoogleProvider`) — an unconfigured
+      build just hides it instead of crashing (the underlying hook throws
+      on an undefined client ID).
+- [x] A brand-new Google sign-in has no role yet (`unassigned`, same as
+      the web). `(tabs)/_layout.tsx` redirects that straight to the new
+      `role-picker.tsx` (Student/Employer cards, mirrors the web's
+      `/onboarding`) instead of the generic "not supported" holding
+      screen. `POST /api/auth/role` was retrofitted to `requireSession`
+      so it accepts the mobile bearer token, not just the web's cookie.
+- [x] **New native dependency (`expo-auth-session`, pulling in
+      `expo-crypto`/`expo-application`) → version bump 1.3.0 → 1.4.0**,
+      same "needs a fresh native build" rule as biometric unlock above.
+- [ ] Not yet verified on a device. **Needs Google OAuth client IDs
+      provisioned first** (see "One-time account setup" below) — without
+      them the button stays hidden by design, not broken.
+
 ## Over-the-air updates (EAS Update) — read this before cutting a build
 
 `expo-updates` is configured (`runtimeVersion.policy: "appVersion"`,
@@ -776,6 +816,7 @@ binary assets) — both steps are the owner's to run locally.
 | Huawei AppGallery developer account | developer.huawei.com | Free | Phase 4 (chosen distribution path) |
 | ~~Google Play Console~~ | ~~play.google.com/console~~ | ~~$25 one-time~~ | **Not needed** — skipped per the owner's decision above |
 | (Later, iOS) Apple Developer | developer.apple.com | $99/year | Phase 4+ |
+| Google OAuth client IDs for mobile (Android now, iOS later) — an "Android" OAuth client (package `com.siwesfinder.app`, signed with the SHA-1 from `eas credentials`) and, later, an "iOS" one | Google Cloud Console → APIs & Services → Credentials (same project as the existing web `GOOGLE_CLIENT_ID`) | Free | Google sign-in phase above — the button just stays hidden until these exist. Set `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID`/`EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` in `mobile/eas.json`'s production `env` (build-time) and the matching `GOOGLE_ANDROID_CLIENT_ID`/`GOOGLE_IOS_CLIENT_ID` in Vercel (server-side verification) — see `mobile/.env.example`. |
 
 ## Conventions for sessions working on mobile
 

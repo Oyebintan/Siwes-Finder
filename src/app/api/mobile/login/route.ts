@@ -12,8 +12,7 @@ import { RATE_LIMITS, rateLimitGuard } from '@/lib/rateLimit';
 // returns a bearer token instead of setting a cookie, since a native app
 // has no cookie jar shared with the browser.
 //
-// Google sign-in on mobile is a later phase (needs expo-auth-session); this
-// route is credentials-only for now.
+// Google sign-in is a separate route: see /api/mobile/google-signin.
 export async function POST(req: Request) {
   try {
     const { email, password } = await req.json();
