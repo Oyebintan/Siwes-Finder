@@ -8,26 +8,23 @@ SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
 seeking SIWES (Students Industrial Work Experience Scheme) placements with
 verified employers, and gives their schools visibility into the process.
 
-**Last synced with:** mobile fintech redesign Batch D — Employer
-Dashboard (2026-07-18) — a new `(tabs)/employer-dashboard.tsx` gives
-employers a real Home tab for the first time (gradient hiring-pipeline
-hero, animated KPI row, "Awaiting your review" preview; employer tab bar
-is now 4 tabs, Home/Applicants/Logbook/Account); `employer-logbook.tsx`
-gained a rotated "APPROVED" stamp visual. The dashboard's own "+ Post a
-job" CTA needed a screen that didn't exist yet, so this batch also added
-`post-job.tsx` (mirrors the web's post-job wizard and `POST /api/jobs`
-contract) plus `createJob()` in the mobile client — which surfaced and
-fixed a real backend bug: `POST /api/jobs` was still cookie-session-only
-while its `GET` sibling already supported mobile bearer tokens; both now
-use `requireSession` (see `MOBILE_APP.md`'s "Fintech redesign — Batch D"
-phase; `__tests__/api/jobs.test.ts` updated, 393/393 root tests pass).
-Before that: Batch C (student screens — `GradientHeroCard` dashboard/
-profile heroes, animated KPI count-up, a horizontal "recommended for
-you" carousel, onboarding gradient-blob accents, a `BottomSheet` logbook
-composer) and Batch B (PIN-keypad unlock alongside biometric, via
-`pinSettings.ts` and a shared `hasQuickUnlockConfigured()` gate) — see
+**Last synced with:** mobile fintech redesign Batch E — school screens
+(2026-07-18) — `school-overview.tsx` gained a `GradientHeroCard`
+placement-rate gauge (reusing `ui/match-ring.tsx`, extended with
+`trackColor`/`valueColor` overrides rather than a second gauge
+component), animated KPI counts, and department-breakdown bars that grow
+on mount instead of snapping to width; `school-students.tsx` gained a
+small status dot on each student's avatar. `school-logbooks.tsx` and the
+student drill-in screen already matched the redesign from an earlier
+phase, so neither needed changes (see `MOBILE_APP.md`'s "Fintech
+redesign — Batch E" phase). Before that: Batch D (a real Employer
+Dashboard Home tab, plus a mobile job-posting wizard that surfaced and
+fixed a `POST /api/jobs` bearer-auth bug), Batch C (student screens —
+`GradientHeroCard` heroes, animated KPI count-up, a `BottomSheet` logbook
+composer), and Batch B (PIN-keypad unlock alongside biometric) — see
 `MOBILE_APP.md`'s "Fintech redesign" phases for the full detail on each.
-Before that: mobile Google sign-in (2026-07-18) — a "Continue with
+Only Batch F (PDF logbook export + streak banner + the v1.5.0 native
+build) remains. Before that: mobile Google sign-in (2026-07-18) — a "Continue with
 Google" button ships on `login.tsx`/`signup.tsx`
 (`expo-auth-session`, new native dependency, mobile version bumped
 1.3.0 → 1.4.0), verified server-side by `POST /api/mobile/google-signin`
@@ -394,8 +391,16 @@ cookie-session-only (`getServerSession`) while its `GET` sibling already
 supported mobile bearer tokens (`requireSession`) — now both do (see
 `MOBILE_APP.md`'s Batch D entry, `__tests__/api/jobs.test.ts` updated,
 393/393 root tests pass). `employer-logbook.tsx` also gained the
-prototype's rotated "APPROVED" stamp visual. Remaining batches (school
-screen restyles, PDF logbook export) are still pending.
+prototype's rotated "APPROVED" stamp visual. Batch E (school screens)
+shipped last so far: `school-overview.tsx` gained a `GradientHeroCard`
+placement-rate gauge (reusing `ui/match-ring.tsx`, extended with
+`trackColor`/`valueColor` overrides, rather than a second gauge
+component) plus animated KPI counts and growing department-breakdown
+bars; `school-students.tsx` gained a small status dot on each student's
+avatar. `school-logbooks.tsx`'s status filter chips and the student
+drill-in screen already matched the redesign from an earlier phase, so
+neither needed changes. Only Batch F (PDF logbook export + streak
+banner + the v1.5.0 native build) is still pending.
 
 ## Demo/seed data
 

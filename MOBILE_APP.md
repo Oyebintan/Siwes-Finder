@@ -857,6 +857,29 @@ straight on Applicants):
       close (same call as Batch C's `applications.tsx`).
 - [ ] Not yet verified on a device — same caveat as every phase.
 
+### Fintech redesign — Batch E: school screens (2026-07-18)
+OTA-eligible (no native dep). Mostly landed on screens already in decent
+shape from earlier phases, so this batch was smaller than A-D:
+- [x] `school-overview.tsx` — new `GradientHeroCard` with a placement-rate
+      gauge: reused `ui/match-ring.tsx` (previously the job-detail match
+      score ring) rather than building a second circular-gauge component,
+      extending it with optional `trackColor`/`valueColor` props so it
+      reads in white on the gradient instead of its default theme colors.
+      The KPI grid's values now count up via `useAnimatedCounter` (same
+      primitive as Batches C/D), and the department-breakdown bars grow
+      from 0 to their placement rate on mount (new local `DeptBar`
+      helper, same shared-value + `withTiming` pattern `MatchRing` itself
+      uses) instead of snapping straight to their final width.
+- [x] `school-students.tsx` — added a small colored "status dot" on each
+      student's avatar corner (green/placed, amber/applying, gray/not
+      applied) as a quick-glance layer *alongside* the existing status
+      Badge, not a replacement.
+- [ ] `school-logbooks.tsx`'s status filter chips (All/Approved/Pending)
+      and `school/students/[id].tsx`'s Card/Badge drill-in already
+      existed from an earlier phase and already matched the redesign's
+      vocabulary — no changes needed, no gap to close.
+- [ ] Not yet verified on a device — same caveat as every phase.
+
 ## Over-the-air updates (EAS Update) — read this before cutting a build
 
 `expo-updates` is configured (`runtimeVersion.policy: "appVersion"`,

@@ -1,9 +1,9 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useScrollToTop } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { Easing, FadeInDown, useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -11,10 +11,13 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorBanner } from '@/components/ui/error-banner';
+import { GradientHeroCard } from '@/components/ui/gradient-hero-card';
+import { MatchRing } from '@/components/ui/match-ring';
 import { BrandRefreshControl } from '@/components/ui/refresh-control';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { Skeleton, SkeletonCard } from '@/components/ui/skeleton';
 import { FontFamily, Radius, Spacing } from '@/constants/theme';
+import { useAnimatedCounter } from '@/hooks/use-animated-counter';
 import { useTabBarInset } from '@/hooks/use-tab-bar-inset';
 import { useTheme } from '@/hooks/use-theme';
 import { ApiError, getSchoolStudents, type SchoolStudent } from '@/api/client';
@@ -77,7 +80,8 @@ export default function SchoolOverviewScreen() {
         };
       })
       .sort((a, b) => b.total - a.total);
-    return { placed, applying, totalLogs, departmentNames, departmentBreakdown };
+    const placementRate = students.length ? Math.round((placed / students.length) * 100) : 0;
+    return { placed, applying, totalLogs, departmentNames, departmentBreakdown, placementRate };
   }, [students]);
 
   if (loading) {
@@ -125,6 +129,20 @@ export default function SchoolOverviewScreen() {
 
           {error ? <ErrorBanner message={error} onRetry={() => load()} /> : null}
 
+          {students.length > 0 ? (
+            <Animated.View entering={FadeInDown.duration(350).delay(20)} style={styles.sectionPad}>
+              <GradientHeroCard style={styles.hero}>
+                <View style={styles.heroText}>
+                  <ThemedText style={styles.heroLabel}>Placement rate</ThemedText>
+                  <ThemedText style={styles.heroDescription}>
+                    {stats.placed} of {students.length} student{students.length === 1 ? '' : 's'} placed so far.
+                  </ThemedText>
+                </View>
+                <MatchRing score={stats.placementRate} size={76} trackColor="rgba(255,255,255,0.25)" valueColor="#ffffff" />
+              </GradientHeroCard>
+            </Animated.View>
+          ) : null}
+
           <View style={styles.kpiGrid}>
             <Kpi icon="people" label="Registered students" value={students.length} tone="primary" delay={60} />
             <Kpi icon="checkmark-done" label="Placed" value={stats.placed} tone="success" delay={120} />
@@ -136,7 +154,7 @@ export default function SchoolOverviewScreen() {
           {stats.departmentBreakdown.length > 0 ? (
             <Animated.View entering={FadeInDown.duration(350).delay(360)} style={styles.section}>
               <ThemedText type="smallBold">By department</ThemedText>
-              {stats.departmentBreakdown.map((d) => (
+              {stats.departmentBreakdown.map((d, index) => (
                 <Card key={d.department} style={styles.deptRow}>
                   <View style={styles.deptRowText}>
                     <ThemedText type="smallBold">{d.department}</ThemedText>
@@ -144,17 +162,13 @@ export default function SchoolOverviewScreen() {
                       {d.placed}/{d.total} placed
                     </ThemedText>
                   </View>
-                  {/* Progress bar + rate: color shifts with how far along the department is. */}
+                  {/* Progress bar + rate: color shifts with how far along the department is; the fill grows in on mount instead of snapping to width. */}
                   <View style={styles.deptProgressCol}>
                     <View style={[styles.progressTrack, { backgroundColor: theme.backgroundSelected }]}>
-                      <View
-                        style={[
-                          styles.progressFill,
-                          {
-                            width: `${d.placementRate}%`,
-                            backgroundColor: d.placementRate >= 50 ? theme.success : theme.primary,
-                          },
-                        ]}
+                      <DeptBar
+                        percent={d.placementRate}
+                        color={d.placementRate >= 50 ? theme.success : theme.primary}
+                        delay={400 + Math.min(index, 6) * 60}
                       />
                     </View>
                     <Badge label={`${d.placementRate}%`} tone={d.placementRate >= 50 ? 'success' : 'primary'} />
@@ -188,6 +202,7 @@ function Kpi({
     success: { bg: theme.successSoft, fg: theme.success },
     warning: { bg: theme.warningSoft, fg: theme.warning },
   }[tone];
+  const animatedValue = useAnimatedCounter(value);
 
   return (
     <Animated.View entering={FadeInDown.duration(350).delay(delay)} style={styles.kpiSlot}>
@@ -195,13 +210,26 @@ function Kpi({
         <View style={[styles.kpiIcon, { backgroundColor: palette.bg }]}>
           <Ionicons name={icon} size={16} color={palette.fg} />
         </View>
-        <ThemedText style={styles.kpiValue}>{value}</ThemedText>
+        <ThemedText style={styles.kpiValue}>{animatedValue}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
           {label}
         </ThemedText>
       </Card>
     </Animated.View>
   );
+}
+
+/** Department-breakdown progress bar that grows from 0 to its placement rate on mount. */
+function DeptBar({ percent, color, delay }: { percent: number; color: string; delay: number }) {
+  const width = useSharedValue(0);
+
+  useEffect(() => {
+    width.value = withDelay(delay, withTiming(percent, { duration: 700, easing: Easing.out(Easing.cubic) }));
+  }, [width, percent, delay]);
+
+  const animatedStyle = useAnimatedStyle(() => ({ width: `${width.value}%` }));
+
+  return <Animated.View style={[styles.progressFill, { backgroundColor: color }, animatedStyle]} />;
 }
 
 const styles = StyleSheet.create({
@@ -225,6 +253,30 @@ const styles = StyleSheet.create({
   container: {
     paddingBottom: Spacing.six,
     gap: Spacing.three,
+  },
+  sectionPad: {
+    paddingHorizontal: Spacing.four,
+  },
+  hero: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.three,
+  },
+  heroText: {
+    flex: 1,
+    gap: Spacing.half,
+  },
+  heroLabel: {
+    color: '#ffffff',
+    fontFamily: FontFamily.bold,
+    fontSize: 15,
+    lineHeight: 20,
+  },
+  heroDescription: {
+    color: 'rgba(255,255,255,0.82)',
+    fontSize: 13,
+    lineHeight: 18,
   },
   kpiGrid: {
     flexDirection: 'row',
