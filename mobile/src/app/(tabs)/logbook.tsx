@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect, useScrollToTop } from 'expo-router';
+import { router, useFocusEffect, useScrollToTop } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import NetInfo from '@react-native-community/netinfo';
@@ -177,7 +177,21 @@ export default function LogbookScreen() {
           keyboardShouldPersistTaps="handled"
           refreshControl={<BrandRefreshControl refreshing={refreshing} onRefresh={() => load(true)} />}
         >
-          <ScreenHeader title="e-Logbook" subtitle="Your daily record, synced to your school" />
+          <ScreenHeader
+            title="e-Logbook"
+            subtitle="Your daily record, synced to your school"
+            right={
+              entries.length > 0 ? (
+                <Button
+                  label="Export"
+                  icon="share-outline"
+                  variant="secondary"
+                  small
+                  onPress={() => router.push('/logbook-export')}
+                />
+              ) : undefined
+            }
+          />
 
           {!loading && entries.length > 0 ? (
             <View style={styles.streakWrap}>

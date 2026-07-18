@@ -880,6 +880,43 @@ shape from earlier phases, so this batch was smaller than A-D:
       vocabulary — no changes needed, no gap to close.
 - [ ] Not yet verified on a device — same caveat as every phase.
 
+### Fintech redesign — Batch F: PDF export + streak banner (2026-07-18)
+Final redesign batch. **New native dependencies (`expo-print`,
+`expo-sharing`) → requires a fresh EAS build.** `app.json` version bumped
+1.4.0 → 1.5.0 for this build — this closes out the v1.5.0 fintech
+redesign (Batches A-F):
+- [x] `expo-print@~57.0.0` / `expo-sharing@~57.0.0` installed via plain
+      `npm install` pinned to match every other `expo-*` package's
+      `~57.0.x` range, since `npx expo install`'s extra compat-check call
+      to `api.expo.dev` isn't reachable from this sandbox (plain
+      `npm install` against `registry.npmjs.org` works fine and lands the
+      identical result). Neither package needs an `app.json` config
+      plugin entry.
+- [x] New `logbook-export.tsx` (stack route, pushed from the Logbook
+      tab's header "Export" button) — fetches entries + profile, builds a
+      self-contained HTML document, renders it to a PDF with
+      `Print.printToFileAsync`, then opens the OS share sheet via
+      `Sharing.shareAsync`. No server round trip, no new backend route.
+- [x] New `ui/streak-push-banner.tsx` — slides in ~2s after the dashboard
+      mounts, auto-hides ~5s later if untouched, tap routes to Logbook.
+      The dashboard now also fetches `listLogbookEntries()` and only
+      mounts the banner when there's an active weekday streak not yet
+      logged today (reuses `streak-card.tsx`'s existing
+      `computeWeekdayStreak`/`loggedThisWeek` rather than a second streak
+      implementation).
+- [x] `expo-doctor` run before commit: the 2 failing checks (config
+      schema validation, React Native Directory lookup) are both
+      `api.expo.dev`-network-blocked in this sandbox, not real project
+      issues. The duplicate-native-module warning (`expo-constants`,
+      `expo-web-browser`, `expo-application` each resolving twice)
+      pre-dates this batch — `expo-auth-session`'s own pinned
+      sub-dependencies from the Google sign-in batch — left alone as out
+      of scope.
+- [ ] Not yet verified on a device — same caveat as every phase. **Needs
+      the new build this version bump triggers** to reach the owner's
+      phone (OTA can't ship new native modules to an already-installed
+      APK).
+
 ## Over-the-air updates (EAS Update) — read this before cutting a build
 
 `expo-updates` is configured (`runtimeVersion.policy: "appVersion"`,

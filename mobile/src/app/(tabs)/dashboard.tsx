@@ -15,12 +15,24 @@ import { PressableScale } from '@/components/ui/pressable-scale';
 import { BrandRefreshControl } from '@/components/ui/refresh-control';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { Skeleton } from '@/components/ui/skeleton';
+import { computeWeekdayStreak, loggedThisWeek } from '@/components/ui/streak-card';
+import { StreakPushBanner } from '@/components/ui/streak-push-banner';
 import { FontFamily, Radius, Spacing } from '@/constants/theme';
 import { useAnimatedCounter } from '@/hooks/use-animated-counter';
 import { useTabBarInset } from '@/hooks/use-tab-bar-inset';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/api/AuthContext';
-import { ApiError, getProfile, listApplications, listJobs, type Application, type Job, type Profile } from '@/api/client';
+import {
+  ApiError,
+  getProfile,
+  listApplications,
+  listJobs,
+  listLogbookEntries,
+  type Application,
+  type Job,
+  type LogbookEntry,
+  type Profile,
+} from '@/api/client';
 
 const STATUS_TONE: Record<Application['status'], BadgeTone> = {
   Pending: 'warning',
@@ -52,6 +64,7 @@ export default function DashboardScreen() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [recommended, setRecommended] = useState<Job[]>([]);
   const [openJobsCount, setOpenJobsCount] = useState(0);
+  const [logbookEntries, setLogbookEntries] = useState<LogbookEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -61,17 +74,19 @@ export default function DashboardScreen() {
     else setLoading(true);
     setError('');
     try {
-      const [profileRes, apps, jobsRes] = await Promise.all([
+      const [profileRes, apps, jobsRes, entries] = await Promise.all([
         getProfile(),
         listApplications(),
         // Newest-first, same as the website's "Recommended for you" query --
         // real personalization by department/skill is a separate change.
         listJobs({ limit: PREVIEW_COUNT - 1 }),
+        listLogbookEntries(),
       ]);
       setProfile(profileRes);
       setApplications(apps);
       setRecommended(jobsRes.jobs);
       setOpenJobsCount(jobsRes.total);
+      setLogbookEntries(entries);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not load your dashboard. Check your connection.');
     } finally {
@@ -100,6 +115,15 @@ export default function DashboardScreen() {
 
   const firstName = (profile?.name || user?.name || '').split(' ')[0] || 'there';
 
+  // The streak-nudge banner only has something to protect on a weekday
+  // with an active streak that isn't logged yet today -- weekends never
+  // break a streak (see streak-card.tsx), so there's nothing to nudge.
+  const todayDow = new Date().getDay(); // 0 Sun .. 6 Sat
+  const isWeekday = todayDow >= 1 && todayDow <= 5;
+  const weekdayStreak = computeWeekdayStreak(logbookEntries);
+  const loggedToday = isWeekday ? loggedThisWeek(logbookEntries)[(todayDow + 6) % 7] : true;
+  const showStreakBanner = !loading && isWeekday && weekdayStreak > 0 && !loggedToday;
+
   if (loading) {
     return (
       <ThemedView style={styles.flex}>
@@ -121,6 +145,7 @@ export default function DashboardScreen() {
   return (
     <ThemedView style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={['top']}>
+        {showStreakBanner ? <StreakPushBanner streak={weekdayStreak} /> : null}
         <ScrollView
           ref={scrollTopRef}
           contentContainerStyle={[styles.container, { paddingBottom: tabBarInset }]}
