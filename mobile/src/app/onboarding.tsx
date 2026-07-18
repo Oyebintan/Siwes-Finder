@@ -9,6 +9,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ThemedText } from '@/components/themed-text';
 import { BrandLogo } from '@/components/ui/brand-logo';
 import { Button } from '@/components/ui/button';
+import { GradientBlob } from '@/components/ui/gradient-blob';
 import { OnboardingIllustration, type OnboardingVariant } from '@/components/ui/onboarding-illustration';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Colors, FontFamily, Spacing } from '@/constants/theme';
@@ -87,6 +88,10 @@ export default function OnboardingScreen() {
               locations={[0, 0.42, 0.78]}
               style={StyleSheet.absoluteFill}
             />
+            {/* Drifting accent orbs -- the "alive" motion layer on top of the
+                static glow gradient, per slide's own accent color. */}
+            <GradientBlob color={item.accent} size={200} opacity={0.16} style={styles.blobTop} />
+            <GradientBlob color={item.accent} size={260} opacity={0.1} style={styles.blobBottom} />
 
             <SafeAreaView style={styles.slideSafe} edges={['top', 'bottom']}>
               <View style={styles.topRow}>
@@ -170,6 +175,14 @@ const styles = StyleSheet.create({
   },
   slideSafe: {
     flex: 1,
+  },
+  blobTop: {
+    top: -40,
+    right: -60,
+  },
+  blobBottom: {
+    bottom: -20,
+    left: -80,
   },
   topRow: {
     paddingHorizontal: Spacing.four,

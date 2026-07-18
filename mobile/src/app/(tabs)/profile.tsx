@@ -4,7 +4,6 @@ import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useScrollToTop } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
@@ -16,6 +15,7 @@ import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { ErrorBanner } from '@/components/ui/error-banner';
 import { Field } from '@/components/ui/field';
+import { GradientHeroCard } from '@/components/ui/gradient-hero-card';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
@@ -169,12 +169,7 @@ export default function ProfileScreen() {
         <ScrollView contentContainerStyle={[styles.container, { paddingBottom: tabBarInset }]} keyboardShouldPersistTaps="handled">
           {/* Gradient identity header — avatar over the brand gradient. */}
           <Animated.View entering={FadeInDown.duration(350)}>
-            <LinearGradient
-              colors={[theme.gradientStart, theme.gradientEnd]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.hero}
-            >
+            <GradientHeroCard style={styles.hero}>
               <PressableScale
                 onPress={() => router.push('/settings')}
                 hitSlop={10}
@@ -206,7 +201,7 @@ export default function ProfileScreen() {
               <ThemedText style={styles.heroMeta}>
                 {[course, university].filter(Boolean).join(' · ') || 'Complete your academic details below'}
               </ThemedText>
-            </LinearGradient>
+            </GradientHeroCard>
           </Animated.View>
 
           {error ? <ErrorBanner message={error} /> : null}
@@ -348,8 +343,6 @@ const styles = StyleSheet.create({
   hero: {
     alignItems: 'center',
     gap: Spacing.one,
-    padding: Spacing.four,
-    borderRadius: Radius.xl,
   },
   settingsButton: {
     position: 'absolute',

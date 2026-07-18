@@ -8,16 +8,27 @@ SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
 seeking SIWES (Students Industrial Work Experience Scheme) placements with
 verified employers, and gives their schools visibility into the process.
 
-**Last synced with:** mobile fintech redesign Batch B — PIN-keypad unlock
-(2026-07-18) — `pinSettings.ts` adds a salted-hash PIN (`expo-crypto`, no
-new native dependency) as an alternative to biometric unlock, with a
-shared `hasQuickUnlockConfigured()` check so a PIN-only user locks on idle
-timeout instead of being logged out; `ui/lock-screen.tsx` now resolves
-biometric-vs-PIN from what's actually configured, and Settings gained a
-"Quick-unlock PIN" section (bottom-sheet keypad flow to set/change/remove)
-(see `MOBILE_APP.md`'s "Fintech redesign — Batch B" phase). Before that:
-mobile Google sign-in (2026-07-18) — a "Continue
-with Google" button ships on `login.tsx`/`signup.tsx`
+**Last synced with:** mobile fintech redesign Batch C — student screens
+(2026-07-18) — dashboard and profile heroes now use the shared
+`GradientHeroCard`, the dashboard's KPI row counts up via
+`useAnimatedCounter`, "Recommended for you" is a horizontal carousel,
+onboarding gained drifting `GradientBlob` accents, and the logbook entry
+form is now a `BottomSheet` composer behind an "Add today's entry"
+trigger instead of an always-open card (`ui/bottom-sheet.tsx` gained a
+`KeyboardAvoidingView` wrap for it). A stipend-range filter slider and a
+login/signup/profile-setup re-skin were deliberately dropped from this
+batch's scope (see `MOBILE_APP.md`'s "Fintech redesign — Batch C" phase
+for why). Before that: mobile fintech redesign Batch B — PIN-keypad
+unlock (2026-07-18) — `pinSettings.ts` adds a salted-hash PIN
+(`expo-crypto`, no new native dependency) as an alternative to biometric
+unlock, with a shared `hasQuickUnlockConfigured()` check so a PIN-only
+user locks on idle timeout instead of being logged out;
+`ui/lock-screen.tsx` now resolves biometric-vs-PIN from what's actually
+configured, and Settings gained a "Quick-unlock PIN" section
+(bottom-sheet keypad flow to set/change/remove) (see `MOBILE_APP.md`'s
+"Fintech redesign — Batch B" phase). Before that: mobile Google sign-in
+(2026-07-18) — a "Continue with Google" button ships on
+`login.tsx`/`signup.tsx`
 (`expo-auth-session`, new native dependency, mobile version bumped
 1.3.0 → 1.4.0), verified server-side by `POST /api/mobile/google-signin`
 (`google-auth-library`); web's NextAuth Google callback and this route
@@ -359,9 +370,18 @@ alternative to biometric unlock, with a shared
 `hasQuickUnlockConfigured()` check so a PIN-only user locks on idle
 timeout/app-kill instead of being logged out, same as a biometric-only
 user. Settings gained a "Quick-unlock PIN" section (set/change/remove via
-a bottom-sheet keypad flow). Remaining batches (student/employer/school
-screen restyles, a new Employer Dashboard tab, PDF logbook export) are
-still pending.
+a bottom-sheet keypad flow). Batch C (student screens) shipped next:
+dashboard and profile heroes now use the shared `GradientHeroCard`, the
+dashboard's KPI row counts up on load, "Recommended for you" is a
+horizontal carousel, onboarding gained drifting gradient-blob accents,
+and the logbook entry form moved from an always-open card into a
+bottom-sheet composer behind an "Add today's entry" trigger row. Batch C
+deliberately dropped a jobs-feed stipend-range filter slider (no numeric
+`Job.stipend` field to back it) and skipped re-skinning the
+already-redesigned login/signup/profile-setup screens — see
+`MOBILE_APP.md`'s Batch C entry for the full reasoning. Remaining batches
+(employer/school screen restyles, a new Employer Dashboard tab, PDF
+logbook export) are still pending.
 
 ## Demo/seed data
 

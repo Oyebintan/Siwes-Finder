@@ -765,6 +765,47 @@ dependency, OTA-eligible**:
 - [ ] Not yet verified on a device — same caveat as every phase.
       OTA-eligible: publishes automatically via `mobile-ota-update.yml`.
 
+### Fintech redesign — Batch C: student screens (2026-07-18, scope revised in-flight)
+OTA-eligible (no native dep). Applies Batch A's primitives where they add
+real value; explicitly skips prototype details that don't map onto real
+data or already-good screens (see `groovy-wiggling-dolphin.md`'s Batch C
+section for the full reasoning) rather than forcing a 1:1 prototype port:
+- [x] **Dashboard** (`(tabs)/dashboard.tsx`) — hero swapped to
+      `GradientHeroCard`; the four KPI numbers (applications sent/under
+      review/offers/open opportunities) now count up via
+      `useAnimatedCounter` instead of snapping in; "Recommended for you"
+      is now a horizontally-scrolling carousel instead of a stacked list.
+- [x] **Profile** (`(tabs)/profile.tsx`) — identity header hero swapped
+      to `GradientHeroCard` (same visual result, one shared component
+      instead of duplicated `LinearGradient` markup).
+- [x] **Onboarding** (`onboarding.tsx`) — two drifting `GradientBlob`
+      accents (top-right, bottom-left, each slide's own accent color)
+      layered over the existing full-bleed glow gradient, for the
+      prototype's "alive" motion quality without touching the
+      already-solid slide/copy/dot-indicator structure.
+- [x] **Logbook** (`(tabs)/logbook.tsx`) — the always-open entry form is
+      now a compact "Add today's entry" trigger row that opens a
+      `BottomSheet` composer (week/hours/day-chips/activity/submit,
+      unchanged fields, just relocated). The offline-queue path now also
+      toasts immediately (previously only an in-form notice, which would
+      have been hidden once the sheet closed); the persistent sync notice
+      moved onto the main scroll so it survives the sheet closing.
+- [x] `ui/bottom-sheet.tsx` gained a `KeyboardAvoidingView` wrap (same
+      `padding`-on-iOS/default-resize-on-Android convention every other
+      form screen already uses) — a `Modal` doesn't inherit that
+      behavior automatically, and the logbook composer's multiline field
+      needed it.
+- [ ] **Dropped from the original Batch C scope, on purpose**: a jobs-feed
+      bottom-sheet filter panel with a stipend-range slider
+      (`Job.stipend` is free text, not numeric — no backend field to
+      slide over, and the screen's existing inline Type/Best-match/Saved
+      chips already cover every real filter dimension); a restyle pass
+      on `login.tsx`/`signup.tsx`/`profile-setup.tsx` (already redesigned
+      in the "centered, animated, fintech" pass — re-skinning for
+      prototype parity alone wasn't worth the regression risk);
+      `applications.tsx` (already a clean list, no gap to close).
+- [ ] Not yet verified on a device — same caveat as every phase.
+
 ## Over-the-air updates (EAS Update) — read this before cutting a build
 
 `expo-updates` is configured (`runtimeVersion.policy: "appVersion"`,
