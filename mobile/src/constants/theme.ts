@@ -121,3 +121,38 @@ export const TabBar = {
 } as const;
 
 export const MaxContentWidth = 800;
+
+// Redesign (v1.5.0) motion/gradient vocabulary. These started as tunable
+// "props" in the design prototype (gradientMood/glowIntensity/motionEnergy)
+// but ship here as one fixed opinionated default rather than user-facing
+// Settings toggles -- the app's existing settings are all functional
+// (theme override, biometric, auto-lock), not aesthetic, and there's no
+// product signal yet that users want to pick their own gradient vibe.
+// Kept as named constants (not inlined) so promoting one to a real setting
+// later is a small change, not a rewrite.
+export type GradientMood = 'classic' | 'deep' | 'electric';
+export const GradientMoods: Record<GradientMood, { start: string; end: string }> = {
+  classic: { start: '#2557eb', end: '#4338ca' },
+  deep: { start: '#1e3a8a', end: '#4338ca' },
+  electric: { start: '#2557eb', end: '#7c3aed' },
+};
+
+export type GlowIntensity = 'subtle' | 'standard' | 'bold';
+export const GlowOpacity: Record<GlowIntensity, number> = {
+  subtle: 0.16,
+  standard: 0.32,
+  bold: 0.5,
+};
+
+export type MotionEnergy = 'calm' | 'snappy' | 'bouncy';
+export const MotionSpecs: Record<MotionEnergy, { damping: number; stiffness: number }> = {
+  calm: { damping: 20, stiffness: 200 },
+  // Matches the tab bar's existing active-icon spring -- the app's current
+  // baseline feel.
+  snappy: { damping: 16, stiffness: 260 },
+  bouncy: { damping: 12, stiffness: 280 },
+};
+
+export const DEFAULT_GRADIENT_MOOD: GradientMood = 'deep';
+export const DEFAULT_GLOW_INTENSITY: GlowIntensity = 'standard';
+export const DEFAULT_MOTION_ENERGY: MotionEnergy = 'snappy';
