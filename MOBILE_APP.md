@@ -806,6 +806,57 @@ section for the full reasoning) rather than forcing a 1:1 prototype port:
       `applications.tsx` (already a clean list, no gap to close).
 - [ ] Not yet verified on a device — same caveat as every phase.
 
+### Fintech redesign — Batch D: Employer Dashboard + employer restyle (2026-07-18)
+OTA-eligible (no native dep). Closes the gap flagged in the original
+design-brief session (no Employer Dashboard tab — employers landed
+straight on Applicants):
+- [x] New `(tabs)/employer-dashboard.tsx` — the employer's Home tab:
+      `GradientHeroCard` "hiring pipeline" hero, an animated KPI row
+      (open postings / total applicants / pending review / acceptance
+      rate, all via `useAnimatedCounter`), a "+ Post a job" CTA, and an
+      "Awaiting your review" preview of up to 3 pending applications
+      (`See all →` routes to Applicants). Open postings and applicant
+      stats come from the same `GET /api/jobs`/`GET /api/applications`
+      calls the rest of the employer app already uses — no new read
+      endpoints needed.
+- [x] `(tabs)/_layout.tsx` — employer `Tabs.Protected` guard grew from 2
+      routes to 3 (`employer-dashboard`, `employer-applicants`,
+      `employer-logbook`); tab bar is now 4 tabs total
+      (Home/Applicants/Logbook/Account), matching the student side's
+      shape. `(tabs)/index.tsx`'s employer redirect now points at
+      `/employer-dashboard` instead of `/employer-applicants`.
+- [x] `employer-logbook.tsx` — approved entries now show `ui/approval-
+      stamp.tsx` (new): a rotated bordered "APPROVED" stamp that springs
+      in via `ZoomIn`, peeking off the card's top-right corner, in place
+      of the plain success Badge — the prototype's "stamp" visual.
+- [x] `account.tsx` (employer/school shared) — hero swapped to
+      `GradientHeroCard`, same treatment `profile.tsx` got in Batch C.
+- [x] **New: `post-job.tsx`** — a 3-step wizard (mirrors the web's
+      `/employer/post-job` field set and `POST /api/jobs` contract
+      exactly; required skills use this app's chip-multi-select
+      convention instead of the web's free-text tag input) reachable from
+      the dashboard's "+ Post a job" CTA. `api/client.ts` gained
+      `createJob()`. This wasn't in the original Batch D scope — the
+      prototype's CTA assumed job posting already existed on mobile, but
+      it was web-only with no mobile client function at all, so the CTA
+      would have had nothing to open.
+- [x] **Backend fix riding along, required for the CTA above to work at
+      all**: `POST /api/jobs` (`src/app/api/jobs/route.ts`) still used
+      `getServerSession(authOptions)` (cookie-only) while its sibling
+      `GET /api/jobs` was already retrofitted to `requireSession(req)`
+      (cookie *or* mobile bearer token) — `src/lib/mobileAuth.ts`'s own
+      comment already assumed this was done ("routes that actually gate
+      on this — POST /api/applications, POST /api/jobs — re-check the
+      DB"). Fixed to match GET; `__tests__/api/jobs.test.ts`'s 16
+      POST-block mocks updated from `getServerSession` to
+      `requireSession` accordingly (27/27 tests pass, full root suite
+      393/393 pass).
+- [ ] `employer-applicants.tsx` deliberately left unrestyled — already
+      uses the same Card/Badge/SwipeRow/bulk-select vocabulary as every
+      other redesigned list screen in the app, so there was no gap to
+      close (same call as Batch C's `applications.tsx`).
+- [ ] Not yet verified on a device — same caveat as every phase.
+
 ## Over-the-air updates (EAS Update) — read this before cutting a build
 
 `expo-updates` is configured (`runtimeVersion.policy: "appVersion"`,

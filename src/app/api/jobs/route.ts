@@ -1,6 +1,4 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Job from '@/models/Job';
 import User from '@/models/User';
@@ -21,7 +19,7 @@ function plainJob(job: JobDoc) {
 // POST: Create a new job placement (verified employers only)
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await requireSession(req);
     if (!session || session.user.role !== 'employer') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

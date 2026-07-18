@@ -6,6 +6,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { ApprovalStamp } from '@/components/ui/approval-stamp';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, InitialAvatar } from '@/components/ui/card';
@@ -95,6 +96,7 @@ export default function EmployerLogbookScreen() {
                 entering={FadeInDown.duration(320).delay(Math.min(index, MAX_STAGGERED) * STAGGER_MS)}
               >
                 <Card>
+                  {item.isApproved ? <ApprovalStamp /> : null}
                   <View style={styles.cardHeader}>
                     <InitialAvatar name={item.studentId?.name ?? '?'} />
                     <View style={styles.cardHeaderText}>
@@ -105,7 +107,6 @@ export default function EmployerLogbookScreen() {
                         Week {item.weekNumber} · {item.dayOfWeek}
                       </ThemedText>
                     </View>
-                    {item.isApproved ? <Badge label="Approved" tone="success" icon="checkmark-circle" /> : null}
                   </View>
 
                   <ThemedText type="small" themeColor="textSecondary">

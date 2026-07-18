@@ -80,6 +80,7 @@ function RootLayoutInner() {
             <Stack.Screen name="signup" options={{ animation: 'fade' }} />
             <Stack.Screen name="role-picker" options={{ animation: 'fade' }} />
             <Stack.Screen name="profile-setup" options={{ animation: 'fade' }} />
+            <Stack.Screen name="post-job" options={{ headerShown: true, title: 'Post an opportunity' }} />
             <Stack.Screen name="forgot-password" />
             <Stack.Screen name="verify-email" />
             <Stack.Screen name="settings" options={{ headerShown: true, title: 'Settings' }} />

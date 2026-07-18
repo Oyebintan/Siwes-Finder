@@ -304,6 +304,32 @@ export async function sendMessage(applicationId: string, body: string): Promise<
 }
 
 // -- Employer --------------------------------------------------------------
+// POST /api/jobs (same route GET /api/jobs above already uses to fetch an
+// employer's own postings, branched server-side by role) -- this is the
+// one write path the employer's mobile client didn't have until the
+// redesign's Employer Dashboard added a "+ Post a job" CTA. Mirrors the
+// web post-job wizard's exact field set (src/app/(dashboard)/employer/
+// post-job/page.tsx) so both clients hit the same validation.
+export type JobPostInput = {
+  title: string;
+  location: string;
+  type: 'On-site' | 'Remote' | 'Hybrid';
+  duration: string;
+  department: string;
+  stipend?: string;
+  description: string;
+  requirements: string[];
+  applicationMethod: 'platform' | 'email' | 'external';
+  applicationEmail?: string;
+  applicationUrl?: string;
+  applicationDeadline?: string;
+  maxApplicants?: number;
+};
+
+export async function createJob(input: JobPostInput): Promise<{ message: string; job: Job }> {
+  return apiFetch('/api/jobs', { method: 'POST', body: JSON.stringify(input) });
+}
+
 // GET /api/applications branches by role server-side; for an employer
 // caller it returns this shape (job title only, populated applicant
 // details) rather than the student shape `Application` above.

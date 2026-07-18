@@ -247,6 +247,10 @@ export default function TabsLayout() {
 
         <Tabs.Protected guard={isEmployer}>
           <Tabs.Screen
+            name="employer-dashboard"
+            options={{ title: 'Home', tabBarIcon: tabIcon('home', 'home-outline') }}
+          />
+          <Tabs.Screen
             name="employer-applicants"
             options={{ title: 'Applicants', tabBarIcon: tabIcon('people', 'people-outline') }}
           />

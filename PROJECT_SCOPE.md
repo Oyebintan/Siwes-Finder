@@ -8,27 +8,27 @@ SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
 seeking SIWES (Students Industrial Work Experience Scheme) placements with
 verified employers, and gives their schools visibility into the process.
 
-**Last synced with:** mobile fintech redesign Batch C — student screens
-(2026-07-18) — dashboard and profile heroes now use the shared
-`GradientHeroCard`, the dashboard's KPI row counts up via
-`useAnimatedCounter`, "Recommended for you" is a horizontal carousel,
-onboarding gained drifting `GradientBlob` accents, and the logbook entry
-form is now a `BottomSheet` composer behind an "Add today's entry"
-trigger instead of an always-open card (`ui/bottom-sheet.tsx` gained a
-`KeyboardAvoidingView` wrap for it). A stipend-range filter slider and a
-login/signup/profile-setup re-skin were deliberately dropped from this
-batch's scope (see `MOBILE_APP.md`'s "Fintech redesign — Batch C" phase
-for why). Before that: mobile fintech redesign Batch B — PIN-keypad
-unlock (2026-07-18) — `pinSettings.ts` adds a salted-hash PIN
-(`expo-crypto`, no new native dependency) as an alternative to biometric
-unlock, with a shared `hasQuickUnlockConfigured()` check so a PIN-only
-user locks on idle timeout instead of being logged out;
-`ui/lock-screen.tsx` now resolves biometric-vs-PIN from what's actually
-configured, and Settings gained a "Quick-unlock PIN" section
-(bottom-sheet keypad flow to set/change/remove) (see `MOBILE_APP.md`'s
-"Fintech redesign — Batch B" phase). Before that: mobile Google sign-in
-(2026-07-18) — a "Continue with Google" button ships on
-`login.tsx`/`signup.tsx`
+**Last synced with:** mobile fintech redesign Batch D — Employer
+Dashboard (2026-07-18) — a new `(tabs)/employer-dashboard.tsx` gives
+employers a real Home tab for the first time (gradient hiring-pipeline
+hero, animated KPI row, "Awaiting your review" preview; employer tab bar
+is now 4 tabs, Home/Applicants/Logbook/Account); `employer-logbook.tsx`
+gained a rotated "APPROVED" stamp visual. The dashboard's own "+ Post a
+job" CTA needed a screen that didn't exist yet, so this batch also added
+`post-job.tsx` (mirrors the web's post-job wizard and `POST /api/jobs`
+contract) plus `createJob()` in the mobile client — which surfaced and
+fixed a real backend bug: `POST /api/jobs` was still cookie-session-only
+while its `GET` sibling already supported mobile bearer tokens; both now
+use `requireSession` (see `MOBILE_APP.md`'s "Fintech redesign — Batch D"
+phase; `__tests__/api/jobs.test.ts` updated, 393/393 root tests pass).
+Before that: Batch C (student screens — `GradientHeroCard` dashboard/
+profile heroes, animated KPI count-up, a horizontal "recommended for
+you" carousel, onboarding gradient-blob accents, a `BottomSheet` logbook
+composer) and Batch B (PIN-keypad unlock alongside biometric, via
+`pinSettings.ts` and a shared `hasQuickUnlockConfigured()` gate) — see
+`MOBILE_APP.md`'s "Fintech redesign" phases for the full detail on each.
+Before that: mobile Google sign-in (2026-07-18) — a "Continue with
+Google" button ships on `login.tsx`/`signup.tsx`
 (`expo-auth-session`, new native dependency, mobile version bumped
 1.3.0 → 1.4.0), verified server-side by `POST /api/mobile/google-signin`
 (`google-auth-library`); web's NextAuth Google callback and this route
@@ -312,7 +312,10 @@ retrofitted `requireApprovedSchool()`. Phases 0-3 are done: foundations,
 student MVP (auth, browse/search/apply, saved jobs, applications tracker,
 profile), e-Logbook with offline drafts and push notifications, and
 employer (applicant review, logbook approval) + school (read-only
-dashboards) screens. Push notifications won't actually deliver until the
+dashboards) screens. Employers also got a Home dashboard tab and a
+mobile job-posting wizard in the fintech redesign's Batch D (see "Last
+synced with" above) -- posting a job was web-only until then. Push
+notifications won't actually deliver until the
 app has a linked EAS project (`User.expoPushToken` stays unset otherwise —
 see `MOBILE_APP.md`'s setup table). Phase 4 (Android release) has its icon
 assets and a `/privacy` policy page (a Play Store requirement) done, but
@@ -379,9 +382,20 @@ bottom-sheet composer behind an "Add today's entry" trigger row. Batch C
 deliberately dropped a jobs-feed stipend-range filter slider (no numeric
 `Job.stipend` field to back it) and skipped re-skinning the
 already-redesigned login/signup/profile-setup screens — see
-`MOBILE_APP.md`'s Batch C entry for the full reasoning. Remaining batches
-(employer/school screen restyles, a new Employer Dashboard tab, PDF
-logbook export) are still pending.
+`MOBILE_APP.md`'s Batch C entry for the full reasoning. Batch D shipped
+next: mobile finally has an Employer Dashboard tab
+(`(tabs)/employer-dashboard.tsx` — gradient hiring-pipeline hero, animated
+KPI row, "Awaiting your review" preview; employer tab bar is now 4 tabs,
+Home/Applicants/Logbook/Account) and, since the design's own "+ Post a
+job" CTA assumed the feature already existed on mobile and it didn't, a
+new `post-job.tsx` wizard plus `createJob()` in the client. That surfaced
+a real backend bug fixed in the same batch: `POST /api/jobs` was still
+cookie-session-only (`getServerSession`) while its `GET` sibling already
+supported mobile bearer tokens (`requireSession`) — now both do (see
+`MOBILE_APP.md`'s Batch D entry, `__tests__/api/jobs.test.ts` updated,
+393/393 root tests pass). `employer-logbook.tsx` also gained the
+prototype's rotated "APPROVED" stamp visual. Remaining batches (school
+screen restyles, PDF logbook export) are still pending.
 
 ## Demo/seed data
 
