@@ -8,7 +8,15 @@ SIWES Finder is a Next.js + MongoDB platform that connects Nigerian students
 seeking SIWES (Students Industrial Work Experience Scheme) placements with
 verified employers, and gives their schools visibility into the process.
 
-**Last synced with:** mobile Google sign-in (2026-07-18) — a "Continue
+**Last synced with:** mobile fintech redesign Batch B — PIN-keypad unlock
+(2026-07-18) — `pinSettings.ts` adds a salted-hash PIN (`expo-crypto`, no
+new native dependency) as an alternative to biometric unlock, with a
+shared `hasQuickUnlockConfigured()` check so a PIN-only user locks on idle
+timeout instead of being logged out; `ui/lock-screen.tsx` now resolves
+biometric-vs-PIN from what's actually configured, and Settings gained a
+"Quick-unlock PIN" section (bottom-sheet keypad flow to set/change/remove)
+(see `MOBILE_APP.md`'s "Fintech redesign — Batch B" phase). Before that:
+mobile Google sign-in (2026-07-18) — a "Continue
 with Google" button ships on `login.tsx`/`signup.tsx`
 (`expo-auth-session`, new native dependency, mobile version bumped
 1.3.0 → 1.4.0), verified server-side by `POST /api/mobile/google-signin`
@@ -340,6 +348,20 @@ until the owner provisions Android/iOS OAuth client IDs (see
 shows the button rather than crashing. A brand-new Google sign-in
 (`role: 'unassigned'`) is routed to `role-picker.tsx`, mobile's
 equivalent of the web's `/onboarding` role picker.
+
+**Fintech redesign in progress (v1.5.0, batched, see `MOBILE_APP.md`)** —
+Claude Design prototypes imported for student/employer/school. Batch A
+(gradient hero card, bottom sheet, animated counter primitives) and Batch
+B shipped OTA so far. Batch B closes the "PIN unlock deferred" gap from
+v1.3: `pinSettings.ts` (salted-hash PIN via `expo-crypto`, already a
+transitive dependency — no new native module) adds a keypad-entry
+alternative to biometric unlock, with a shared
+`hasQuickUnlockConfigured()` check so a PIN-only user locks on idle
+timeout/app-kill instead of being logged out, same as a biometric-only
+user. Settings gained a "Quick-unlock PIN" section (set/change/remove via
+a bottom-sheet keypad flow). Remaining batches (student/employer/school
+screen restyles, a new Employer Dashboard tab, PDF logbook export) are
+still pending.
 
 ## Demo/seed data
 

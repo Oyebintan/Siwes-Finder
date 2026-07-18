@@ -716,6 +716,55 @@ bumped 1.2.0 → 1.3.0 for this build.
       provisioned first** (see "One-time account setup" below) — without
       them the button stays hidden by design, not broken.
 
+### Fintech redesign — Batch A: shared primitives (2026-07-18)
+Foundation for the full UI/UX redesign (Claude Design prototypes for
+student/employer/school, imported via DesignSync). No screen changes yet.
+OTA-eligible (no native dep):
+- [x] `theme.ts`: `GradientMood`/`GlowIntensity`/`MotionEnergy` constants
+      (shipped as one fixed default — deep/standard/snappy — not exposed
+      as Settings; these are aesthetic prototyping knobs, not a functional
+      preference).
+- [x] `ui/gradient-hero-card.tsx` + `ui/gradient-blob.tsx`: the
+      brand-gradient hero pattern (previously duplicated per screen) as
+      one reusable component, with an optional drifting glow-blob
+      backdrop.
+- [x] `ui/bottom-sheet.tsx`: hand-rolled sheet on RN's own `Modal
+      animationType="slide"` (no drag-to-dismiss, no new dependency —
+      matches the codebase's hand-rolled-over-library bias).
+- [x] `hooks/use-animated-counter.ts`: cubic-ease-out count-up hook for
+      KPI/stat numbers.
+
+### Fintech redesign — Batch B: PIN-keypad unlock (2026-07-18)
+Closes the "PIN quick-unlock was explicitly deferred" gap noted in Phase
+12 above, and matches the redesign prototypes' lock screen (which shows a
+PIN-keypad mode alongside the biometric one). Uses `expo-crypto`, already
+a transitive dependency since Google sign-in — **no new native
+dependency, OTA-eligible**:
+- [x] `api/pinSettings.ts` — `hasPinSet()`/`setPin()`/`verifyPin()`/
+      `clearPin()`; a salted SHA-256 hash (`expo-crypto`'s
+      `digestStringAsync`) stored in `expo-secure-store`, mirroring
+      `authStorage.ts`'s secret-goes-in-SecureStore convention (distinct
+      from `biometricSettings.ts`'s AsyncStorage-for-a-boolean-flag —
+      a PIN hash is a secret). `hasQuickUnlockConfigured()` is the shared
+      "biometric enabled + hardware ready, OR PIN set" check now used by
+      both `AuthContext`'s cold-boot restore and `useIdleAutoLock`, so a
+      PIN-only user locks (keeps their session) instead of being logged
+      out, exactly like a biometric-only user.
+- [x] `ui/pin-keypad.tsx` (new) — `PinDots`/`PinKeypad`, a shared 12-key
+      numeric pad + 4-dot progress indicator, used by both the lock
+      screen and the new Settings PIN flow.
+- [x] `ui/lock-screen.tsx` — now resolves which mode to show from what's
+      actually configured (a PIN-only user never sees the OS biometric
+      sheet auto-fire); "Use PIN instead"/"Use biometrics instead" toggle
+      appears only when both are configured.
+- [x] Settings screen: new "Quick-unlock PIN" section — "Set a PIN"/
+      "Change PIN" opens a `BottomSheet` with a two-step enter → confirm
+      keypad flow; "Remove" clears it with a native confirm dialog (same
+      pattern as `confirmSignOut()`). Auto-lock's footnote text now
+      reflects biometric-or-PIN, not biometric-only.
+- [ ] Not yet verified on a device — same caveat as every phase.
+      OTA-eligible: publishes automatically via `mobile-ota-update.yml`.
+
 ## Over-the-air updates (EAS Update) — read this before cutting a build
 
 `expo-updates` is configured (`runtimeVersion.policy: "appVersion"`,
